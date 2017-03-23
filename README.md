@@ -9,8 +9,8 @@
 Il front end server è un component della architettura di 
 https://developers.italia.it/it/datigov/
 
-L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework
-che offra una Restful interface ai client del progetto _dati aperti_.
+L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework e servizi
+esterni che offra una Restful interface ai client del progetto _dati aperti_.
 
 Lo standard adottato sarà quello descritto in:
 [OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification)
