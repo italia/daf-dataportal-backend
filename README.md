@@ -4,9 +4,22 @@
 <img title="Build Status Images" src="https://api.travis-ci.com/italia/dati-frontendserver.svg?token=sdc8mJz3EyP3LyxtXjxQ">
 </a>
 
-**dati-frontendserver** é un progetto playframework 2.5.13 basato su scala 2.11.8 e utilizza sbt 0.13 per fare build.
-Il progetto al momento e' vuoto non contiene ancora codice sviluppato. E' il nostro punto di inizio del progetto.
+**FRONT END SERVER** 
+Il front end server è un component della architettura di 
+https://developers.italia.it/it/datigov/
 
+L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework
+che offra una Restful interface ai client del progetto _dati aperti_ 
+
+Lo standard adottato sarà quello descritto in:
+[OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification)
+
+### Tecnologie ###
+ - playframework 2.5.13 
+ - scala 2.11.8 
+ - sbt 0.13 
+
+Per lanciare il server
 ```
 git clone https://github.com/italia/dati-frontendserver
 sbt compile
@@ -14,10 +27,7 @@ sbt run
 http://localhost:9000
 ```
 
-## Motivazione
 
-L'obbiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework
-che si ...
  
 
 
