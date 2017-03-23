@@ -5,6 +5,7 @@
 </a>
 
 **dati-frontendserver** é un progetto playframework 2.5.13 basato su scala 2.11.8 e utilizza sbt 0.13 per fare build.
+Il progetto al momento e' vuoto non contiene ancora codice sviluppato. E' il nostro punto di inizio del progetto.
 
 ```
 git clone https://github.com/italia/dati-frontendserver
@@ -13,9 +14,10 @@ sbt run
 http://localhost:9000
 ```
 
-Il progetto al momento e' completamente vuoto. Puoi provare a fare un clone e fare sbt run per vedere se funziona anche a te. 
+## Motivazione
 
-Il progetto e' collegato a travi ci, un tool che ogni volta viene fatta una push sulla repo github lancia il processo di test
-e build in cloud indipendente dal tuo ambiente di sviluppo. Puoi provare a collegarti qua per vedere se riesci a vedere la
-build del primo commit.
+L'obbiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework
+che si ...
+ 
+
 
