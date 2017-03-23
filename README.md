@@ -22,7 +22,7 @@ Lo standard adottato sarà quello descritto in:
 
 Per lanciare il server
 ```
-git clone https://github.com/italia/dati-frontendserver
+git clone git@github.com:italia/dati-frontendserver.git
 sbt compile
 sbt run
 http://localhost:9000
