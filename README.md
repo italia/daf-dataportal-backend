@@ -28,7 +28,7 @@ sbt run
 http://localhost:9000
 ```
 
-** Motivazione **
+### Motivazione ###
 
 Per front end server si intende una applicazione che espone come unica view una collezione di servizi Rest ful con Content Representation di tipo JSON organizzati secondo una filosofia di tipo Resource Oriented.
 Questo approccio garantisce un'ampia possibilità di aggiungere delle nuove resources ed estendere il perimetro dei servizi offerti, mantenendo un approccio elastico e sostanzialmente neutro rispetto al contenuto degli stessi. 
