@@ -6,11 +6,11 @@
 
 **FRONT END SERVER** 
 
-Il front end server è un component della architettura di 
+Il front end server è un component dell'architettura di 
 https://developers.italia.it/it/datigov/
 
-L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework e servizi
-esterni che offra una Restful interface ai client del progetto _dati aperti_.
+L'obiettivo del progetto è quello di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework e servizi
+esterni che offra un'interfaccia RESTful ai client del progetto _dati aperti_.
 
 Lo standard adottato sarà quello descritto in:
 [OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification)
@@ -30,18 +30,18 @@ http://localhost:9000
 
 ### Motivazione ###
 
-Per front end server si intende una applicazione che espone come unica view una collezione di servizi Rest ful con Content Representation di tipo JSON organizzati secondo una filosofia di tipo Resource Oriented.
+Per _front end server_ si intende un'applicazione che espone come unica view una collezione di servizi RESTful con Content Representation di tipo JSON organizzati secondo una filosofia di tipo _Resource Oriented_.
 Questo approccio garantisce un'ampia possibilità di aggiungere delle nuove resources ed estendere il perimetro dei servizi offerti, mantenendo un approccio elastico e sostanzialmente neutro rispetto al contenuto degli stessi. 
 
 I vantaggi che proponiamo sono:
-- Avere un controllo completo del layer dei “dati” non avendo nessun dipendenza da un contenitore come  ad esempio un CMS
-- Avere un front end assolutamente autonomo e sviluppato secondo standard quali HTML5, javascript con una estesa esperienza utente che prescinda dal backend.
-- Fornire ai client un unico contratto di accesso ai dati, come un unico “schema” JSON da integrare, e soprattutto evitare delle dipendenze dirette da strutture dati di terze parti (CKAN, ect).
-- Avere un controllo esclusivo sul layer dati e sulla struttura da esporre, garantendo quindi un approccio “essenziale” e mirato alle esigenze del client
+- Avere un controllo completo del layer dei "dati" non avendo nessun dipendenza da un contenitore, come ad esempio un CMS
+- Avere un front end assolutamente autonomo e sviluppato secondo standard quali HTML5, JavaScript con un'estesa esperienza utente che prescinda dal backend
+- Fornire ai client un unico contratto di accesso ai dati, come un unico "schema" JSON da integrare e soprattutto evitare delle dipendenze dirette da strutture dati di terze parti (CKAN, etc)
+- Avere un controllo esclusivo sul layer dati e sulla struttura da esporre, garantendo quindi un approccio "essenziale" e mirato alle esigenze del client
 - Rispondere in via centralizzata a requisiti non funzionali quali: sicurezza, anonimizzazione, logging, analisi,  etc. 
 
-Compito del front end server sarà
-- Esporre e documentare i contratti REST, ed il dialetto JSON usato
+Compiti del front end server saranno:
+- Esporre e documentare i contratti REST ed lo schema JSON usato
 - Comunicare con i backend integrati
 - Fornire un'architettura su cui integrare nuove sorgenti dati in maniera semplice attraverso interfacce applicative esposte
 - Predisporre eventuali pipeline di trattamento dei dati 
