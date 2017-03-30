@@ -5,6 +5,9 @@ bin/
 .project
 /.settings/
 .classpath
+.cache-main
+.cache-tests
+/.idea/
 /lib/
 /logs/
 /modules
