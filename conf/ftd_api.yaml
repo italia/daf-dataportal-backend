@@ -4,7 +4,7 @@ swagger: '2.0'
 info:
   title: dati.gov.it API
   description: Consume dati.gov.it API
-  version: "1.0.0"
+  version: "BETA"
   termsOfService: http://termofservice
   contact:
     name: team digitale
@@ -12,7 +12,7 @@ info:
   license:
     name: Creative Commons 4.0 International
     url: http://creativecommons.org/licenses/by/4.0/
-
+host : localhost:9000
 # will be prefixed to all paths
 basePath: /monitor
 produces:

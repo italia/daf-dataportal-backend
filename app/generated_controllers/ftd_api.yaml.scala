@@ -62,7 +62,7 @@ package ftd_api.yaml {
         val getcatalogs = getcatalogsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getcatalogs
             println("Ciao bella ...")
-            Getcatalogs200(Seq(Catalog(Option("ale")),Catalog(Option("ciao"))))
+            Getcatalogs200(List(Catalog(Option("ale")),Catalog(Option("ciao"))))
          //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getcatalogs
         }
