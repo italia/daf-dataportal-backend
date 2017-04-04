@@ -18,5 +18,6 @@ tmp/
 test-result
 server.pid
 *.eml
+*.sc
 /dist/
 .cache
