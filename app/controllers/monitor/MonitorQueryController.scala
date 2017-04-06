@@ -16,6 +16,7 @@ class MonitorQueryController @Inject() extends Controller {
     val test = ComponentRegistry.monitorService.allCatalogs()
     println(test)
     Ok(Json.parse("""[{"ale" : "test"},{ "ale" : "dsadasda"}]"""))
+    //Ok(test)
   }
 
 }

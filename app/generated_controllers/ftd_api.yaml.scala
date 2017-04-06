@@ -17,6 +17,7 @@ import javax.inject._
 
 import play.api.libs.json._
 import     play.api.libs.json.JsNumber
+import services.ComponentRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -31,23 +32,21 @@ package ftd_api.yaml {
         // ----- End of unmanaged code area for constructor Ftd_apiYaml
         val catalogDistributionLicense = catalogDistributionLicenseAction { (catalogName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
-            NotImplementedYet
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogLicenses(catalogName)
+            CatalogDistributionLicense200(distributions)
+            //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
-        }
-        val catalogDatasetCount = catalogDatasetCountAction { (catalogName: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
         val allDistributionLiceses = allDistributionLicesesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
-        val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { (catalogName: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
+        val catalogDistrubutionFormat = catalogDistrubutionFormatAction { (catalogName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogFormat(catalogName)
+            CatalogDistrubutionFormat200(distributions)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
         }
         val allDistributionGroups = allDistributionGroupsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
@@ -64,20 +63,32 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
+        val catalogDatasetCount = catalogDatasetCountAction { (catalogName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
+        }
+        val catalogBrokenLinks = catalogBrokenLinksAction { (catalogName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
+        }
         val allBrokenLinks = allBrokenLinksAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
         }
-        val catalogDistrubutionFormat = catalogDistrubutionFormatAction { (catalogName: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
+        val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { (catalogName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogGroup(catalogName)
+            CatalogDistrubutionGroups200(distributions)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
         }
         val getmonitorCatalogs = getmonitorCatalogsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
             println("Ciao bella ...")
-            GetmonitorCatalogs200(List(Catalog(Option("ale")),Catalog(Option("ciao"))))
+            val catalogs = ComponentRegistry.monitorService.allCatalogs()
+            GetmonitorCatalogs200(catalogs)
             //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
         }

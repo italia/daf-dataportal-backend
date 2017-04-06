@@ -19,5 +19,6 @@ test-result
 server.pid
 *.eml
 *.sc
+/conf/production.conf
 /dist/
 .cache

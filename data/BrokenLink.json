@@ -1,0 +1,164 @@
+{
+  "BrokenLinks" : {
+    "test1" : [
+      {
+        "url" : "http://geweq.it/dasdds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://32131",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/3432",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://fsdfwe",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/fdeds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://grew",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/hgers",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://32131",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/hrew",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://vfewre",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/lrtri",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://dsewr",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/grewire",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://erewrew",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      }
+    ],
+    "test2" : [
+      {
+        "url" : "http://geweq.it/dasdds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://32131",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/3432",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://fsdfwe",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/fdeds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://grew",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/hgers",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://32131",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/hrew",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://vfewre",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/lrtri",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://dsewr",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      }
+    ],
+    "test3" : [
+      {
+        "url" : "http://geweq.it/dasdds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://32131",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/3432",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://fsdfwe",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/fdeds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://grew",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      }
+    ],
+    "test4" : [
+      {
+        "url" : "http://geweq.it/dasdds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://32131",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/3432",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://fsdfwe",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      },
+      {
+        "url" : "http://geweq.it/fdeds",
+        "m_status": "ko",
+        "name": "test.txt",
+        "rurl": "http://grew",
+        "catalog_name": "test1",
+        "dataset_url" : "http://dasdwe"
+      }
+    ]
+  }
+}

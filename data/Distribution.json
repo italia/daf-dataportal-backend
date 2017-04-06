@@ -1,0 +1,93 @@
+{
+  "Distribution": {
+    "test1": [
+      {
+        "label": "label1",
+        "count": 75
+      },
+      {
+        "label": "label2",
+        "count": 21
+      },
+      {
+        "label": "label3",
+        "count": 321
+      },
+      {
+        "label": "label4",
+        "count": 213
+      },
+      {
+        "label": "label5",
+        "count": 121
+      }
+    ]
+  },
+  "test2": [
+    {
+      "label": "label1",
+      "count": 75
+    },
+    {
+      "label": "label2",
+      "count": 21
+    },
+    {
+      "label": "label3",
+      "count": 321
+    },
+    {
+      "label": "label4",
+      "count": 213
+    },
+    {
+      "label": "label5",
+      "count": 121
+    }
+  ],
+  "test3": [
+    {
+      "label": "label1",
+      "count": 75
+    },
+    {
+      "label": "label2",
+      "count": 21
+    },
+    {
+      "label": "label3",
+      "count": 321
+    },
+    {
+      "label": "label4",
+      "count": 213
+    },
+    {
+      "label": "label5",
+      "count": 121
+    }
+  ],
+  "test4": [
+    {
+      "label": "label1",
+      "count": 75
+    },
+    {
+      "label": "label2",
+      "count": 21
+    },
+    {
+      "label": "label3",
+      "count": 321
+    },
+    {
+      "label": "label4",
+      "count": 213
+    },
+    {
+      "label": "label5",
+      "count": 121
+    }
+  ]
+}
+
