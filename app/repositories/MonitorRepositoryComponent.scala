@@ -13,27 +13,26 @@ trait MonitorRepositoryComponent {
   val monitorRepository : Repository //= new MonitorRepository
   trait Repository{
     def allCatalogs(): List[Catalog]
-    // def apply(config :String) :Unit = config match {
-    //   case "dev" => new MonitorRepositoryDev
-    //   case "prod" => new MonitorRepositoryProd
-    // }
   }
+
   object Repository {
      def apply(config :String) :Repository = config match {
        case "dev" => new MonitorRepositoryDev
        case "prod" => new MonitorRepositoryProd
      }
   }
+
   class MonitorRepositoryDev extends Repository{
     def allCatalogs(): List[Catalog] = {
       println("Lists of catalogs")
       List(Catalog(Some("ale")), Catalog(Some("ale")))
     }
   }
+
   class MonitorRepositoryProd extends Repository {
     def allCatalogs(): List[Catalog] = {
       println("Lists of catalogs")
-      List(Catalog(Some("gigio")), Catalog(Some("prova")))
+      List(Catalog(None), Catalog(None))
     }
   }
 }

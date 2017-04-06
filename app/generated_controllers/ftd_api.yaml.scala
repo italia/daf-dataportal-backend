@@ -59,13 +59,6 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
-        val getcatalogs = getcatalogsAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getcatalogs
-            println("Ciao bella ...")
-            Getcatalogs200(List(Catalog(Option("ale")),Catalog(Option("ciao"))))
-         //   NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getcatalogs
-        }
         val allDistributionFormats = allDistributionFormatsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
             NotImplementedYet
@@ -80,6 +73,13 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
+        }
+        val getmonitorCatalogs = getmonitorCatalogsAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
+            println("Ciao bella ...")
+            GetmonitorCatalogs200(List(Catalog(Option("ale")),Catalog(Option("ciao"))))
+            //   NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
         }
     
     }

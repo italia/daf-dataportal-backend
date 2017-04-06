@@ -14,11 +14,11 @@ info:
     url: http://creativecommons.org/licenses/by/4.0/
 host : localhost:9000
 # will be prefixed to all paths
-basePath: /monitor
+basePath: /api/v1.0
 produces:
   - application/json
 paths:
-  "/catalogs":
+  "/monitor/catalogs":
     get:
       summary: Name of all catalogs
       description:
@@ -231,6 +231,23 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+#  "/ckan/organizations":
+#    get:
+#      tags:
+#      - CKAN
+#      summary: All organizations in ckan
+#      description: All resources grouped by license
+#      operationId: ckan_organizations
+#      parameters: []
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            "$ref": "#/definitions/ActionAnyContent"
+#        default:
+#          description: Unexpected error
+#          schema:
+#            $ref: '#/definitions/Error'
 definitions:
   ActionAnyContent:
     type: object

@@ -4,11 +4,6 @@ import scala.collection.immutable.List
 import ftd_api.yaml.Catalog
 import repositories.MonitorRepositoryComponent
 
-//Model
-//case class Catalog(name :String)
-
-
-
 
 
 trait MonitorServiceComponent { this: MonitorRepositoryComponent =>
