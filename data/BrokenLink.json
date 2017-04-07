@@ -1,5 +1,5 @@
 {
-  "BrokenLinks" : {
+  "BrokenLink" : {
     "test1" : [
       {
         "url" : "http://geweq.it/dasdds",
@@ -7,7 +7,8 @@
         "name": "test.txt",
         "rurl": "http://32131",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/3432",
@@ -15,7 +16,8 @@
         "name": "test.txt",
         "rurl": "http://fsdfwe",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/fdeds",
@@ -23,7 +25,8 @@
         "name": "test.txt",
         "rurl": "http://grew",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/hgers",
@@ -31,7 +34,8 @@
         "name": "test.txt",
         "rurl": "http://32131",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/hrew",
@@ -39,7 +43,8 @@
         "name": "test.txt",
         "rurl": "http://vfewre",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/lrtri",
@@ -47,7 +52,8 @@
         "name": "test.txt",
         "rurl": "http://dsewr",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/grewire",
@@ -55,7 +61,8 @@
         "name": "test.txt",
         "rurl": "http://erewrew",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       }
     ],
     "test2" : [
@@ -65,7 +72,8 @@
         "name": "test.txt",
         "rurl": "http://32131",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/3432",
@@ -73,7 +81,8 @@
         "name": "test.txt",
         "rurl": "http://fsdfwe",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/fdeds",
@@ -81,7 +90,8 @@
         "name": "test.txt",
         "rurl": "http://grew",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/hgers",
@@ -89,7 +99,8 @@
         "name": "test.txt",
         "rurl": "http://32131",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/hrew",
@@ -97,7 +108,8 @@
         "name": "test.txt",
         "rurl": "http://vfewre",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/lrtri",
@@ -105,7 +117,8 @@
         "name": "test.txt",
         "rurl": "http://dsewr",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       }
     ],
     "test3" : [
@@ -115,7 +128,8 @@
         "name": "test.txt",
         "rurl": "http://32131",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/3432",
@@ -123,7 +137,8 @@
         "name": "test.txt",
         "rurl": "http://fsdfwe",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/fdeds",
@@ -131,7 +146,8 @@
         "name": "test.txt",
         "rurl": "http://grew",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       }
     ],
     "test4" : [
@@ -141,7 +157,8 @@
         "name": "test.txt",
         "rurl": "http://32131",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/3432",
@@ -149,7 +166,8 @@
         "name": "test.txt",
         "rurl": "http://fsdfwe",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       },
       {
         "url" : "http://geweq.it/fdeds",
@@ -157,7 +175,8 @@
         "name": "test.txt",
         "rurl": "http://grew",
         "catalog_name": "test1",
-        "dataset_url" : "http://dasdwe"
+        "dataset_url" : "http://dasdwe",
+        "label" : "test1"
       }
     ]
   }

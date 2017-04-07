@@ -289,7 +289,7 @@ definitions:
       rurl:
          type : string
          description : Url of resource
-      url:
+      dataset_url:
          type : string
          description : Url of dataset in dati.gov.it
       catalog_name:

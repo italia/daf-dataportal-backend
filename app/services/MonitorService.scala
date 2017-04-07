@@ -1,7 +1,7 @@
 package services
 
 import scala.collection.immutable.List
-import ftd_api.yaml.{Catalog, Distribution}
+import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
 import repositories.MonitorRepositoryComponent
 import play.api.Environment
 
@@ -23,6 +23,34 @@ trait MonitorServiceComponent { this: MonitorRepositoryComponent =>
 
     def datasetCatalogGroup(catalogName :String): Seq[Distribution] = {
       monitorRepository.datasetCatalogGroup(catalogName)
+    }
+
+     def datasetsCount() :Seq[Distribution] = {
+        monitorRepository.datasetCounts()
+     }
+
+    def allDistributionLiceses():Seq[Distribution] = {
+      monitorRepository.allDistributionLiceses()
+    }
+
+    def allDistributionFormat():Seq[Distribution] = {
+      monitorRepository.allDistributionFormat()
+    }
+
+    def allDistributionGroup():Seq[Distribution] = {
+      monitorRepository.allDistributionGroup()
+    }
+
+    def catalogDatasetCount(catalogName: String) : Seq[Distribution] = {
+      monitorRepository.catalogDatasetCount(catalogName)
+    }
+
+    def catalogBrokenLinks(catalogName: String) :Seq[BrokenLink] = {
+      monitorRepository.catalogBrokenLinks(catalogName)
+    }
+
+    def allBrokenLinks() :Seq[BrokenLink] = {
+      monitorRepository.allBrokenLinks()
     }
   }
 

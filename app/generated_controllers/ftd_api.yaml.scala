@@ -39,7 +39,9 @@ package ftd_api.yaml {
         }
         val allDistributionLiceses = allDistributionLicesesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
-            NotImplementedYet
+            val distributions : Seq[Distribution] = ComponentRegistry.monitorService.allDistributionLiceses()
+            AllDistributionLiceses200(distributions)
+            // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
         val catalogDistrubutionFormat = catalogDistrubutionFormatAction { (catalogName: String) =>  
@@ -50,32 +52,40 @@ package ftd_api.yaml {
         }
         val allDistributionGroups = allDistributionGroupsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
-            NotImplementedYet
+            // NotImplementedYet
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
+            AllDistributionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
         }
         val allDatasets = allDatasetsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDatasets
-            NotImplementedYet
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetsCount()
+            AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
         val allDistributionFormats = allDistributionFormatsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
-            NotImplementedYet
+            //NotImplementedYet
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
+            AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
         val catalogDatasetCount = catalogDatasetCountAction { (catalogName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
-            NotImplementedYet
+            val distribution :Seq[Distribution] = ComponentRegistry.monitorService.catalogDatasetCount(catalogName)
+            CatalogDatasetCount200(distribution)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
         val catalogBrokenLinks = catalogBrokenLinksAction { (catalogName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
-            NotImplementedYet
+            val brokenLinks :Seq[BrokenLink] = ComponentRegistry.monitorService.catalogBrokenLinks(catalogName)
+            CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
         }
         val allBrokenLinks = allBrokenLinksAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
-            NotImplementedYet
+            val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
+            AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
         }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { (catalogName: String) =>  
