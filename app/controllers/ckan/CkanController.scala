@@ -84,7 +84,7 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
       datasets <- getOrgs(organizationId)
       dataset: Seq[JsValue] <- getOrgDatasets(datasets)
     } yield {
-       Ok(Json.toJson(dataset))
+       Ok(Json.obj("result" -> Json.toJson(dataset)))
     }
   }
 
