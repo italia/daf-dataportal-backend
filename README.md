@@ -15,9 +15,9 @@ esterni che offra una Restful interface ai client del progetto _dati aperti_.
 Lo standard adottato sarà quello descritto in:
 [OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification)
 Abbiamo scelto di avere un approccio contract first, nel quale prima si definiscono i contratti di tipo Rest, in un file yaml/json.
-Il [file](conf/ftd_api.yaml) descrive, seguendo le specifiche [swagger 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md),
-le routes e il modello dati della risposta. Utilizzando, ad esempio [swagger-codegen](https://github.com/swagger-api/swagger-codegen)
-o online [swagger editor](http://editor.swagger.io/) e' possibile creare lo sceletro di un web server o api client a partire dal [file](conf/ftd_api.yaml) in vari linguaggi di programmazione che espone o consuma i servizi descritti.
+
+- [file](conf/ftd_api.yaml) descrive, seguendo le specifiche [swagger 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md),
+- le routes e il modello dati della risposta. Utilizzando, ad esempio [swagger-codegen](https://github.com/swagger-api/swagger-codegen) o online [swagger editor](http://editor.swagger.io/) e' possibile creare lo sceletro di un web server o api client a partire dal [file](conf/ftd_api.yaml) in vari linguaggi di programmazione che espone o consuma i servizi descritti.
 
 Il progetto utilizza la libreria [api-first-hand](https://github.com/zalando/api-first-hand) che a partire dal file yaml genera un web server play con modello dati e alcuni test gia' implementati e la UI di swagger.
 Zalando inoltre ha messo a disposizione le [linee guida per creare API](http://zalando.github.io/restful-api-guidelines/TOC.html), lettura interessante per approfondire l'argomento.
@@ -41,11 +41,11 @@ http://localhost:9000
  - [api-fitst-hand](https://github.com/zalando/api-first-hand)
 
 ### Processo di sviluppo generico ###
-- Scaricare il [file](conf/ftd_api.yaml) e aggiungere le routes e il modello dati di risposta (NB il modello dati dovrebbe essere definito avendo in mente una sorgente reale esistente (un database, un servizio esterno, ecc..).
-- Generare lo scheletro del  codice attraverso [swagger-codegen](https://github.com/swagger-api/swagger-codegen) o online [swagger editor](http://editor.swagger.io/)
-- Creare nella cartella [data/NOME_DATASET.json o .csv o ..](data/) i dati che andranno a riempire il modello dati generato attraverso il processo di build. NB File e non oggetti STUB per garantire di essere agnostici al linguaggio di programmazione utilizzato
-- Scrivere il codice che dai files va a riempire con i dati(nei files) il modello delle risposte descritto nello yaml.
-- Scrivere il codice che va a interfacciarsi con le sorgenti dati (databases, servizi ec... ) senza specificare URL di connessioni.
+1. Scaricare il [file](conf/ftd_api.yaml) e aggiungere le routes e il modello dati di risposta (NB il modello dati dovrebbe essere definito avendo in mente una sorgente reale esistente (un database, un servizio esterno, ecc..).
+2. Generare lo scheletro del  codice attraverso [swagger-codegen](https://github.com/swagger-api/swagger-codegen) o online [swagger editor](http://editor.swagger.io/)
+3. Creare nella cartella [data/NOME_DATASET.json o .csv o ..](data/) i dati che andranno a riempire il modello dati generato attraverso il processo di build. NB File e non oggetti STUB per garantire di essere agnostici al linguaggio di programmazione utilizzato
+4. Scrivere il codice che dai files va a riempire con i dati(nei files) il modello delle risposte descritto nello yaml.
+5. Scrivere il codice che va a interfacciarsi con le sorgenti dati (databases, servizi ec... ) senza specificare URL di connessioni.
 A breve un esempio di servizi esposti utilizzando nodejs
 
 ### dati-frontendserver: sviluppo ###
@@ -54,7 +54,7 @@ A breve un esempio di servizi esposti utilizzando nodejs
  e delle risposte ma non modifica il codice scritto
 - le Action sono generate in [generated_controllers](app/generated_controllers/ftd_api.yaml.scala). Il codice tra i commenti
 non viene rigenerato. Nell'esempio sottostante un metodo e il relativo popolamento che verra' spiegato nei dettagli di seguito.
-```
+```scala
 val catalogDistrubutionFormat = catalogDistrubutionFormatAction { (catalogName: String) =>
 // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
      val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogFormat(catalogName)
@@ -70,17 +70,21 @@ I vantaggi sono efficienza, modularita' e non dipendere da librerie esterne. Nel
 
 ### Implementazione ###
 L'organizzazione dei packages potra' cambiare, al momento la maggior parte del codice e' contenuto nelle catelle
-[repositories](repositories/) e [services](services/).
+
+- [repositories](repositories/) 
+- [services](services/).
+
 La cartella repositories contiene il codice necessario a leggere i dati dalle sorgenti, per l'ambiente di test attuale dai
 file nella cartella [data](data/) ed esporli attraverso i servizi dichiarati nella cartella [services](services/).
 L'interfaccia Repository definisce i metodi da implementare mentre le classi MonitorRepositoryDev e MonitorRepositoryProd
 l'implementazione dei metodi che leggono dalle sorgenti dati.
+
 Al momento services/ ha solo funzione di proxy e dipende dall'injection di almeno una repository ma con i prossimi sviluppi
 avra' differenti implementazione. Il vantaggio di quest'approccio risiede nella modularizzazione delle dipendenza
 per la creazione di differenti ambienti test, sviluppo online/offline, staging, production indipendenti e intercambiabili.
 Un esempio di codice d'esempio piu' esplicativo di molte parole:
 
-```
+```scala
 trait TestEnvironment extends
   UserServiceComponent with
   UserRepositoryComponent with
