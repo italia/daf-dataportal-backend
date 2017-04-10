@@ -16,8 +16,7 @@ Lo standard adottato sarà quello descritto in:
 [OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification)
 Abbiamo scelto di avere un approccio contract first, nel quale prima si definiscono i contratti di tipo Rest, in un file yaml/json.
 
-- [file](conf/ftd_api.yaml) descrive, seguendo le specifiche [swagger 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md),
-- le routes e il modello dati della risposta. Utilizzando, ad esempio [swagger-codegen](https://github.com/swagger-api/swagger-codegen) o online [swagger editor](http://editor.swagger.io/) e' possibile creare lo sceletro di un web server o api client a partire dal [file](conf/ftd_api.yaml) in vari linguaggi di programmazione che espone o consuma i servizi descritti.
+Il [file](conf/ftd_api.yaml) descrive, seguendo le specifiche [swagger 2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md), le routes e il modello dati della risposta. Utilizzando, ad esempio [swagger-codegen](https://github.com/swagger-api/swagger-codegen) o online [swagger editor](http://editor.swagger.io/) e' possibile creare lo sceletro di un web server o api client a partire dal [file](conf/ftd_api.yaml) in vari linguaggi di programmazione che espone o consuma i servizi descritti.
 
 Il progetto utilizza la libreria [api-first-hand](https://github.com/zalando/api-first-hand) che a partire dal file yaml genera un web server play con modello dati e alcuni test gia' implementati e la UI di swagger.
 Zalando inoltre ha messo a disposizione le [linee guida per creare API](http://zalando.github.io/restful-api-guidelines/TOC.html), lettura interessante per approfondire l'argomento.
