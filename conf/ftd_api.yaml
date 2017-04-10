@@ -1,5 +1,5 @@
-# this is an example of the Uber API
-# as a demonstration of an API spec in YAML
+# Questo e' la descrizione delle API che vengono esposte da dati.gov.it.
+# Le API sono pubbliche
 swagger: '2.0'
 info:
   title: dati.gov.it API

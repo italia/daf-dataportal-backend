@@ -15,7 +15,6 @@ import scala.collection.immutable.List
 
 class MonitorRepositoryDev extends Repository {
 
-    import play.api.libs.functional.syntax._
 
     private val streamCatalog = new FileInputStream(Environment.simple().getFile("data/Catalog.json"))
     private val jsonCatalog: JsValue = try {
@@ -37,21 +36,6 @@ class MonitorRepositoryDev extends Repository {
     } finally {
       streamBrokenLink.close()
     }
-
-    implicit val distributionRead: Reads[Distribution] = (
-      (JsPath \ "label").readNullable[String] and
-        (JsPath \ "count").readNullable[Float]
-      ) (Distribution.apply _)
-
-    implicit val brokenLinkRead: Reads[BrokenLink] = (
-      (JsPath \ "url").readNullable[String] and
-        (JsPath \ "m_status").readNullable[String] and
-        (JsPath \ "name").readNullable[String] and
-        (JsPath \ "rurl").readNullable[String] and
-        (JsPath \ "catalog_name").readNullable[String] and
-        (JsPath \ "dataset_url").readNullable[String] and
-        (JsPath \ "label").readNullable[String]
-      ) (BrokenLink.apply _)
 
 
 
