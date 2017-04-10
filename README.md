@@ -6,7 +6,7 @@
 
 **FRONT END SERVER** 
 
-Il front end server è un component della architettura di 
+Il front end server è un componente della architettura di 
 https://developers.italia.it/it/datigov/
 
 L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework e servizi
