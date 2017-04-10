@@ -24,6 +24,22 @@ Zalando inoltre ha messo a disposizione le [linee guida per creare API](http://z
 
 Al momento vengono esposte delle API di monitoriggio di dati.gov.it. I dati sono d'esempio per essere utilizzati anche in modalita' offline, rendendo il webserver una componente a se stante dalle sorgenti dati e dal front end in termini di sviluppo.
 
+### Per lanciare il servizio ###
+
+```
+git clone git@github.com:italia/dati-frontendserver.git
+sbt compile
+sbt run
+connect to:
+http://localhost:9000
+```
+
+### Tecnologie ###
+ - playframework 2.5.13
+ - scala 2.11.8
+ - sbt 0.13
+ - [api-fitst-hand](https://github.com/zalando/api-first-hand)
+
 ### Processo di sviluppo generico ###
 - Scaricare il [file](conf/ftd_api.yaml) e aggiungere le routes e il modello dati di risposta (NB il modello dati dovrebbe essere definito avendo in mente una sorgente reale esistente (un database, un servizio esterno, ecc..).
 - Generare lo scheletro del  codice attraverso [swagger-codegen](https://github.com/swagger-api/swagger-codegen) o online [swagger editor](http://editor.swagger.io/)
@@ -104,21 +120,6 @@ class UserServiceSuite extends TestNGSuite with TestEnvironment {
 ### Test cases ###
 TODO
 
-
-Per lanciare il web server in offline mode
-```
-git clone git@github.com:italia/dati-frontendserver.git
-sbt compile
-sbt run
-connect to:
-http://localhost:9000
-```
-
-### Tecnologie ###
- - playframework 2.5.13
- - scala 2.11.8
- - sbt 0.13
- - [api-fitst-hand](https://github.com/zalando/api-first-hand)
 
 ### Motivazione ###
 
