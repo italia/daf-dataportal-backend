@@ -80,11 +80,15 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   }
 
   def getOrganizationDataset(organizationId :String) = Action.async { implicit request =>
+    def isNull(v: JsValue) = v match {
+      case JsNull => true
+      case _ => false
+    }
     for {
       datasets <- getOrgs(organizationId)
       dataset: Seq[JsValue] <- getOrgDatasets(datasets)
     } yield {
-       Ok(Json.obj("result" -> Json.toJson(dataset), "success" -> JsBoolean(true)))
+       Ok(Json.obj("result" -> Json.toJson(dataset.filterNot(isNull(_))), "success" -> JsBoolean(true)))
     }
   }
 

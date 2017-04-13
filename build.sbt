@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
   "org.scalacheck"          %% "scalacheck"         % "1.12.4" % Test,
   "org.specs2"              %% "specs2-scalacheck"  % "3.6" % Test,
   "me.jeffmay"              %% "play-json-tests"    % "1.3.0" % Test,
-  "org.scalatestplus.play"  %% "scalatestplus-play" % "1.5.1" % Test
+  "org.scalatestplus.play"  %% "scalatestplus-play" % "1.5.1" % Test,
+  "org.mongodb" %% "casbah" % "3.1.1"
 )
 
 resolvers ++= Seq(

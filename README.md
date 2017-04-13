@@ -70,8 +70,8 @@ I vantaggi sono efficienza, modularita' e non dipendere da librerie esterne. Nel
 ### Implementazione ###
 L'organizzazione dei packages potra' cambiare, al momento la maggior parte del codice e' contenuto nelle catelle
 
-- [repositories](repositories/) 
-- [services](services/).
+- [repositories](app/repositories/) 
+- [services](app/services/).
 
 La cartella repositories contiene il codice necessario a leggere i dati dalle sorgenti, per l'ambiente di test attuale dai
 file nella cartella [data](data/) ed esporli attraverso i servizi dichiarati nella cartella [services](services/).

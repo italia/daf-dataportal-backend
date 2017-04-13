@@ -2,6 +2,7 @@ package services
 
 import scala.collection.immutable.List
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
+import play.api.{Configuration, Environment}
 import repositories.MonitorRepositoryComponent
 import repositories.monitor.Repository
 
@@ -62,6 +63,9 @@ object ComponentRegistry extends
   MonitorServiceComponent with
   MonitorRepositoryComponent
 {
-  val monitorRepository =  Repository("dev")
+  val conf = Configuration.load(Environment.simple())
+  val app: String = conf.getString("app.type").getOrElse("dev")
+  println("APP type : " + app )
+  val monitorRepository =  Repository(app)
   val monitorService = new MonitorService
 }
