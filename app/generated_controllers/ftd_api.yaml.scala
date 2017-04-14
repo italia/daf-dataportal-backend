@@ -63,6 +63,12 @@ package ftd_api.yaml {
             AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
+        val updateTable = updateTableAction { input: (DashboardDatabaseNameCreateTableNamePostUpfile, String, String) =>
+            val (upfile, databaseName, tableName) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateTable
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
+        }
         val allDistributionFormats = allDistributionFormatsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
             //NotImplementedYet
@@ -81,6 +87,12 @@ package ftd_api.yaml {
             val brokenLinks :Seq[BrokenLink] = ComponentRegistry.monitorService.catalogBrokenLinks(catalogName)
             CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
+        }
+        val createTable = createTableAction { input: (DashboardDatabaseNameCreateTableNamePostUpfile, String, String) =>
+            val (upfile, databaseName, tableName) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
         val allBrokenLinks = allBrokenLinksAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
@@ -102,6 +114,22 @@ package ftd_api.yaml {
             //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
         }
+    
+     // Dead code for absent methodFtd_apiYaml.putdashboardByDatabaseNameByTableName
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.putdashboardByDatabaseNameByTableName
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.putdashboardByDatabaseNameByTableName
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.postdashboardByDatabaseNameByTableName
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.postdashboardByDatabaseNameByTableName
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.postdashboardByDatabaseNameByTableName
+     */
+
     
     }
 }

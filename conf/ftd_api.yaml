@@ -256,6 +256,70 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/dashboard/{databaseName}/create/{tableName}":
+    post:
+      tags:
+      - Dashboard
+      summary: Create a table for metabase visualization
+      operationId: createTable
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        description: The file to upload
+      - name: databaseName
+        in: path
+        description: Name of database
+        required: true
+        type: string
+      - name: tableName
+        in: path
+        description: Name of database
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/dashboard/{databaseName}/update/{tableName}":
+    put:
+      tags:
+      - Dashboard
+      summary: Overwrite a table for metabase visualization
+      operationId: updateTable
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        description: The file to upload
+      - name: databaseName
+        in: path
+        description: Name of database
+        required: true
+        type: string
+      - name: tableName
+        in: path
+        description: Name of database
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -302,6 +366,13 @@ definitions:
       code:
         type: integer
         format: int32
+      message:
+        type: string
+      fields:
+        type: string
+  Success:
+    type: object
+    properties:
       message:
         type: string
       fields:
