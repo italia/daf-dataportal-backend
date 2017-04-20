@@ -12,6 +12,7 @@ info:
   license:
     name: Creative Commons 4.0 International
     url: http://creativecommons.org/licenses/by/4.0/
+#host : XXX.XXX.XXX.XXX:8000
 host : localhost:9000
 # will be prefixed to all paths
 basePath: /api/v1.0
@@ -25,6 +26,12 @@ paths:
         List of names of all catalogs
       tags:
         - Monitor
+      parameters:
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         200:
           description: An array of Catalog
@@ -47,6 +54,11 @@ paths:
       - name: catalogName
         in: path
         description: Name of catalog
+        required: true
+        type: string
+      - name: apikey
+        in: query
+        description: Api key
         required: true
         type: string
       responses:
@@ -77,6 +89,11 @@ paths:
         description: Name of catalog
         required: true
         type: string
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -99,6 +116,11 @@ paths:
       - name: catalogName
         in: path
         description: Name of catalog
+        required: true
+        type: string
+      - name: apikey
+        in: query
+        description: Api key
         required: true
         type: string
       responses:
@@ -125,6 +147,11 @@ paths:
         description: Name of catalog
         required: true
         type: string
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -149,6 +176,11 @@ paths:
         description: Name of catalog
         required: true
         type: string
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -167,7 +199,12 @@ paths:
       summary: List of all broken links
       description: List of all broken links
       operationId: allBrokenLinks
-      parameters: []
+      parameters:
+        - name: apikey
+          in: query
+          description: Api key
+          required: true
+          type: string
       responses:
         '200':
           description: successful operation
@@ -186,7 +223,12 @@ paths:
       summary: List of catalogs name and number of dataset
       description: List of catalogs name and number of dataset
       operationId: allDatasets
-      parameters: []
+      parameters:
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -205,7 +247,12 @@ paths:
       summary: All resources grouped by format
       description: All resources grouped by format
       operationId: allDistributionFormats
-      parameters: []
+      parameters:
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -224,7 +271,12 @@ paths:
       summary: All resources grouped by group title
       description: All resources grouped by group title
       operationId: allDistributionGroups
-      parameters: []
+      parameters:
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -243,7 +295,12 @@ paths:
       summary: All resources grouped by license
       description: All resources grouped by license
       operationId: allDistributionLiceses
-      parameters: []
+      parameters:
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -274,6 +331,11 @@ paths:
         description: Name of table
         required: true
         type: string
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
@@ -302,11 +364,41 @@ paths:
         description: Name of table
         required: true
         type: string
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
       responses:
         '200':
           description: successful operation
           schema:
             "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/dashboard/tables":
+    get:
+      tags:
+      - Dashboard
+      summary: List of tables for dashboard visualization
+      operationId: dashboardTables
+      produces:
+       - application/json
+      parameters:
+      - name: apikey
+        in: query
+        description: Api key
+        required: true
+        type: string
+      responses:
+        200:
+          description: An array of Catalog
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Catalog'
         default:
           description: Unexpected error
           schema:

@@ -2,7 +2,7 @@ package repositories.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.Success
+import ftd_api.yaml.{Catalog, Success}
 
 /**
   * Created by ale on 14/04/17.
@@ -10,8 +10,8 @@ import ftd_api.yaml.Success
 trait DashboardRepository {
    def save(upFile :File,tableName :String) :Success
    def update(upFile :File,tableName :String) :Success
+   def tables(): Seq[Catalog]
 }
-
 
 object DashboardRepository {
   def apply(config: String): DashboardRepository = config match {

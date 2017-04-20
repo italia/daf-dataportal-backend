@@ -4,6 +4,7 @@ import java.io.File
 import java.util.Date
 
 import ftd_api.yaml.Success
+import ftd_api.yaml.Catalog
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -32,5 +33,9 @@ class DashboardRepositoryDev extends DashboardRepository{
     val copyFilePath = copyFile.toPath
     Files.copy(upFile.toPath, copyFilePath, StandardCopyOption.REPLACE_EXISTING)
     Success(Some(message), Some("Good!!"))
+  }
+
+  def tables() :Seq[Catalog] = {
+     Seq(Catalog(None), Catalog(None))
   }
 }

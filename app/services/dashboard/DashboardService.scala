@@ -2,7 +2,7 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.Success
+import ftd_api.yaml.{Catalog, Success}
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
 
@@ -26,6 +26,9 @@ trait DashboardServiceComponent {
       result
     }
 
+    def tables() : Seq[Catalog] = {
+       dashboardRepository.tables()
+    }
   }
 }
 

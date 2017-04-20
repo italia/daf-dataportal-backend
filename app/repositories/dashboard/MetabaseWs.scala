@@ -23,6 +23,8 @@ class MetabaseWs {
 
   val conf = Configuration.load(Environment.simple())
   val URL : String = conf.getString("metabase.url").get
+  val metauser = conf.getString("metabase.user").get
+  val metapass = conf.getString("metabase.pass").get
 
   def call(wsClient: WSClient, data :JsObject): Future[Seq[WSResponse]] = {
     def sessionIds: Future[String] = wsClient.url(URL + "/session").post(data).map { response =>

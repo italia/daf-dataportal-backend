@@ -3,21 +3,21 @@ package repositories.dashboard
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.Date
+
 import com.mongodb.DBObject
 import com.mongodb.casbah.MongoClient
-import ftd_api.yaml.Success
-import play.api.libs.json.{JsArray}
+import ftd_api.yaml.{Catalog, Success}
+import play.api.libs.json.JsArray
 import utils.ConfigReader
+import ftd_api.yaml.Catalog
 
 import scala.io.Source
-
-
-
 
 /**
   * Created by ale on 14/04/17.
   */
-class DashboardRepositoryProd extends  DashboardRepository{
+
+class DashboardRepositoryProd extends DashboardRepository{
 
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
@@ -43,8 +43,8 @@ class DashboardRepositoryProd extends  DashboardRepository{
     mongoClient.close()
     val meta =  new MetabaseWs
     meta.syncMetabase(
-      "ale.ercolani@gmail.com",
-      "giuggi78")
+      metaemail,
+      metapass)
     Success(Some(message), Some("Good!!"))
   }
 
@@ -70,5 +70,14 @@ class DashboardRepositoryProd extends  DashboardRepository{
     mongoClient.close()
     Success(Some(message), Some("Good!!"))
   }
+
+    def tables() :Seq[Catalog] = {
+      val mongoClient = MongoClient(mongoHost, mongoPort)
+      val db = mongoClient("monitor_mdb")
+      val collections = db.collectionNames()
+      val catalogs = collections.map(x => Catalog(Some(x))).toSeq
+      mongoClient.close()
+      catalogs
+    }
 
 }

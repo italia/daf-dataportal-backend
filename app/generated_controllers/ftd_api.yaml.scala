@@ -33,87 +33,97 @@ package ftd_api.yaml {
         // ----- Start of unmanaged code area for constructor Ftd_apiYaml
 
         // ----- End of unmanaged code area for constructor Ftd_apiYaml
-        val catalogDistributionLicense = catalogDistributionLicenseAction { (catalogName: String) =>  
+        val catalogDistributionLicense = catalogDistributionLicenseAction { input: (String, String) =>
+            val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogLicenses(catalogName)
             CatalogDistributionLicense200(distributions)
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val createTable = createTableAction { input: (File, String) =>
-            val (upfile, tableName) = input
+        val createTable = createTableAction { input: (File, String, String) =>
+            val (upfile, tableName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
             val success = DashboardRegistry.dashboardService.save(upfile,tableName)
             CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
-        val allDistributionLiceses = allDistributionLicesesAction {  _ =>  
+        val dashboardTables = dashboardTablesAction { (apikey: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
+            val tables = DashboardRegistry.dashboardService.tables()
+            DashboardTables200(tables)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardTables
+        }
+        val allDistributionLiceses = allDistributionLicesesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
             val distributions : Seq[Distribution] = ComponentRegistry.monitorService.allDistributionLiceses()
             AllDistributionLiceses200(distributions)
             // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
-        val catalogDistrubutionFormat = catalogDistrubutionFormatAction { (catalogName: String) =>  
+        val catalogDistrubutionFormat = catalogDistrubutionFormatAction { input: (String, String) =>
+            val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogFormat(catalogName)
             CatalogDistrubutionFormat200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
         }
-        val allDistributionGroups = allDistributionGroupsAction {  _ =>  
+        val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
             // NotImplementedYet
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
             AllDistributionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
         }
-        val allDatasets = allDatasetsAction {  _ =>  
+        val allDatasets = allDatasetsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDatasets
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetsCount()
             AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
-        val updateTable = updateTableAction { input: (File, String) =>
-            val (upfile, tableName) = input
+        val updateTable = updateTableAction { input: (File, String, String) =>
+            val (upfile, tableName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateTable
             val success = DashboardRegistry.dashboardService.update(upfile,tableName)
             UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
         }
-        val allDistributionFormats = allDistributionFormatsAction {  _ =>  
+        val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
             //NotImplementedYet
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
             AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
-        val catalogDatasetCount = catalogDatasetCountAction { (catalogName: String) =>  
+        val catalogDatasetCount = catalogDatasetCountAction { input: (String, String) =>
+            val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
             val distribution :Seq[Distribution] = ComponentRegistry.monitorService.catalogDatasetCount(catalogName)
             CatalogDatasetCount200(distribution)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
-        val catalogBrokenLinks = catalogBrokenLinksAction { (catalogName: String) =>  
+        val catalogBrokenLinks = catalogBrokenLinksAction { input: (String, String) =>
+            val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
             val brokenLinks :Seq[BrokenLink] = ComponentRegistry.monitorService.catalogBrokenLinks(catalogName)
             CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
         }
-        val allBrokenLinks = allBrokenLinksAction {  _ =>  
+        val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
             AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
         }
-        val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { (catalogName: String) =>  
+        val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
+            val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogGroup(catalogName)
             CatalogDistrubutionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
         }
-        val getmonitorCatalogs = getmonitorCatalogsAction {  _ =>  
+        val getmonitorCatalogs = getmonitorCatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
-            println("Ciao bella ...")
             val catalogs = ComponentRegistry.monitorService.allCatalogs()
             GetmonitorCatalogs200(catalogs)
             //   NotImplementedYet
