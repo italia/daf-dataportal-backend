@@ -7,7 +7,7 @@ import scala.collection.immutable.List
 /**
   * Created by ale on 07/04/17.
   */
-trait Repository {
+trait MonitorRepository {
 
   import play.api.libs.functional.syntax._
 
@@ -40,8 +40,8 @@ trait Repository {
 
 }
 
-object Repository {
-  def apply(config: String): Repository = config match {
+object MonitorRepository {
+  def apply(config: String): MonitorRepository = config match {
     case "dev" => new MonitorRepositoryDev
     case "prod" => new MonitorRepositoryProd
   }

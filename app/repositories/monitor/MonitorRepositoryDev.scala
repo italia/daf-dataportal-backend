@@ -13,7 +13,7 @@ import scala.collection.immutable.List
   */
 
 
-class MonitorRepositoryDev extends Repository {
+class MonitorRepositoryDev extends MonitorRepository {
 
 
     private val streamCatalog = new FileInputStream(Environment.simple().getFile("data/Catalog.json"))
@@ -77,9 +77,7 @@ class MonitorRepositoryDev extends Repository {
 
     def datasetCounts() :Seq[Distribution] = {
       val distritbutionJs: JsValue = (jsonDistribution \ "Distribution").get
-
       val counts = MonitorDevRepoUtil.labelGroupBy(distritbutionJs)
-
       val valid = counts.validate[Seq[Distribution]]
       val results = valid match {
         case s: JsSuccess[Seq[Distribution]] => s.get
@@ -91,9 +89,7 @@ class MonitorRepositoryDev extends Repository {
 
     def allDistributionLiceses():Seq[Distribution] = {
       val distritbutionJs: JsValue = (jsonDistribution \ "Distribution").get
-
       val counts = MonitorDevRepoUtil.labelGroupBy(distritbutionJs)
-
       val valid = counts.validate[Seq[Distribution]]
       val results = valid match {
         case s: JsSuccess[Seq[Distribution]] => s.get
@@ -104,9 +100,7 @@ class MonitorRepositoryDev extends Repository {
 
     def allDistributionFormat():Seq[Distribution] = {
       val distritbutionJs: JsValue = (jsonDistribution \ "Distribution").get
-
       val counts = MonitorDevRepoUtil.labelGroupBy(distritbutionJs)
-
       val valid = counts.validate[Seq[Distribution]]
       val results = valid match {
         case s: JsSuccess[Seq[Distribution]] => s.get
@@ -117,9 +111,7 @@ class MonitorRepositoryDev extends Repository {
 
     def allDistributionGroup():Seq[Distribution] = {
       val distritbutionJs: JsValue = (jsonDistribution \ "Distribution").get
-
       val counts = MonitorDevRepoUtil.labelGroupBy(distritbutionJs)
-
       val valid = counts.validate[Seq[Distribution]]
       val results = valid match {
         case s: JsSuccess[Seq[Distribution]] => s.get
@@ -130,9 +122,7 @@ class MonitorRepositoryDev extends Repository {
 
     def catalogDatasetCount(catalogName: String) : Seq[Distribution] = {
       val distritbutionJs: JsValue = (jsonDistribution \ "Distribution").get
-
       val counts = MonitorDevRepoUtil.labelGroupBy(distritbutionJs)
-
       val valid = counts.validate[Seq[Distribution]]
       val results = valid match {
         case s: JsSuccess[Seq[Distribution]] => s.get
@@ -157,9 +147,7 @@ class MonitorRepositoryDev extends Repository {
         case o: JsObject => o.keys //++ o.values.flatMap(allKeys)
         case _ => Set()
       }
-
       val flattened: JsValue =  (brokenLinkJs \ keys.head).get
-
       val brokenLinks: JsResult[Seq[BrokenLink]] = flattened.validate[Seq[BrokenLink]]
       val results = brokenLinks match {
         case s: JsSuccess[Seq[BrokenLink]] => s.get

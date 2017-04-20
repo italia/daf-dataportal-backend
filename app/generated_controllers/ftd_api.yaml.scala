@@ -15,9 +15,12 @@ import scala.util._
 
 import javax.inject._
 
+import java.io.File
+
 import play.api.libs.json._
 import     play.api.libs.json.JsNumber
 import services.ComponentRegistry
+import     services.dashboard.DashboardRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -36,6 +39,13 @@ package ftd_api.yaml {
             CatalogDistributionLicense200(distributions)
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
+        }
+        val createTable = createTableAction { input: (File, String) =>
+            val (upfile, tableName) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
+            val success = DashboardRegistry.dashboardService.save(upfile,tableName)
+            CreateTable200(success)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
         val allDistributionLiceses = allDistributionLicesesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
@@ -63,10 +73,11 @@ package ftd_api.yaml {
             AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
-        val updateTable = updateTableAction { input: (DashboardDatabaseNameCreateTableNamePostUpfile, String, String) =>
-            val (upfile, databaseName, tableName) = input
+        val updateTable = updateTableAction { input: (File, String) =>
+            val (upfile, tableName) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateTable
-            NotImplementedYet
+            val success = DashboardRegistry.dashboardService.update(upfile,tableName)
+            UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
         }
         val allDistributionFormats = allDistributionFormatsAction {  _ =>  
@@ -88,12 +99,6 @@ package ftd_api.yaml {
             CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
         }
-        val createTable = createTableAction { input: (DashboardDatabaseNameCreateTableNamePostUpfile, String, String) =>
-            val (upfile, databaseName, tableName) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
-        }
         val allBrokenLinks = allBrokenLinksAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
@@ -114,22 +119,6 @@ package ftd_api.yaml {
             //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
         }
-    
-     // Dead code for absent methodFtd_apiYaml.putdashboardByDatabaseNameByTableName
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.putdashboardByDatabaseNameByTableName
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.putdashboardByDatabaseNameByTableName
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.postdashboardByDatabaseNameByTableName
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.postdashboardByDatabaseNameByTableName
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.postdashboardByDatabaseNameByTableName
-     */
-
     
     }
 }

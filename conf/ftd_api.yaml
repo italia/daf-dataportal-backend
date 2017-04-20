@@ -12,8 +12,7 @@ info:
   license:
     name: Creative Commons 4.0 International
     url: http://creativecommons.org/licenses/by/4.0/
-host : 156.54.180.186
-#host : localhost:9999
+host : localhost:9000
 # will be prefixed to all paths
 basePath: /api/v1.0
 produces:
@@ -256,7 +255,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/dashboard/{databaseName}/create/{tableName}":
+  "/dashboard/create/{tableName}":
     post:
       tags:
       - Dashboard
@@ -268,15 +267,11 @@ paths:
       - in: formData
         name: upfile
         type: file
-        description: The file to upload
-      - name: databaseName
-        in: path
-        description: Name of database
         required: true
-        type: string
+        description: The file to upload
       - name: tableName
         in: path
-        description: Name of database
+        description: Name of table
         required: true
         type: string
       responses:
@@ -288,7 +283,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/dashboard/{databaseName}/update/{tableName}":
+  "/dashboard/update/{tableName}":
     put:
       tags:
       - Dashboard
@@ -299,16 +294,12 @@ paths:
       parameters:
       - in: formData
         name: upfile
+        required : true
         type: file
         description: The file to upload
-      - name: databaseName
-        in: path
-        description: Name of database
-        required: true
-        type: string
       - name: tableName
         in: path
-        description: Name of database
+        description: Name of table
         required: true
         type: string
       responses:

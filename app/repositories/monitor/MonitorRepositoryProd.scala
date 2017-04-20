@@ -1,17 +1,12 @@
 package repositories.monitor
 
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
-
 import scala.collection.immutable.List
-import javax.inject.Inject
-
-import akka.io.Udp.SO.Broadcast
-import play.api.{Configuration, Environment}
 import com.mongodb.casbah.MongoClient
 import com.mongodb.casbah.Imports._
 import play.api.libs.json._
+import utils.{ConfigReader}
 
-import scala.collection.immutable
 
 /**
   * Created by ale on 07/04/17.
@@ -19,19 +14,7 @@ import scala.collection.immutable
   */
 
 
-
-class AppConfig @Inject()(playConfig: Configuration) {
-  val dbHost: Option[String] = playConfig.getString("mongo.host")
-  val dbPort: Option[Int] = playConfig.getInt("mongo.port")
-}
-
-object ConfigReader {
-  private val config = new AppConfig(Configuration.load(Environment.simple()))
-  def getDbHost: String = config.dbHost.getOrElse("localhost")
-  def getDbPort: Int = config.dbPort.getOrElse(27017)
-}
-
-class MonitorRepositoryProd  extends Repository {
+class MonitorRepositoryProd  extends MonitorRepository {
 
 
   private val mongoHost: String = ConfigReader.getDbHost

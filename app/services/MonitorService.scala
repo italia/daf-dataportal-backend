@@ -4,7 +4,8 @@ import scala.collection.immutable.List
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
 import play.api.{Configuration, Environment}
 import repositories.MonitorRepositoryComponent
-import repositories.monitor.Repository
+import repositories.monitor.MonitorRepository
+
 
 
 
@@ -65,7 +66,6 @@ object ComponentRegistry extends
 {
   val conf = Configuration.load(Environment.simple())
   val app: String = conf.getString("app.type").getOrElse("dev")
-  println("APP type : " + app )
-  val monitorRepository =  Repository(app)
+  val monitorRepository =  MonitorRepository(app)
   val monitorService = new MonitorService
 }
