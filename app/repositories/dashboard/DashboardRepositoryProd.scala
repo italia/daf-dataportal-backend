@@ -42,9 +42,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     })
     mongoClient.close()
     val meta =  new MetabaseWs
-    meta.syncMetabase(
-      metaemail,
-      metapass)
+    meta.syncMetabase()
     Success(Some(message), Some("Good!!"))
   }
 

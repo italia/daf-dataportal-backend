@@ -62,12 +62,12 @@ class MetabaseWs {
   }
 
 
-  def syncMetabase(email: String, pass: String): Future[Unit] = {
+  def syncMetabase(): Future[Unit] = {
     val wsClient = AhcWSClient()
     println("Start")
     val data = Json.obj(
-      "email" -> email,
-      "password" -> pass
+      "email" -> metauser,
+      "password" -> metapass
     )
     val syncAll: Future[Seq[WSResponse]] = call(wsClient,data)
       .andThen { case _ => wsClient.close() }
