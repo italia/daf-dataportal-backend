@@ -16,13 +16,13 @@ trait DashboardServiceComponent {
   val dashboardService: DashboardService
 
   class DashboardService {
-    def save(upFile :File,tableName :String) :Success = {
-      val result = dashboardRepository.save(upFile,tableName)
+    def save(upFile :File,tableName :String, fileType :String) :Success = {
+      val result = dashboardRepository.save(upFile,tableName, fileType)
       result
     }
 
-    def update(upFile :File,tableName :String) :Success = {
-      val result = dashboardRepository.update(upFile,tableName)
+    def update(upFile :File,tableName :String, fileType :String) :Success = {
+      val result = dashboardRepository.update(upFile,tableName, fileType)
       result
     }
 

@@ -312,7 +312,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/dashboard/create/{tableName}":
+  "/dashboard/create/{tableName}/{fileType}":
     post:
       tags:
       - Dashboard
@@ -331,6 +331,11 @@ paths:
         description: Name of table
         required: true
         type: string
+      - name: fileType
+        in: path
+        description: csv o json enum not working
+        required: true
+        type: string
       - name: apikey
         in: query
         description: Api key
@@ -345,7 +350,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/dashboard/update/{tableName}":
+  "/dashboard/update/{tableName}/{fileType}":
     put:
       tags:
       - Dashboard
@@ -362,6 +367,11 @@ paths:
       - name: tableName
         in: path
         description: Name of table
+        required: true
+        type: string
+      - name: fileType
+        in: path
+        description: csv o json enum not working
         required: true
         type: string
       - name: apikey

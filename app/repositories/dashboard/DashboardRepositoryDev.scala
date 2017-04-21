@@ -8,13 +8,18 @@ import ftd_api.yaml.Catalog
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
+import com.mongodb.DBObject
+import play.api.libs.json.{JsArray, JsObject, Json}
+
+import scala.io.Source
+
 
 /**
   * Created by ale on 14/04/17.
   */
 class DashboardRepositoryDev extends DashboardRepository{
 
-  def save(upFile :File,tableName :String) :Success = {
+  def save(upFile :File,tableName :String, fileType :String) :Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
     val currentPath =  new java.io.File(".").getCanonicalPath
@@ -22,10 +27,26 @@ class DashboardRepositoryDev extends DashboardRepository{
     copyFile.mkdirs()
     val copyFilePath = copyFile.toPath
     Files.copy(upFile.toPath, copyFilePath, StandardCopyOption.REPLACE_EXISTING)
+    if(fileType.toLowerCase.equals("json")){
+      val fileString = Source.fromFile(upFile).getLines().mkString
+      val jsonArray: Option[JsArray] = DashboardUtil.toJson(fileString)
+      val readyToBeSaved = DashboardUtil.convertToJsonString(jsonArray)
+      readyToBeSaved.foreach(x => {
+        val jsonStr = x.toString()
+        println(jsonStr)
+      })
+    } else if (fileType.toLowerCase.equals("csv")) {
+      val csvs = DashboardUtil.trasformMap(upFile)
+      val jsons: Seq[JsObject] = csvs.map(x => Json.toJson(x).as[JsObject])
+      jsons.foreach(x => {
+        val jsonStr = x.toString()
+        println(jsonStr)
+      })
+    }
     Success(Some(message), Some("Good!!"))
   }
 
-  def update(upFile :File,tableName :String) :Success = {
+  def update(upFile :File,tableName :String, fileType :String) :Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
     val copyFile = new File(System.getProperty("user.home") + "/metabasefile/" + tableName)

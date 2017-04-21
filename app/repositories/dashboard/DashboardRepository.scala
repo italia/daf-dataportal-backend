@@ -8,8 +8,8 @@ import ftd_api.yaml.{Catalog, Success}
   * Created by ale on 14/04/17.
   */
 trait DashboardRepository {
-   def save(upFile :File,tableName :String) :Success
-   def update(upFile :File,tableName :String) :Success
+   def save(upFile :File,tableName :String, fileType :String) :Success
+   def update(upFile :File,tableName :String, fileType :String) :Success
    def tables(): Seq[Catalog]
 }
 

@@ -41,13 +41,6 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val createTable = createTableAction { input: (File, String, String) =>
-            val (upfile, tableName, apikey) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
-            val success = DashboardRegistry.dashboardService.save(upfile,tableName)
-            CreateTable200(success)
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
-        }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
             val tables = DashboardRegistry.dashboardService.tables()
@@ -81,13 +74,6 @@ package ftd_api.yaml {
             AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
-        val updateTable = updateTableAction { input: (File, String, String) =>
-            val (upfile, tableName, apikey) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateTable
-            val success = DashboardRegistry.dashboardService.update(upfile,tableName)
-            UpdateTable200(success)
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
-        }
         val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
             //NotImplementedYet
@@ -115,6 +101,13 @@ package ftd_api.yaml {
             AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
         }
+        val updateTable = updateTableAction { input: (File, String, String, String) =>
+            val (upfile, tableName, fileType, apikey) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateTable
+            val success = DashboardRegistry.dashboardService.update(upfile,tableName, fileType)
+            UpdateTable200(success)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
+        }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
@@ -128,6 +121,13 @@ package ftd_api.yaml {
             GetmonitorCatalogs200(catalogs)
             //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
+        }
+        val createTable = createTableAction { input: (File, String, String, String) =>
+            val (upfile, tableName, fileType, apikey) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
+            val success = DashboardRegistry.dashboardService.save(upfile,tableName,fileType)
+            CreateTable200(success)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
     
     }
