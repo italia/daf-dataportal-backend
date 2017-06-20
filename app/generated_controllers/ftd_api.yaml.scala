@@ -1,7 +1,9 @@
 
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.{Action,Controller}
 
 import play.api.data.validation.Constraint
+
+import play.api.i18n.MessagesApi
 
 import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
 
@@ -18,9 +20,9 @@ import javax.inject._
 import java.io.File
 
 import play.api.libs.json._
-import     play.api.libs.json.JsNumber
+import play.api.libs.json.JsNumber
 import services.ComponentRegistry
-import     services.dashboard.DashboardRegistry
+import services.dashboard.DashboardRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -28,8 +30,17 @@ import     services.dashboard.DashboardRegistry
  */
 
 package ftd_api.yaml {
+    // ----- Start of unmanaged code area for package Ftd_apiYaml
+        
+    // ----- End of unmanaged code area for package Ftd_apiYaml
+    class Ftd_apiYaml @Inject() (
+        // ----- Start of unmanaged code area for injections Ftd_apiYaml
 
-    class Ftd_apiYaml @Inject() (lifecycle: ApplicationLifecycle, config: ConfigurationProvider) extends Ftd_apiYamlBase {
+        // ----- End of unmanaged code area for injections Ftd_apiYaml
+        val messagesApi: MessagesApi,
+        lifecycle: ApplicationLifecycle,
+        config: ConfigurationProvider
+    ) extends Ftd_apiYamlBase {
         // ----- Start of unmanaged code area for constructor Ftd_apiYaml
 
         // ----- End of unmanaged code area for constructor Ftd_apiYaml

@@ -11,6 +11,7 @@ trait MonitorRepository {
 
   import play.api.libs.functional.syntax._
 
+
   def allCatalogs(): List[Catalog]
   def datasetCatalogLicenses(catalogName: String): Seq[Distribution]
   def datasetCatalogFormat(catalogName: String): Seq[Distribution]
@@ -23,7 +24,7 @@ trait MonitorRepository {
   def catalogBrokenLinks(catalogName: String): Seq[BrokenLink]
   def allBrokenLinks(): Seq[BrokenLink]
 
-  implicit val distributionRead: Reads[Distribution] = (
+ implicit val distributionRead: Reads[Distribution] = (
     (JsPath \ "label").readNullable[String] and
       (JsPath \ "count").readNullable[Float]
     ) (Distribution.apply _)

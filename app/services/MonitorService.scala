@@ -8,8 +8,6 @@ import repositories.monitor.MonitorRepository
 
 
 
-
-
 trait MonitorServiceComponent { this: MonitorRepositoryComponent =>
   val monitorService  :MonitorService//= new MonitorService
   class MonitorService {

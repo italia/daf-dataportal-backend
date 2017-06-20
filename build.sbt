@@ -1,3 +1,6 @@
+import de.zalando.play.generator.sbt.ApiFirstPlayScalaCodeGenerator.autoImport.playScalaAutogenerateTests
+
+
 name := """datipubblici"""
 
 version := "0.1.18"
