@@ -1,0 +1,231 @@
+definitions:
+  Dataset:
+    type: Object
+    properties:
+      alternate_identifier:
+        type: string
+      author:
+        type: string
+      author_email:
+        type: string
+      conforms_to:
+        type: string
+      contact:
+        type: string
+      creation_date:
+        type: string
+      creator_identifier:
+        type: string
+      creator_name:
+        type: string
+      creator_user_id:
+        type: string
+      encoding:
+        type: string
+      fields_description:
+        type: string
+      frequency:
+        type: string
+      geographical_geonames_url:
+        type: string
+      geographical_name:
+        type: string
+      groups:
+        type: array
+        items:
+          $ref: '#/definitions/Group'
+      holder_identifier:
+        type: string
+      holder_name:
+        type: string
+      identifier:
+        type: string
+      is_version_of:
+        type: string
+      isopen:
+        type: boolean
+      issued:
+        type: string
+      language:
+        type: string
+      license_id:
+        type: string
+      license_title:
+        type: string
+      maintainer:
+        type: string
+      maintainer_email:
+        type: string
+      metadata_created:
+        type: string
+      metadata_modified:
+        type: string
+      modified:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      num_resources:
+        type: integer
+      num_tags:
+        type: integer
+      organization:
+        $ref: '#/definitions/Organization'
+      owner_org:
+        type: string
+      private:
+        type: boolean
+      publisher_identifier:
+        type: string
+      publisher_name:
+        type: string
+      relationships_as_object:
+        type: array
+        items:
+          $ref: '#/definitions/Relationship'
+      relationships_as_subject:
+        type: array
+        items:
+          $ref: '#/definitions/Relationship'
+      resources:
+        type: array
+        items:
+          $ref: '#/definitions/Resource'
+      revision_id:
+        type: string
+      site_url:
+        type: string
+      state:
+        type: string
+      tags:
+        type: array
+        items:
+          $ref: '#/definitions/Tag'
+      temporal_end:
+        type: string
+      temporal_start:
+        type: string
+      theme:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+      version:
+        type: string
+  Group:
+    type: object
+    properties:
+      display_name:
+        type: string
+      description:
+        type: string
+      image_display_url:
+        type: string
+      title:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+  Organization:
+    type: object
+    properties:
+      approval_status:
+        type: string
+      created:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      is_organization:
+        type: boolean
+      name:
+        type: string
+      revision_id:
+        type: string
+      state:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+  Relationship:
+    type: object
+    properties:
+      subject:
+        type: string
+      object:
+        type: string
+      type:
+        type: string
+      comment:
+        type: string
+  Resource:
+    type: object
+    properties:
+      cache_last_updated:
+        type: string
+      cache_url:
+        type: string
+      created:
+        type: string
+      datastore_active:
+        type: boolean
+      description:
+        type: string
+      distribution_format:
+        type: string
+      format:
+        type: string
+      hash:
+        type: string
+      id:
+        type: string
+      last_modified:
+        type: string
+      mimetype:
+        type: string
+      mimetype_inner:
+        type: string
+      name:
+        type: string
+      package_id:
+        type: string
+      position:
+        type: integer
+      resource_type:
+        type: string
+      revision_id:
+        type: string
+      size:
+        type: integer
+      state:
+        type: string
+      url:
+        type: string
+      url_type:
+        type: string
+      webstore_last_updated:
+        type: string
+      webstore_url:
+        type: string
+  Tag:
+    type: object
+    properties:
+      display_name:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      state:
+        type: string
+      vocabulary_id:
+        type: string
