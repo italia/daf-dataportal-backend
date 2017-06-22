@@ -16,7 +16,7 @@ GET         /favicon.ico    controllers.Assets.versioned(path="/public/swagger/i
 
 #GET        /api/*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
 
-->          /api/v1.0                   ftd_api.yaml.Routes
+->          /dati-gov/v1                  ftd_api.yaml.Routes
 
 
 GET   /catalogs     controllers.monitor.MonitorQueryController.catalogs

@@ -13,10 +13,12 @@ info:
     name: Creative Commons 4.0 International
     url: http://creativecommons.org/licenses/by/4.0/
 #host : XXX.XXX.XX.XXX:8000
-host : localhost:9000
+host: localhost:9000
 # will be prefixed to all paths
-basePath: /catalog_manager/v1
+basePath: /dati-gov/v1
 produces:
+  - application/json
+consumes:
   - application/json
 paths:
   "/monitor/catalogs":
