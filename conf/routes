@@ -27,6 +27,7 @@ GET /ckan/organizations/:organizationId         controllers.ckan.CkanController.
 GET /ckan/dataset/:datasetId                    controllers.ckan.CkanController.getDataset(datasetId :String)
 GET /ckan/organization/datasets/:organizationId controllers.ckan.CkanController.getOrganizationDataset(organizationId :String)
 
+POST   /ckan/createDataset                      controllers.ckan.CkanController.createDataset
 
 GET         /*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
 

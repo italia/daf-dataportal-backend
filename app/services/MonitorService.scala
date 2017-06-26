@@ -2,6 +2,7 @@ package services
 
 import scala.collection.immutable.List
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
+import play.api.libs.json.JsValue
 import play.api.{Configuration, Environment}
 import repositories.MonitorRepositoryComponent
 import repositories.monitor.MonitorRepository
@@ -11,6 +12,10 @@ import repositories.monitor.MonitorRepository
 trait MonitorServiceComponent { this: MonitorRepositoryComponent =>
   val monitorService  :MonitorService//= new MonitorService
   class MonitorService {
+
+    def createDataset(jsonDataset: JsValue): Unit =
+      monitorRepository.createDataset(jsonDataset)
+
     def allCatalogs(): List[Catalog] =
       monitorRepository.allCatalogs()
 
