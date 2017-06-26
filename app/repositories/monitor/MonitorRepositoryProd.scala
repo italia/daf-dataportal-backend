@@ -20,6 +20,9 @@ class MonitorRepositoryProd  extends MonitorRepository {
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
 
+
+  def createDataset(jsonDataset: JsValue): Unit = println("TODO")
+
   def allCatalogs(): List[Catalog] = {
     val mongoClient = MongoClient(mongoHost, mongoPort)
     val db = mongoClient("monitor_mdb")

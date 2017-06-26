@@ -1,7 +1,8 @@
 package repositories.monitor
 
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
-import play.api.libs.json.{JsPath, Reads}
+import play.api.libs.json.{JsPath, JsValue, Reads}
+
 import scala.collection.immutable.List
 
 /**
@@ -11,7 +12,7 @@ trait MonitorRepository {
 
   import play.api.libs.functional.syntax._
 
-
+  def createDataset(jsonDataset: JsValue): Unit
   def allCatalogs(): List[Catalog]
   def datasetCatalogLicenses(catalogName: String): Seq[Distribution]
   def datasetCatalogFormat(catalogName: String): Seq[Distribution]

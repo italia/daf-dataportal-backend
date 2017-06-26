@@ -6,11 +6,15 @@ package controllers.ckan
 
 
 import javax.inject._
+
 import play.api.mvc._
 import play.api.libs.ws._
+
 import scala.concurrent.Future
 import play.api.libs.json._
-import play.api.inject.{ConfigurationProvider}
+import play.api.inject.ConfigurationProvider
+import services.ComponentRegistry
+
 
 
 
@@ -48,6 +52,14 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
     })
     val datasetFuture :Future[Seq[JsValue]] = Future.sequence(datasetResponses)
     datasetFuture
+  }
+
+
+
+  def createDataset = Action { request =>
+    val json:JsValue = request.body.asJson.get
+    ComponentRegistry.monitorService.createDataset(json)
+    Ok
   }
 
 

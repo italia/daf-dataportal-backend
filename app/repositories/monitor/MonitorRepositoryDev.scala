@@ -1,6 +1,6 @@
 package repositories.monitor
 
-import java.io.FileInputStream
+import java.io.{FileInputStream, FileOutputStream, PrintWriter}
 
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
 import play.Environment
@@ -37,7 +37,13 @@ class MonitorRepositoryDev extends MonitorRepository {
       streamBrokenLink.close()
     }
 
+    private val streamDataset = new PrintWriter(Environment.simple().getFile("data/Dataset.json"))
 
+    def createDataset( jsonDataset: JsValue ): Unit = try {
+      streamDataset.println(jsonDataset.toString)
+    } finally {
+      streamDataset.flush()
+    }
 
     def allCatalogs(): List[Catalog] = {
       val names: List[String] = ((jsonCatalog \ "Catalog") \\ "name").map(_.as[String]).toList
