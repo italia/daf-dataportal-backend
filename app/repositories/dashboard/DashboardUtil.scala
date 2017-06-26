@@ -2,11 +2,14 @@ package repositories.dashboard
 
 import java.io.{File, FileReader}
 import java.util
+
 import au.com.bytecode.opencsv.CSVReader
-import play.api.libs.json.{JsArray, JsObject, Json}
+import play.api.libs.json._
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Source
+import scala.util.Try
 
 /**
   * Created by ale on 17/04/17.
@@ -38,7 +41,7 @@ object DashboardUtil {
     SEPARATORS(max._2)
   }
 
-  def trasformMap(file :File): Seq[Map[String,String]] = {
+  def trasformMap(file :File): Seq[Map[String,JsValue]] = {
     val header = Source.fromFile(file).getLines().toList.head
     val separator = inferSeparator(header)
     val reader = new CSVReader(new FileReader(file), separator)
@@ -46,9 +49,16 @@ object DashboardUtil {
     val lines :mutable.Seq[Array[String]] = csvLines.asScala
     val headers = lines(0)
     val data: mutable.Seq[Array[String]] = lines.slice(1, (lines.length))
-    val result: mutable.Seq[Map[String, String]] = data.map{ xs =>
-      val jsons = xs.zipWithIndex.map{case (e , in) =>
-        (headers(in) -> e)
+    val result: mutable.Seq[Map[String, JsValue]] = data.map{ xs =>
+      val jsons = xs.zipWithIndex.map{case (value , in) =>{
+        val toCast: Any = Try(value.toInt).getOrElse(value)
+        val casted: JsValue = toCast match {
+          case x: Int => JsNumber(x)
+          case y: String => JsString(y)
+        }
+        (headers(in) -> casted)
+      }
+
       }
       jsons.toMap
     }
