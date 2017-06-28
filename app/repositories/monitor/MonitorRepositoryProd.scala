@@ -22,6 +22,7 @@ class MonitorRepositoryProd  extends MonitorRepository {
 
 
   def createDataset(jsonDataset: JsValue): Unit = println("TODO")
+  def dataset(datasetId: String): JsValue = JsString("TODO")
 
   def allCatalogs(): List[Catalog] = {
     val mongoClient = MongoClient(mongoHost, mongoPort)

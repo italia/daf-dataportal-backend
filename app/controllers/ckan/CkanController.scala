@@ -27,6 +27,10 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
 
   private val LOCAL_URL :String = config.get.getString("app.local.url").get
 
+  private val ENV:String = config.get.getString("app.type").get
+
+  private val AUTH_TOKEN:String = config.get.getString("app.ckan.auth.token").get
+
   private def getOrgs(orgId :String): Future[List[String]] = {
       val orgs : Future[WSResponse] = ws.url(LOCAL_URL + "/ckan/organizations/" + orgId).get()
       orgs.map( item => {
@@ -55,11 +59,25 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   }
 
 
+  def createDataset = Action.async { implicit request =>
 
-  def createDataset = Action { request =>
     val json:JsValue = request.body.asJson.get
-    ComponentRegistry.monitorService.createDataset(json)
-    Ok
+
+    if(ENV == "dev"){
+      ComponentRegistry.monitorService.createDataset(json)
+
+      val isOk = Future.successful(JsString("operazione effettuata correttamente"))
+      isOk map { x =>
+        Ok(x)
+      }
+    }else{
+      val response = ws.url(CKAN_URL + "/api/3/action/package_create").withHeaders("Authorization" -> AUTH_TOKEN).post(json)
+
+      response map { x =>
+        println(x.json.toString)
+        Ok(x.json)
+      }
+    }
   }
 
 
@@ -82,13 +100,25 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   }
 
   def getDataset(datasetId :String) = Action.async { implicit request =>
-    val url = CKAN_URL + "/api/3/action/package_show?id=" + datasetId
-    println("URL " + url)
-    val test = ws.url(url).get
-    test map { response =>
-      // val bodyResponse :String = response.body
-      Ok(response.json)
+
+    if(ENV == "dev"){
+      val dataset= ComponentRegistry.monitorService.dataset(datasetId)
+
+      val isOk = Future.successful(dataset)
+      isOk map { x =>
+        Ok(x)
+      }
+
+    }else{
+      val url = CKAN_URL + "/api/3/action/package_show?id=" + datasetId
+      println("URL " + url)
+      val test = ws.url(url).get
+      test map { response =>
+        // val bodyResponse :String = response.body
+        Ok(response.json)
+      }
     }
+
   }
 
   def getOrganizationDataset(organizationId :String) = Action.async { implicit request =>
