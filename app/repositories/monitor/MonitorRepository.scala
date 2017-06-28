@@ -13,6 +13,7 @@ trait MonitorRepository {
   import play.api.libs.functional.syntax._
 
   def createDataset(jsonDataset: JsValue): Unit
+  def dataset(datasetId: String): JsValue
   def allCatalogs(): List[Catalog]
   def datasetCatalogLicenses(catalogName: String): Seq[Distribution]
   def datasetCatalogFormat(catalogName: String): Seq[Distribution]
