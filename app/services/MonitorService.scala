@@ -16,6 +16,9 @@ trait MonitorServiceComponent { this: MonitorRepositoryComponent =>
     def createDataset(jsonDataset: JsValue): Unit =
       monitorRepository.createDataset(jsonDataset)
 
+    def dataset(datasetId: String): JsValue =
+      monitorRepository.dataset(datasetId)
+
     def allCatalogs(): List[Catalog] =
       monitorRepository.allCatalogs()
 
