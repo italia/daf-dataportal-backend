@@ -24,6 +24,7 @@ import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.libs.json.JsValue
 import play.libs.Json
+import services.ckan.CkanRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -32,7 +33,7 @@ import play.libs.Json
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -89,7 +90,7 @@ package ftd_api.yaml {
         val createckandataset = createckandatasetAction { (dataset: Dataset) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckandataset
             val jsonv : JsValue = ResponseWrites.DatasetWrites.writes(dataset)
-            ComponentRegistry.monitorService.createDataset(jsonv)
+            CkanRegistry.ckanService.createDataset(jsonv)
             Createckandataset200( dataset )
             //println(" --> jsonv= "+jsonv)
             //val appo : String = (Json.toJson(dataset)).toString

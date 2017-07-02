@@ -14,6 +14,7 @@ import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 import services.ComponentRegistry
+import services.ckan.CkanRegistry
 
 
 
@@ -29,7 +30,6 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
 
   private val ENV:String = config.get.getString("app.type").get
 
-  private val AUTH_TOKEN:String = config.get.getString("app.ckan.auth.token").get
 
   private def getOrgs(orgId :String): Future[List[String]] = {
       val orgs : Future[WSResponse] = ws.url(LOCAL_URL + "/ckan/organizations/" + orgId).get()
@@ -61,10 +61,12 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
 
   def createDataset = Action.async { implicit request =>
 
+    val AUTH_TOKEN:String = config.get.getString("app.ckan.auth.token").get
+
     val json:JsValue = request.body.asJson.get
 
     if(ENV == "dev"){
-      ComponentRegistry.monitorService.createDataset(json)
+      CkanRegistry.ckanService.createDataset(json)
 
       val isOk = Future.successful(JsString("operazione effettuata correttamente"))
       isOk map { x =>
@@ -102,7 +104,7 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   def getDataset(datasetId :String) = Action.async { implicit request =>
 
     if(ENV == "dev"){
-      val dataset= ComponentRegistry.monitorService.dataset(datasetId)
+      val dataset = CkanRegistry.ckanService.dataset(datasetId)
 
       val isOk = Future.successful(dataset)
       isOk map { x =>

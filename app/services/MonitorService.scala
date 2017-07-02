@@ -13,11 +13,11 @@ trait MonitorServiceComponent { this: MonitorRepositoryComponent =>
   val monitorService  :MonitorService//= new MonitorService
   class MonitorService {
 
-    def createDataset(jsonDataset: JsValue): Unit =
-      monitorRepository.createDataset(jsonDataset)
+   // def createDataset(jsonDataset: JsValue): Unit =
+   //   monitorRepository.createDataset(jsonDataset)
 
-    def dataset(datasetId: String): JsValue =
-      monitorRepository.dataset(datasetId)
+   // def dataset(datasetId: String): JsValue =
+   //   monitorRepository.dataset(datasetId)
 
     def allCatalogs(): List[Catalog] =
       monitorRepository.allCatalogs()
