@@ -22,12 +22,15 @@ GET         /favicon.ico    controllers.Assets.versioned(path="/public/swagger/i
 GET   /catalogs     controllers.monitor.MonitorQueryController.catalogs
 
 # Temporary Ckan API outside swagger file
-GET /ckan/organizations                         controllers.ckan.CkanController.getOrganizations
+GET /ckan/organizations                         controllers.ckan.CkanController.getOrganizationList
 GET /ckan/organizations/:organizationId         controllers.ckan.CkanController.getOganizationRevisionList(organizationId :String)
 GET /ckan/dataset/:datasetId                    controllers.ckan.CkanController.getDataset(datasetId :String)
 GET /ckan/organization/datasets/:organizationId controllers.ckan.CkanController.getOrganizationDataset(organizationId :String)
 
 POST   /ckan/createDataset                      controllers.ckan.CkanController.createDataset
+POST   /ckan/createOrganization                 controllers.ckan.CkanController.createOrganization
+GET    /ckan/datasets                           controllers.ckan.CkanController.getDatasetList
+GET    /ckan/searchDataset                      controllers.ckan.CkanController.searchDataset(q :String)
 
 GET         /*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
 
