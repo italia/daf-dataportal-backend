@@ -427,14 +427,43 @@ paths:
         description: Dataset Catalog
         required: true
         schema:
-          $ref: "./imports/dataset.yaml#/definitions/Dataset"
-          #$ref: '#/definitions/Dataset'
+          #$ref: "./imports/dataset.yaml#/definitions/Dataset"
+          $ref: '#/definitions/Dataset'
       responses:
         200:
           description: Success
           schema:
             type: object
             $ref: '#/definitions/Dataset'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/datasets/{dataset_id}":
+    get:
+      description: Get ckan dataset for ....
+      operationId: getckandatasetbyid
+      produces:
+      - application/json
+      parameters:
+      - name: dataset_id
+        in: path
+        description: DatasetId
+        required: true
+        type: string
+      responses:
+        200:
+          description: Dataset
+          schema:
+            type: object
+            $ref: '#/definitions/Dataset'
+        401:
+          description: Error Message
+          schema:
+            type: object
+            properties:
+               error:
+                  type: string
         default:
           description: Unexpected error
           schema:

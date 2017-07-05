@@ -1,8 +1,11 @@
 package services.ckan
 
+import ftd_api.yaml.Dataset
 import play.api.{Configuration, Environment}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsResult, JsValue}
 import repositories.ckan.{CkanRepository, CkanRepositoryComponent}
+
+import scala.concurrent.Future
 /**
   * Created by ale on 01/07/17.
   */
@@ -17,6 +20,10 @@ trait CkanServiceComponent {
     }
     def dataset(datasetId: String): JsValue = {
       ckanRepository.dataset(datasetId)
+    }
+
+    def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
+        ckanRepository.testDataset(datasetId)
     }
 
   }

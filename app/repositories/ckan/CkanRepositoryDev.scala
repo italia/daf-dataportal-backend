@@ -2,13 +2,18 @@ package repositories.ckan
 
 import java.io.{FileInputStream, PrintWriter}
 
+import ftd_api.yaml.Dataset
 import play.Environment
-import play.api.libs.json.{JsString, JsValue, Json}
+import play.api.libs.json._
+
+import scala.concurrent.Future
 
 /**
   * Created by ale on 01/07/17.
   */
 class CkanRepositoryDev extends  CkanRepository{
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   private def readDataset():JsValue = {
     val streamDataset = new FileInputStream(Environment.simple().getFile("data/Dataset.json"))
@@ -31,6 +36,13 @@ class CkanRepositoryDev extends  CkanRepository{
 
   def dataset(datasetId: String): JsValue = {
     readDataset()
+  }
+
+  def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
+    Future(JsSuccess(Dataset(None,None,None,None,None,
+      None,None,None,None,None,None,None,
+      None,None,None,None,None,
+      None,None)))
   }
 
 }

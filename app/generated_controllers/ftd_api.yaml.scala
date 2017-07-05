@@ -25,6 +25,9 @@ import services.dashboard.DashboardRegistry
 import play.api.libs.json.JsValue
 import play.libs.Json
 import services.ckan.CkanRegistry
+import play.api.libs.json.{JsError,JsResult,JsSuccess}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -33,7 +36,7 @@ import services.ckan.CkanRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-            
+                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -130,6 +133,23 @@ package ftd_api.yaml {
             val success = DashboardRegistry.dashboardService.update(upfile,tableName, fileType)
             UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
+        }
+        val getckandatasetbyid = getckandatasetbyidAction { (dataset_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckandatasetbyid
+            val datasetFuture: Future[JsResult[Dataset]] = CkanRegistry.ckanService.testDataset(dataset_id)
+            val eitherDataset: Future[Either[String, Dataset]] = datasetFuture.map(result => {
+                result match {
+                    case s: JsSuccess[Dataset] => Right(s.get)
+                    case e: JsError => Left("error no dataset with that id")
+                }
+            })
+            // Getckandatasetbyid200(dataset)
+            eitherDataset.flatMap {
+                case Right(dataset) => Getckandatasetbyid200(dataset)
+                case Left(error) => Getckandatasetbyid401(CkanDatasetsDataset_idGetResponses401(Option(error)))
+            }
+            //NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckandatasetbyid
         }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
             val (catalogName, apikey) = input
