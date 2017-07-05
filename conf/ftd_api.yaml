@@ -415,7 +415,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
   "/ckan/create/dataset":
     post:
       description: Create ckan dataset for ....

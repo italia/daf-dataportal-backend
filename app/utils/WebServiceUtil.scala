@@ -7,6 +7,8 @@ package it.gov.daf.catalogmanager.utilities
 
 import java.io.File
 
+import org.asynchttpclient.DefaultAsyncHttpClientConfig
+
 //import akka.actor.ActorSystem
 //import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
@@ -40,7 +42,7 @@ object WebServiceUtil {
   }
   val ahcBuilder = builder.configure()
   ahcBuilder.setHttpAdditionalChannelInitializer(logging)
-  val ahcConfig = ahcBuilder.build()
+  val ahcConfig  = ahcBuilder.build()
 
 }
 
