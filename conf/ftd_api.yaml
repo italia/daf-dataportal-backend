@@ -427,8 +427,8 @@ paths:
         description: Dataset Catalog
         required: true
         schema:
-          #$ref: "./imports/dataset.yaml#/definitions/Dataset"
-          $ref: '#/definitions/Dataset'
+          $ref: "./imports/dataset.yaml#/definitions/Dataset"
+          #$ref: '#/definitions/Dataset'
       responses:
         200:
           description: Success
