@@ -336,6 +336,20 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
 
   }
 
+  def getOrganization(orgId :String) = Action.async { implicit request =>
+
+    val url = CKAN_URL + "/api/3/action/organization_show?id=" + orgId
+    println("URL " + url)
+    val test = ws.url(url).get
+    test map { response =>
+      // val bodyResponse :String = response.body
+      Ok(response.json)
+    }
+
+
+  }
+
+
   def updateOrganization(orgId :String)= Action.async { implicit request =>
 
     // curl -H "Content-Type: application/json" -X PUT -d @org.json http://localhost:9000/ckan/updateOrganization/id=232cad97-ecf2-447d-9656-63899023887t
@@ -404,7 +418,7 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   def getOrganizationList = Action.async { implicit request =>
     val test = ws.url(CKAN_URL + "/api/3/action/organization_list").get
     test map { response =>
-     // val bodyResponse :String = response.body
+      println(response.body)
       Ok(response.json)
     }
   }

@@ -36,4 +36,4 @@ routesGenerator := InjectedRoutesGenerator
 
 apiFirstParsers := Seq(ApiFirstSwaggerParser.swaggerSpec2Ast.value).flatten
 
-playScalaAutogenerateTests := true
+playScalaAutogenerateTests := false
