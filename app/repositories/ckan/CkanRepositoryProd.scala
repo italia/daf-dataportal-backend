@@ -2,10 +2,11 @@ package repositories.ckan
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import ftd_api.yaml.Dataset
-import ftd_api.yaml.Organization
+import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
+import utils.it.gov.daf.catalogmanager.utilities.WebServiceUtil
+
 import scala.concurrent.Future
 
 /**
@@ -85,6 +86,51 @@ class CkanRepositoryProd  extends CkanRepository{
     }).andThen { case _ => wsClient.close() }
       .andThen { case _ => system.terminate() }
   }
+
+  def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]={
+
+    val wsClient = AhcWSClient()
+
+    val params = Map(("q",input._1),("sort",input._2),("rows",input._3))
+
+    val queryString = WebServiceUtil.buildEncodedQueryString(params)
+
+    val url =  LOCALURL + "/ckan/searchDataset"+queryString
+
+    wsClient.url(url).get().map ({ response =>
+      val datasetJson: JsValue =( (response.json \ "result") \ "results")
+        .getOrElse(Json.obj("error" -> "No datasets"))
+
+      val datasetsValidate = datasetJson.validate[Seq[Dataset]]
+      println(datasetsValidate)
+      datasetsValidate
+    }).andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate() }
+
+  }
+
+  def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
+
+    val wsClient = AhcWSClient()
+
+    val params = Map( ("limit",input._1),("offset",input._2) )
+
+    val queryString = WebServiceUtil.buildEncodedQueryString(params)
+
+    val url =  LOCALURL + "/ckan/datasetsWithResources"+queryString
+
+    wsClient.url(url).get().map ({ response =>
+      val datasetJson: JsValue =(response.json \ "result")
+        .getOrElse(Json.obj("error" -> "No datasets"))
+
+      val datasetsValidate = datasetJson.validate[Seq[Dataset]]
+      println(datasetsValidate)
+      datasetsValidate
+    }).andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate() }
+
+  }
+
 
   def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
 

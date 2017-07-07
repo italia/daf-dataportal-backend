@@ -1,6 +1,6 @@
 package services.ckan
 
-import ftd_api.yaml.{Dataset, Organization}
+import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.api.{Configuration, Environment}
 import play.api.libs.json.{JsResult, JsValue}
 import repositories.ckan.{CkanRepository, CkanRepositoryComponent}
@@ -37,6 +37,13 @@ trait CkanServiceComponent {
       ckanRepository.getDatasets
     }
 
+    def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
+      ckanRepository.searchDatasets(input)
+    }
+
+    def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
+      ckanRepository.getDatasetsWithRes(input)
+    }
 
     def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
       ckanRepository.testDataset(datasetId)

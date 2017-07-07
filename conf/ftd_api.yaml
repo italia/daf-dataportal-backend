@@ -564,6 +564,70 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/ckan/datasetsWithResources":
+    get:
+      description: Get ckan dataset list with all infos associated.
+      operationId: getckandatasetListWithRes
+      produces:
+      - application/json
+      parameters:
+      - name: limit
+        in: query
+        description: If given, the list of datasets will be broken into pages
+        type: integer
+      - name: offset
+        in: query
+        description: When limit is given, the offset to start returning packages from
+        type: integer
+      responses:
+        200:
+          description: List of datasets. The list is sorted most-recently-modified first.
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Dataset"
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/searchDataset":
+    get:
+      description: Search ckan datasets with all infos associated.
+      operationId: searchdataset
+      produces:
+      - application/json
+      parameters:
+      - name: q
+        in: query
+        description: The solr query
+        type: string
+      - name: sort
+        in: query
+        description: Sorting of the search results
+        type: string
+      - name: rows
+        in: query
+        description: The number of matching rows to return
+        type: integer
+      responses:
+        200:
+          description: List of datasets. The list is sorted most-recently-modified first.
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Dataset"
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:

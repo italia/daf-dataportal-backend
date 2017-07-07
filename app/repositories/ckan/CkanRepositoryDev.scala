@@ -2,7 +2,7 @@ package repositories.ckan
 
 import java.io.{FileInputStream, PrintWriter}
 
-import ftd_api.yaml.{Dataset, Organization}
+import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.Environment
 import play.api.libs.json._
 
@@ -53,6 +53,14 @@ class CkanRepositoryDev extends  CkanRepository{
   }
 
   def getDatasets() : Future[JsValue] = {
+    Future(null)
+  }
+
+  def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]={
+    Future(null)
+  }
+
+  def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
     Future(null)
   }
 

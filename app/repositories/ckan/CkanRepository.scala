@@ -1,6 +1,6 @@
 package repositories.ckan
 
-import ftd_api.yaml.{Dataset, Organization}
+import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.api.libs.json.{JsResult, JsValue}
 
 import scala.concurrent.Future
@@ -16,6 +16,8 @@ trait CkanRepository {
   def getOrganization(orgId :String) : Future[JsResult[Organization]]
   def getOrganizations() : Future[JsValue]
   def getDatasets() : Future[JsValue]
+  def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]
+  def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]
   def testDataset(datasetId :String) : Future[JsResult[Dataset]]
 }
 
