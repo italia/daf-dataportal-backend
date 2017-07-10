@@ -39,7 +39,7 @@ import scala.concurrent.Future
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -62,7 +62,6 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-      
         val searchdataset = searchdatasetAction { input: (DistributionLabel, DistributionLabel, ResourceSize) =>
             val (q, sort, rows) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchdataset
@@ -110,6 +109,11 @@ package ftd_api.yaml {
                 case Left(error) => GetckandatasetList401(error)
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckandatasetList
+        }
+        val testmulti = testmultiAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.testmulti
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.testmulti
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
@@ -226,7 +230,7 @@ package ftd_api.yaml {
 
             eitherDataset.flatMap {
                 case Right(dataset) => Getckandatasetbyid200(dataset)
-                case Left(error) => Getckandatasetbyid401(CkanMultiGetResponses401(Option(error)))
+                case Left(error) => Getckandatasetbyid401(Error(None,Option(error),None))
             }
            // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckandatasetbyid
