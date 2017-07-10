@@ -36,4 +36,5 @@ routesGenerator := InjectedRoutesGenerator
 
 apiFirstParsers := Seq(ApiFirstSwaggerParser.swaggerSpec2Ast.value).flatten
 
-playScalaAutogenerateTests := true
+javaOptions in Test += "-Dconfig.resource=" + System.getProperty("config.resource", "production.conf")
+playScalaAutogenerateTests := false

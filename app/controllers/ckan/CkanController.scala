@@ -14,6 +14,7 @@ import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 import services.ckan.CkanRegistry
+import utils.it.gov.daf.catalogmanager.utilities.WebServiceUtil
 
 
 
@@ -284,10 +285,10 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   def deleteDataset(datasetId :String) = Action.async { implicit request =>
 
     //curl -H "Content-Type: application/json" -X DELETE http://localhost:9000/ckan/deleteDataset/49f3d5f9-5ad6-4451-9bca-b3287185d19d
-
     val url = CKAN_URL + "/api/3/action/package_delete"
     val body = s"""{\"id\":\"$datasetId\"}"""
     val test = ws.url(url).withHeaders("Authorization" -> AUTH_TOKEN).post(body)
+    println("--"+url)
     test map { response =>
       Ok(response.json)
     }
@@ -335,6 +336,20 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
     }
 
   }
+
+  def getOrganization(orgId :String) = Action.async { implicit request =>
+
+    val url = CKAN_URL + "/api/3/action/organization_show?id=" + orgId
+    println("URL " + url)
+    val test = ws.url(url).get
+    test map { response =>
+      // val bodyResponse :String = response.body
+      Ok(response.json)
+    }
+
+
+  }
+
 
   def updateOrganization(orgId :String)= Action.async { implicit request =>
 
@@ -388,12 +403,15 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   }
 
 
-  def getDatasetListWithResources(limit:Int, offset:Int) = Action.async { implicit request =>
+  def getDatasetListWithResources(limit:Option[Int], offset:Option[Int]) = Action.async { implicit request =>
 
     // curl -X GET "http://localhost:9000/ckan/datasetsWithResources?limit=1&offset=1"
 
-    val url = CKAN_URL + s"/api/3/action/current_package_list_with_resources?limit=$limit&offset=$offset"
-    //println("url-->"+url)
+    val params= Map( ("limit",limit), ("offset",offset) )
+    val queryString = WebServiceUtil.buildEncodedQueryString(params)
+
+    val url = CKAN_URL + s"/api/3/action/current_package_list_with_resources$queryString"
+    println("url-->"+url)
     val test = ws.url(url).get
     test map { response =>
       Ok(response.json)
@@ -404,19 +422,26 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
   def getOrganizationList = Action.async { implicit request =>
     val test = ws.url(CKAN_URL + "/api/3/action/organization_list").get
     test map { response =>
-     // val bodyResponse :String = response.body
+      println(response.body)
       Ok(response.json)
     }
   }
 
 
-  def searchDataset(q :String) = Action.async { implicit request =>
+  def searchDataset(q:Option[String], sort:Option[String], rows:Option[Int]) = Action.async { implicit request =>
 
-    val url = CKAN_URL + "/api/3/action/package_search?q=" + q
+    //curl -X GET "http://localhost:9000/ckan/datasetsWithResources?limit=1&offset=1
+
+    val params= Map( ("q",q), ("sort",sort), ("rows",rows) )
+    val queryString = WebServiceUtil.buildEncodedQueryString(params)
+
+    val url = CKAN_URL + s"/api/3/action/package_search$queryString"
+    println(url)
     val test = ws.url(url).get
     test map { response =>
       Ok(response.json)
     }
+
   }
 
 

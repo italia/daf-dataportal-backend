@@ -6,6 +6,7 @@ package utils
 package it.gov.daf.catalogmanager.utilities
 
 import java.io.File
+import java.net.URLEncoder
 
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
 
@@ -43,6 +44,19 @@ object WebServiceUtil {
   val ahcBuilder = builder.configure()
   ahcBuilder.setHttpAdditionalChannelInitializer(logging)
   val ahcConfig  = ahcBuilder.build()
+
+
+  def buildEncodedQueryString(params: Map[String, Any]): String = {
+    val encoded = for {
+      (name, value) <- params if value != None
+      encodedValue = value match {
+        case Some(x)         => URLEncoder.encode(x.toString, "UTF8")
+        case x               => URLEncoder.encode(x.toString, "UTF8")
+      }
+    } yield name + "=" + encodedValue
+
+    encoded.mkString("?", "&", "")
+  }
 
 }
 

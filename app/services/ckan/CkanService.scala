@@ -1,6 +1,6 @@
 package services.ckan
 
-import ftd_api.yaml.Dataset
+import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.api.{Configuration, Environment}
 import play.api.libs.json.{JsResult, JsValue}
 import repositories.ckan.{CkanRepository, CkanRepositoryComponent}
@@ -15,15 +15,38 @@ trait CkanServiceComponent {
   val ckanService: CkanService
 
   class CkanService {
-    def createDataset(jsonDataset: JsValue): Unit = {
-         ckanRepository.createDataset(jsonDataset)
+    def createDataset(jsonDataset: JsValue): Future[String] = {
+      ckanRepository.createDataset(jsonDataset)
+    }
+    def createOrganization(jsonDataset: JsValue): Future[String] = {
+      ckanRepository.createOrganization(jsonDataset)
     }
     def dataset(datasetId: String): JsValue = {
       ckanRepository.dataset(datasetId)
     }
 
+    def getOrganization(orgId :String) : Future[JsResult[Organization]] = {
+      ckanRepository.getOrganization(orgId)
+    }
+
+    def getOrganizations() : Future[JsValue] = {
+      ckanRepository.getOrganizations
+    }
+
+    def getDatasets() : Future[JsValue] = {
+      ckanRepository.getDatasets
+    }
+
+    def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
+      ckanRepository.searchDatasets(input)
+    }
+
+    def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
+      ckanRepository.getDatasetsWithRes(input)
+    }
+
     def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
-        ckanRepository.testDataset(datasetId)
+      ckanRepository.testDataset(datasetId)
     }
 
   }

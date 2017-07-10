@@ -434,7 +434,11 @@ paths:
           description: Success
           schema:
             type: object
-            $ref: '#/definitions/Dataset'
+            $ref: '#/definitions/Success'
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -460,10 +464,166 @@ paths:
         401:
           description: Error Message
           schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/create/organization":
+    post:
+      description: Create ckan organization
+      operationId: createckanorganization
+      produces:
+      - application/json
+      parameters:
+      - name: organization
+        in: body
+        description: Organization
+        required: true
+        schema:
+          $ref: '#/definitions/Organization'
+      responses:
+        200:
+          description: Success
+          schema:
             type: object
-            properties:
-               error:
-                  type: string
+            $ref: '#/definitions/Success'
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/organization/{org_id}":
+    get:
+      description: Get ckan organization
+      operationId: getckanorganizationbyid
+      produces:
+      - application/json
+      parameters:
+      - name: org_id
+        in: path
+        description: OrganizationId or Name
+        required: true
+        type: string
+      responses:
+        200:
+          description: Dataset
+          schema:
+            type: object
+            $ref: '#/definitions/Organization'
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/organizations":
+    get:
+      description: Get ckan organization list
+      operationId: getckanorganizationList
+      produces:
+      - application/json
+      responses:
+        200:
+          description: An array of Organization names
+          schema:
+            type: array
+            items:
+              type: string
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/datasets":
+    get:
+      description: Get ckan dataset list
+      operationId: getckandatasetList
+      produces:
+      - application/json
+      responses:
+        200:
+          description: An array of Dataset names
+          schema:
+            type: array
+            items:
+              type: string
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/datasetsWithResources":
+    get:
+      description: Get ckan dataset list with all infos associated.
+      operationId: getckandatasetListWithRes
+      produces:
+      - application/json
+      parameters:
+      - name: limit
+        in: query
+        description: If given, the list of datasets will be broken into pages
+        type: integer
+      - name: offset
+        in: query
+        description: When limit is given, the offset to start returning packages from
+        type: integer
+      responses:
+        200:
+          description: List of datasets. The list is sorted most-recently-modified first.
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Dataset"
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/searchDataset":
+    get:
+      description: Search ckan datasets with all infos associated.
+      operationId: searchdataset
+      produces:
+      - application/json
+      parameters:
+      - name: q
+        in: query
+        description: The solr query
+        type: string
+      - name: sort
+        in: query
+        description: Sorting of the search results
+        type: string
+      - name: rows
+        in: query
+        description: The number of matching rows to return
+        type: integer
+      responses:
+        200:
+          description: List of datasets. The list is sorted most-recently-modified first.
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Dataset"
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -491,7 +651,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
 definitions:
   DatasetTest:
     properties:
@@ -553,8 +712,8 @@ definitions:
         type: string
       conforms_to:
         type: string
-      contact:
-        type: string
+      #contact:
+        #type: string
       #creation_date:
         #type: string
       #creator_identifier:
@@ -567,8 +726,9 @@ definitions:
         #type: string
       #fields_description:
         #type: string
-      #frequency:
-        #type: string
+      frequency:
+        type: string
+        required: true
       #geographical_geonames_url:
         #type: string
       #geographical_name:
@@ -579,12 +739,16 @@ definitions:
           $ref: '#/definitions/Group'
       holder_identifier:
         type: string
+        required: true
       holder_name:
         type: string
+        required: true
       identifier:
         type: string
-      is_version_of:
-        type: string
+        required: true
+
+      #is_version_of:
+        #type: string
       #isopen:
         #type: boolean
       #issued:
@@ -603,26 +767,31 @@ definitions:
         #type: string
       #metadata_modified:
         #type: string
-      #modified:
-        #type: string
+      modified:
+        type: string
+        required: true
       name:
         type: string
-      #notes:
-        #type: string
+        required: true
+      notes:
+        type: string
+        required: true
       #num_resources:
         #type: integer
       #num_tags:
         #type: integer
       organization:
         $ref: '#/definitions/Organization'
-      #owner_org:
-        #type: string
+      owner_org:
+        type: string
       #private:
         #type: boolean
-      #publisher_identifier:
-        #type: string
-      #publisher_name:
-        #type: string
+      publisher_identifier:
+        type: string
+        required: true
+      publisher_name:
+        type: string
+        required: true
       relationships_as_object:
         type: array
         items:
@@ -635,12 +804,12 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Resource'
-      revision_id:
-        type: string
+      #revision_id:
+        #type: string
       site_url:
         type: string
-      state:
-        type: string
+      #state:
+        #type: string
       tags:
         type: array
         items:
@@ -649,8 +818,9 @@ definitions:
         #type: string
       #temporal_start:
         #type: string
-      #theme:
-        #type: string
+      theme:
+        type: string
+        required: true
       #title:
         #type: string
       #type:
@@ -683,6 +853,8 @@ definitions:
         type: string
       description:
         type: string
+      email:
+        type: string
       id:
         type: string
       image_url:
@@ -691,6 +863,7 @@ definitions:
         type: boolean
       name:
         type: string
+        required: true
       revision_id:
         type: string
       state:

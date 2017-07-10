@@ -2,7 +2,7 @@ package repositories.ckan
 
 import java.io.{FileInputStream, PrintWriter}
 
-import ftd_api.yaml.Dataset
+import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.Environment
 import play.api.libs.json._
 
@@ -28,19 +28,47 @@ class CkanRepositoryDev extends  CkanRepository{
 
   private val datasetWriter = new PrintWriter(Environment.simple().getFile("data/Dataset.json"))
 
-  def createDataset( jsonDataset: JsValue ): Unit = try {
+  def createDataset( jsonDataset: JsValue ): Future[String] = try {
     datasetWriter.println(jsonDataset.toString)
+    Future("ok")
   } finally {
     datasetWriter.flush()
   }
+
+  def createOrganization( jsonDataset: JsValue ) : Future[String] = {
+    Future("todo")
+  }
+
 
   def dataset(datasetId: String): JsValue = {
     readDataset()
   }
 
+  def getOrganization(orgId :String) : Future[JsResult[Organization]] = {
+    Future(null)
+  }
+
+  def getOrganizations() : Future[JsValue] = {
+    Future(null)
+  }
+
+  def getDatasets() : Future[JsValue] = {
+    Future(null)
+  }
+
+  def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]={
+    Future(null)
+  }
+
+  def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]] = {
+    Future(null)
+  }
+
   def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
     Future(JsSuccess(Dataset(None,None,None,None,None,
       None,None,None,None,None,None,None,
-      None,None,None,None,None, None,None)))
+      None,None,None,None,None,
+      None,None,None,None,None)))
   }
+
 }
