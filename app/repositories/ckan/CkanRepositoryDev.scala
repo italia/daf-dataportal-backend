@@ -41,8 +41,6 @@ class CkanRepositoryDev extends  CkanRepository{
   def testDataset(datasetId :String) : Future[JsResult[Dataset]] = {
     Future(JsSuccess(Dataset(None,None,None,None,None,
       None,None,None,None,None,None,None,
-      None,None,None,None,None,
-      None,None)))
+      None,None,None,None,None, None,None)))
   }
-
 }

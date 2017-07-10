@@ -13,6 +13,7 @@ trait CkanRepository {
   def createDataset(jsonDataset: JsValue): Unit
   def dataset(datasetId: String): JsValue
   def testDataset(datasetId :String) : Future[JsResult[Dataset]]
+
 }
 
 object CkanRepository {
