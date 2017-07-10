@@ -628,7 +628,39 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/ckan/multi":
+    get:
+      description: Get ckan dataset for ....
+      operationId: testmulti
+      produces:
+      - application/json
+      responses:
+        200:
+          description: DatasetTest
+          schema:
+            type: object
+            $ref: '#/definitions/DatasetTest'
+        401:
+          description: Error Message
+          schema:
+            type: object
+            properties:
+               error:
+                  type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
+  DatasetTest:
+    properties:
+       test_multi:
+         type: string
+         description: Name of catalog
+       groups:
+        type: array
+        items:
+          $ref: '#/definitions/Group'
   Catalog:
     properties:
        name:

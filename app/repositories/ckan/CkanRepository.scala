@@ -19,6 +19,7 @@ trait CkanRepository {
   def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]
   def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]
   def testDataset(datasetId :String) : Future[JsResult[Dataset]]
+
 }
 
 object CkanRepository {
