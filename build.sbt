@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
+  filters,
   specs2 % Test,
   "org.scalacheck"          %% "scalacheck"         % "1.12.4" % Test,
   "org.specs2"              %% "specs2-scalacheck"  % "3.6" % Test,

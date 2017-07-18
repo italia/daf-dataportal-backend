@@ -416,6 +416,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/create/dataset":
+    tags:
+      - Ckan
     post:
       description: Create ckan dataset for ....
       operationId: createckandataset
@@ -444,6 +446,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/datasets/{dataset_id}":
+    tags:
+      - Ckan
     get:
       description: Get ckan dataset for ....
       operationId: getckandatasetbyid
@@ -470,6 +474,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/create/organization":
+    tags:
+      - Ckan
     post:
       description: Create ckan organization
       operationId: createckanorganization
@@ -497,6 +503,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/organization/{org_id}":
+    tags:
+      - Ckan
     get:
       description: Get ckan organization
       operationId: getckanorganizationbyid
@@ -523,6 +531,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/organizations":
+    tags:
+      - Ckan
     get:
       description: Get ckan organization list
       operationId: getckanorganizationList
@@ -544,6 +554,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/datasets":
+    tags:
+      - Ckan
     get:
       description: Get ckan dataset list
       operationId: getckandatasetList
@@ -565,6 +577,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/datasetsWithResources":
+    tags:
+      - Ckan
     get:
       description: Get ckan dataset list with all infos associated.
       operationId: getckandatasetListWithRes
@@ -595,6 +609,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/searchDataset":
+    tags:
+      - Ckan
     get:
       description: Search ckan datasets with all infos associated.
       operationId: searchdataset
@@ -629,6 +645,8 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/ckan/multi":
+    tags:
+      - Ckan
     get:
       description: Get ckan dataset for ....
       operationId: testmulti
@@ -700,7 +718,6 @@ definitions:
       catalog_name:
          type : string
          description : Name of catalog
-
   Dataset:
     #type: Object
     properties:
@@ -710,8 +727,8 @@ definitions:
         type: string
       author_email:
         type: string
-      conforms_to:
-        type: string
+      #conforms_to:
+       # type: string
       #contact:
         #type: string
       #creation_date:
@@ -755,10 +772,10 @@ definitions:
         #type: string
       #language:
         #type: string
-      #license_id:
-        #type: string
-      #license_title:
-        #type: string
+      license_id:
+        type: string
+      license_title:
+        type: string
       #maintainer:
         #type: string
       #maintainer_email:
@@ -806,8 +823,8 @@ definitions:
           $ref: '#/definitions/Resource'
       #revision_id:
         #type: string
-      site_url:
-        type: string
+      #site_url:
+       # type: string
       #state:
         #type: string
       tags:
