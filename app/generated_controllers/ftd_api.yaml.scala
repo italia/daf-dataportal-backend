@@ -39,7 +39,7 @@ import scala.concurrent.Future
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                
+                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -148,6 +148,11 @@ package ftd_api.yaml {
             AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
+        val getckanuserList = getckanuserListAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckanuserList
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuserList
+        }
         val createckandataset = createckandatasetAction { (dataset: Dataset) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckandataset
             val jsonv : JsValue = ResponseWrites.DatasetWrites.writes(dataset)
@@ -205,11 +210,34 @@ package ftd_api.yaml {
             CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
         }
+        val updateckanorganization = updateckanorganizationAction { input: (String, Organization) =>
+            val (org_id, organization) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateckanorganization
+            //NotImplementedYet
+            val jsonv : JsValue = ResponseWrites.OrganizationWrites.writes(organization)
+
+            CkanRegistry.ckanService.updateOrganization(org_id,jsonv)flatMap {
+                case "true" => Updateckanorganization200(Success(Some("Success"), Some("organization updated")))
+                case _ =>  Updateckanorganization401(GENERIC_ERROR)
+            }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateckanorganization
+        }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
             AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
+        }
+        val createckanuser = createckanuserAction { (user: User) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckanuser
+            //NotImplementedYet
+            val jsonv : JsValue = ResponseWrites.UserWrites.writes(user)
+
+            CkanRegistry.ckanService.createUser(jsonv)flatMap {
+                case "true" => Createckanuser200(Success(Some("Success"), Some("user created")))
+                case _ =>  Createckanuser401(GENERIC_ERROR)
+            }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.createckanuser
         }
         val updateTable = updateTableAction { input: (File, String, String, String) =>
             val (upfile, tableName, fileType, apikey) = input

@@ -337,6 +337,32 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
 
   }
 
+  def createUser = Action.async { implicit request =>
+
+    /*
+
+    settare la proprietà ckan.auth.create_user_via_api = true
+
+    curl -H "Content-Type: application/json" -X POST -d @user.json http://localhost:9000/ckan/createUser dove user.json contiene
+    {
+      "name": "test_user",
+      "email": "test@test.org",
+      "password": "password",
+      "fullname": "utente di test",
+      "about": "prova inserimento utente di test"
+    }
+    * */
+
+    val json:JsValue = request.body.asJson.get
+    val response = ws.url(CKAN_URL + "/api/3/action/user_create").post(json)
+
+    response map { x =>
+      println(x.json.toString)
+      Ok(x.json)
+    }
+
+  }
+
   def getOrganization(orgId :String) = Action.async { implicit request =>
 
     val url = CKAN_URL + "/api/3/action/organization_show?id=" + orgId
@@ -356,10 +382,13 @@ class CkanController @Inject() (ws: WSClient, config: ConfigurationProvider) ext
     // curl -H "Content-Type: application/json" -X PUT -d @org.json http://localhost:9000/ckan/updateOrganization/id=232cad97-ecf2-447d-9656-63899023887t
 
     val json:JsValue = request.body.asJson.get
+    val url = CKAN_URL + "/api/3/action/organization_update?id=" + orgId;
+    val response = ws.url(url).withHeaders("Authorization" -> AUTH_TOKEN).post(json)
 
-    val response = ws.url(CKAN_URL + "/api/3/action/organization_update?id=" + orgId).withHeaders("Authorization" -> AUTH_TOKEN).post(json)
-
+    //println(url)
+    //println(json)
     response map { x =>
+      println(x.body)
       Ok(x.json)
     }
 

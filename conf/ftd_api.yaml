@@ -502,6 +502,41 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
+  "/ckan/update/organization/{org_id}":
+    tags:
+      - Ckan
+    put:
+      description: Update ckan organization
+      operationId: updateckanorganization
+      produces:
+      - application/json
+      parameters:
+      - name: org_id
+        in: path
+        description: OrganizationId or Name
+        required: true
+        type: string
+      - name: organization
+        in: body
+        description: Organization
+        required: true
+        schema:
+          $ref: '#/definitions/Organization'
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            $ref: '#/definitions/Success'
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/ckan/organization/{org_id}":
     tags:
       - Ckan
@@ -644,6 +679,59 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/ckan/create/user":
+    tags:
+      - Ckan
+    post:
+      description: Create a user
+      operationId: createckanuser
+      produces:
+      - application/json
+      parameters:
+      - name: user
+        in: body
+        description: User
+        required: true
+        schema:
+          $ref: '#/definitions/User'
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            $ref: '#/definitions/Success'
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/ckan/users":
+    tags:
+      - Ckan
+    get:
+      description: Get ckan user list
+      operationId: getckanuserList
+      produces:
+      - application/json
+      responses:
+        200:
+          description: An array of Users
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/User"
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
   "/ckan/multi":
     tags:
       - Ckan
@@ -889,6 +977,10 @@ definitions:
         type: string
       type:
         type: string
+      users:
+        type: array
+        items:
+          $ref: '#/definitions/UserOrg'
   Relationship:
     type: object
     properties:
@@ -962,7 +1054,26 @@ definitions:
         type: string
       vocabulary_id:
         type: string
-
+  User:
+    type: object
+    properties:
+      name:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      fullname:
+        type: string
+      about:
+        type: string
+  UserOrg:
+    type: object
+    properties:
+      name:
+        type: string
+      capacity:
+        type: string
   Error:
     type: object
     properties:

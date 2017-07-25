@@ -18,8 +18,14 @@ trait CkanServiceComponent {
     def createDataset(jsonDataset: JsValue): Future[String] = {
       ckanRepository.createDataset(jsonDataset)
     }
-    def createOrganization(jsonDataset: JsValue): Future[String] = {
-      ckanRepository.createOrganization(jsonDataset)
+    def createOrganization(jsonOrg: JsValue): Future[String] = {
+      ckanRepository.createOrganization(jsonOrg)
+    }
+    def updateOrganization(orgId: String, jsonOrg: JsValue): Future[String] = {
+      ckanRepository.updateOrganization(orgId,jsonOrg)
+    }
+    def createUser(jsonUser: JsValue): Future[String] = {
+      ckanRepository.createUser(jsonUser)
     }
     def dataset(datasetId: String): JsValue = {
       ckanRepository.dataset(datasetId)
