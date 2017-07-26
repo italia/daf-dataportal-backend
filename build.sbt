@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
   "me.jeffmay"              %% "play-json-tests"    % "1.3.0" % Test,
   "org.scalatestplus.play"  %% "scalatestplus-play" % "1.5.1" % Test,
   "org.mongodb" %% "casbah" % "3.1.1",
-  "net.sf.opencsv" % "opencsv" % "2.3"
+  "net.sf.opencsv" % "opencsv" % "2.3",
+  "me.lessis" %% "base64" % "0.2.0"
 )
 
 
@@ -28,6 +29,7 @@ resolvers ++= Seq(
   "zalando-bintray"  at "https://dl.bintray.com/zalando/maven",
   "scalaz-bintray"   at "http://dl.bintray.com/scalaz/releases",
   "jeffmay" at "https://dl.bintray.com/jeffmay/maven",
+  "softprops-maven" at "http://dl.bintray.com/content/softprops/maven",
   Resolver.url("sbt-plugins", url("http://dl.bintray.com/zalando/sbt-plugins"))(Resolver.ivyStylePatterns)
 )
 

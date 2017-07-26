@@ -35,10 +35,17 @@ class CkanRepositoryDev extends  CkanRepository{
     datasetWriter.flush()
   }
 
-  def createOrganization( jsonDataset: JsValue ) : Future[String] = {
+  def createOrganization( jsonOrg: JsValue ) : Future[String] = {
     Future("todo")
   }
 
+  def updateOrganization(orgId: String, jsonOrg: JsValue): Future[String] = {
+    Future("todo")
+  }
+
+  def createUser(jsonUser: JsValue): Future[String]= {
+    Future("todo")
+  }
 
   def dataset(datasetId: String): JsValue = {
     readDataset()

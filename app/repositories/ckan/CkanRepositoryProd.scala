@@ -2,9 +2,12 @@ package repositories.ckan
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import com.mongodb.{DBObject, WriteResult}
+import com.mongodb.casbah.MongoClient
 import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
+import utils.ConfigReader
 import utils.it.gov.daf.catalogmanager.utilities.WebServiceUtil
 
 import scala.concurrent.Future
@@ -23,6 +26,24 @@ class CkanRepositoryProd  extends CkanRepository{
   private val LOCALURL = "http://localhost:9000"
   private val CKAN_ERROR = "CKAN service is not working correctly"
 
+  private val mongoHost: String = ConfigReader.getDbHost
+  private val mongoPort = ConfigReader.getDbPort
+
+  private def writeMongo(json: JsValue, collectionName: String): Boolean = {
+
+    println("write mongo: "+json.toString())
+    val mongoClient = MongoClient(mongoHost, mongoPort)
+    val db = mongoClient("monitor_mdb")
+    val coll = db(collectionName)
+    val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+    val inserted = coll.insert(obj)
+    mongoClient.close()
+    inserted.getN > 0
+
+  }
+
+
+
   def createDataset(jsonDataset: JsValue): Future[String] = {
 
     val wsClient = AhcWSClient()
@@ -34,12 +55,37 @@ class CkanRepositoryProd  extends CkanRepository{
 
   }
 
-  def createOrganization(jsonDataset: JsValue): Future[String] = {
+  def createOrganization(jsonOrg: JsValue): Future[String] = {
 
     val wsClient = AhcWSClient()
     val url =  LOCALURL + "/ckan/createOrganization"
-    wsClient.url(url).post(jsonDataset).map({ response =>
+    wsClient.url(url).post(jsonOrg).map({ response =>
       (response.json \ "success").getOrElse(JsString(CKAN_ERROR)).toString()
+    }).andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate() }
+
+  }
+
+  def updateOrganization(orgId: String, jsonOrg: JsValue): Future[String] = {
+
+    val wsClient = AhcWSClient()
+    val url =  LOCALURL + "/ckan/updateOrganization/" + orgId
+    wsClient.url(url).put(jsonOrg).map({ response =>
+      (response.json \ "success").getOrElse(JsString(CKAN_ERROR)).toString()
+    }).andThen { case _ => wsClient.close() }
+      .andThen { case _ => system.terminate() }
+
+  }
+
+  def createUser(jsonUser: JsValue): Future[String] = {
+
+    val wsClient = AhcWSClient()
+    val url =  LOCALURL + "/ckan/createUser"
+    wsClient.url(url).post(jsonUser).map({ response =>
+      (response.json \ "success").toOption match {
+                case Some(x) => if(x.toString()=="true")writeMongo(jsonUser,"users"); x.toString()
+                case _ => JsString(CKAN_ERROR).toString()
+            }
     }).andThen { case _ => wsClient.close() }
       .andThen { case _ => system.terminate() }
 

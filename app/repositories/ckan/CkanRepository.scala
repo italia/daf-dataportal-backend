@@ -12,6 +12,8 @@ trait CkanRepository {
 
   def createDataset(jsonDataset: JsValue): Future[String]
   def createOrganization(jsonDataset: JsValue): Future[String]
+  def updateOrganization(orgId: String, jsonOrg: JsValue): Future[String]
+  def createUser(jsonDataset: JsValue): Future[String]
   def dataset(datasetId: String): JsValue
   def getOrganization(orgId :String) : Future[JsResult[Organization]]
   def getOrganizations() : Future[JsValue]
