@@ -588,6 +588,35 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/ckan/userOrganizations/{username}":
+    tags:
+      - Ckan
+    get:
+      description: Get ckan organizations created by the user
+      operationId: getckanuserorganizationList
+      produces:
+      - application/json
+      parameters:
+      - name: username
+        in: path
+        description: Username
+        required: true
+        type: string
+      responses:
+        200:
+          description: An array of Organizations
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Organization"
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/ckan/datasets":
     tags:
       - Ckan
@@ -731,7 +760,63 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/ckan/verifyCredentials":
+      tags:
+        - Ckan
+      post:
+        description: Verify username & pwd
+        operationId: verifycredentials
+        produces:
+        - application/json
+        parameters:
+        - name: credentials
+          in: body
+          description: Credentials
+          required: true
+          schema:
+            $ref: '#/definitions/Credentials'
+        responses:
+          200:
+            description: Success
+            schema:
+              type: object
+              $ref: '#/definitions/Success'
+          401:
+            description: Error Message
+            schema:
+              $ref: '#/definitions/Error'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
+  "/ckan/user/{username}":
+    tags:
+      - Ckan
+    get:
+      description: Get ckan user info (from mongodb)
+      operationId: getckanuser
+      produces:
+      - application/json
+      parameters:
+      - name: username
+        in: path
+        description: Username
+        required: true
+        type: string
+      responses:
+        200:
+          description: User
+          schema:
+            type: object
+            $ref: '#/definitions/User'
+        401:
+          description: Error Message
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/ckan/multi":
     tags:
       - Ckan
@@ -1073,6 +1158,13 @@ definitions:
       name:
         type: string
       capacity:
+        type: string
+  Credentials:
+    type: object
+    properties:
+      username:
+        type: string
+      password:
         type: string
   Error:
     type: object

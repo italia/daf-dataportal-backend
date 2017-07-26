@@ -1,6 +1,6 @@
 package repositories.ckan
 
-import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
+import ftd_api.yaml.{Credentials, Dataset, DistributionLabel, Organization, ResourceSize, User}
 import play.api.libs.json.{JsResult, JsValue}
 
 import scala.concurrent.Future
@@ -10,6 +10,8 @@ import scala.concurrent.Future
   */
 trait CkanRepository {
 
+  def getMongoUser(name:String): JsResult[User]
+  def verifyCredentials(credentials: Credentials):Boolean
   def createDataset(jsonDataset: JsValue): Future[String]
   def createOrganization(jsonDataset: JsValue): Future[String]
   def updateOrganization(orgId: String, jsonOrg: JsValue): Future[String]
@@ -17,6 +19,7 @@ trait CkanRepository {
   def dataset(datasetId: String): JsValue
   def getOrganization(orgId :String) : Future[JsResult[Organization]]
   def getOrganizations() : Future[JsValue]
+  def getUserOrganizations(userName :String) : Future[JsResult[Seq[Organization]]]
   def getDatasets() : Future[JsValue]
   def searchDatasets( input: (DistributionLabel, DistributionLabel, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]
   def getDatasetsWithRes( input: (ResourceSize, ResourceSize) ) : Future[JsResult[Seq[Dataset]]]
