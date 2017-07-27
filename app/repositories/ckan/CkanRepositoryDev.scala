@@ -2,7 +2,7 @@ package repositories.ckan
 
 import java.io.{FileInputStream, PrintWriter}
 
-import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
+import ftd_api.yaml.{Credentials, Dataset, DistributionLabel, Organization, ResourceSize, User}
 import play.Environment
 import play.api.libs.json._
 
@@ -35,6 +35,14 @@ class CkanRepositoryDev extends  CkanRepository{
     datasetWriter.flush()
   }
 
+  def getMongoUser(name:String): JsResult[User]={
+    JsSuccess(null)
+  }
+
+  def verifyCredentials(credentials: Credentials):Boolean = {
+    true
+  }
+
   def createOrganization( jsonOrg: JsValue ) : Future[String] = {
     Future("todo")
   }
@@ -56,6 +64,9 @@ class CkanRepositoryDev extends  CkanRepository{
   }
 
   def getOrganizations() : Future[JsValue] = {
+    Future(null)
+  }
+  def getUserOrganizations(userName :String) : Future[JsResult[Seq[Organization]]] = {
     Future(null)
   }
 

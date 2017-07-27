@@ -1,6 +1,6 @@
 package services.ckan
 
-import ftd_api.yaml.{Dataset, DistributionLabel, Organization, ResourceSize}
+import ftd_api.yaml.{Credentials, Dataset, DistributionLabel, Organization, ResourceSize, User}
 import play.api.{Configuration, Environment}
 import play.api.libs.json.{JsResult, JsValue}
 import repositories.ckan.{CkanRepository, CkanRepositoryComponent}
@@ -15,6 +15,15 @@ trait CkanServiceComponent {
   val ckanService: CkanService
 
   class CkanService {
+
+    def getMongoUser(name:String): JsResult[User] = {
+      ckanRepository.getMongoUser(name)
+    }
+
+    def verifyCredentials(credentials: Credentials):Boolean = {
+      ckanRepository.verifyCredentials(credentials: Credentials)
+    }
+
     def createDataset(jsonDataset: JsValue): Future[String] = {
       ckanRepository.createDataset(jsonDataset)
     }
@@ -37,6 +46,10 @@ trait CkanServiceComponent {
 
     def getOrganizations() : Future[JsValue] = {
       ckanRepository.getOrganizations
+    }
+
+    def getUserOrganizations(userName :String) : Future[JsResult[Seq[Organization]]] ={
+      ckanRepository.getUserOrganizations(userName)
     }
 
     def getDatasets() : Future[JsValue] = {
