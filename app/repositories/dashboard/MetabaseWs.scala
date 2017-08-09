@@ -26,7 +26,7 @@ class MetabaseWs {
   val metauser = conf.getString("metabase.user").get
   val metapass = conf.getString("metabase.pass").get
 
-  def call(wsClient: WSClient, data :JsObject): Future[Seq[WSResponse]] = {
+  def  call(wsClient: WSClient, data :JsObject): Future[Seq[WSResponse]] = {
     def sessionIds: Future[String] = wsClient.url(URL + "/session").post(data).map { response =>
       val resp = (response.json \ "id").as[String]
       println("Ale " + resp)
@@ -75,4 +75,6 @@ class MetabaseWs {
 
     Future { println("hello, from elsewhere.") }
   }
+
+
 }

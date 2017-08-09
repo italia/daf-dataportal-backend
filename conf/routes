@@ -6,7 +6,7 @@ GET         /spec/:name     controllers.Swagger.swaggerSpec(name: String)
 
 GET         /list_specs     controllers.Swagger.listSpecs
 
-GET         /                controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
+GET         /dati-gov               controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
 
 GET         /index.html     controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
 
@@ -43,6 +43,7 @@ DELETE /ckan/deleteOrganization/:orgId          controllers.ckan.CkanController.
 DELETE /ckan/purgeDataset/:datasetId            controllers.ckan.CkanController.purgeDataset(datasetId :String)
 DELETE /ckan/purgeOrganization/:orgId           controllers.ckan.CkanController.purgeOrganization(orgId :String)
 
+GET /superset/iframes controllers.dashboard.SupersetController.getIframes()
 
 
 GET         /*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
