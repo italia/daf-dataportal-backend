@@ -43,7 +43,14 @@ DELETE /ckan/deleteOrganization/:orgId          controllers.ckan.CkanController.
 DELETE /ckan/purgeDataset/:datasetId            controllers.ckan.CkanController.purgeDataset(datasetId :String)
 DELETE /ckan/purgeOrganization/:orgId           controllers.ckan.CkanController.purgeOrganization(orgId :String)
 
+
+# Dashboard
+
 GET /superset/iframes controllers.dashboard.SupersetController.getIframes()
+
+GET /metabase/session controllers.dashboard.MetabaseController.session()
+GET /metabase/public_card/:sessionId controllers.dashboard.MetabaseController.publicCard(sessionId :String)
+
 
 
 GET         /*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)

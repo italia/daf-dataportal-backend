@@ -2,9 +2,11 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Success}
+import ftd_api.yaml.{Catalog, DashboardIframes, Success}
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
+
+import scala.concurrent.Future
 
 
 
@@ -28,6 +30,10 @@ trait DashboardServiceComponent {
 
     def tables() : Seq[Catalog] = {
        dashboardRepository.tables()
+    }
+
+    def iframes() :Future[Seq[DashboardIframes]] = {
+      dashboardRepository.iframes()
     }
   }
 }

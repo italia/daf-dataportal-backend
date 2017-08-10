@@ -3,14 +3,14 @@ package repositories.dashboard
 import java.io.File
 import java.util.Date
 
-import ftd_api.yaml.Success
-import ftd_api.yaml.Catalog
+import ftd_api.yaml.{Catalog, DashboardIframes, Success}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 import com.mongodb.DBObject
 import play.api.libs.json.{JsArray, JsObject, Json}
 
+import scala.concurrent.Future
 import scala.io.Source
 
 
@@ -18,6 +18,8 @@ import scala.io.Source
   * Created by ale on 14/04/17.
   */
 class DashboardRepositoryDev extends DashboardRepository{
+
+  import scala.concurrent.ExecutionContext.Implicits._
 
   def save(upFile :File,tableName :String, fileType :String) :Success = {
     val message = s"Table created  $tableName"
@@ -59,4 +61,9 @@ class DashboardRepositoryDev extends DashboardRepository{
   def tables() :Seq[Catalog] = {
      Seq(Catalog(None), Catalog(None))
   }
+
+  def iframes() :Future[Seq[DashboardIframes]] = {
+    Future(Seq(DashboardIframes(None,None,None)))
+  }
+
 }

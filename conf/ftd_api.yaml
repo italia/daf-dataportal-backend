@@ -415,6 +415,31 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/dashboard/iframes":
+      get:
+        tags:
+        - Dashboard
+        summary: List of iframes for dashboard visualization
+        operationId: dashboardIframes
+        produces:
+         - application/json
+        parameters:
+        - name: apikey
+          in: query
+          description: Api key
+          required: true
+          type: string
+        responses:
+          200:
+            description: An array of iFrames
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/DashboardIframes'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/ckan/create/dataset":
     tags:
       - Ckan
@@ -1165,6 +1190,15 @@ definitions:
       username:
         type: string
       password:
+        type: string
+  DashboardIframes:
+    type: object
+    properties:
+      iframe_url:
+        type: string
+      origin:
+        type: string
+      title:
         type: string
   Error:
     type: object

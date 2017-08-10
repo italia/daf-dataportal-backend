@@ -4,13 +4,17 @@ import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.Date
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.mongodb.DBObject
 import com.mongodb.casbah.MongoClient
-import ftd_api.yaml.{Catalog, Success}
-import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
+import ftd_api.yaml.{Catalog, DashboardIframes, Success}
+import play.api.libs.json._
+import play.api.libs.ws.WSResponse
+import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
-import ftd_api.yaml.Catalog
 
+import scala.concurrent.Future
 import scala.io.Source
 
 /**
@@ -19,8 +23,16 @@ import scala.io.Source
 
 class DashboardRepositoryProd extends DashboardRepository{
 
+  import ftd_api.yaml.BodyReads._
+  import scala.concurrent.ExecutionContext.Implicits._
+
+  implicit val system = ActorSystem()
+  implicit val materializer = ActorMaterializer()
+
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
+
+  private val localUrl = ConfigReader.getLocalUrl
 
   def save(upFile :File,tableName :String, fileType :String) :Success = {
     val message = s"Table created  $tableName"
@@ -97,5 +109,29 @@ class DashboardRepositoryProd extends DashboardRepository{
       mongoClient.close()
       catalogs
     }
+
+  def iframes() :Future[Seq[DashboardIframes]] = {
+    val wsClient = AhcWSClient()
+    val metabaseSessionUrl =  localUrl + "/metabase/session"
+    val metabasePublic = localUrl + "/metabase/public_card/"
+    val sessionFuture: Future[WSResponse] = wsClient.url(metabaseSessionUrl).get
+    val metabaseReq: Future[WSResponse] = for {
+      session   <- sessionFuture.map {_.body}
+      jsonPublic <- wsClient.url(metabasePublic + session ).get()
+    } yield jsonPublic
+
+    val result: Future[Seq[DashboardIframes]] = metabaseReq.map { response =>
+      println(response.json)
+      val json = response.json.as[Seq[JsValue]]
+      json.map(x => {
+        val uuid = (x \ "public_uuid").get.as[String]
+        val title = (x \ "name").get.as[String]
+        val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+        DashboardIframes(Some(url), Some("metabase"), Some(title))
+      })
+    }
+    result
+   // Future(Seq(DashboardIframes(None,None,None)))
+  }
 
 }
