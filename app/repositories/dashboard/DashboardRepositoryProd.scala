@@ -110,7 +110,7 @@ class DashboardRepositoryProd extends DashboardRepository{
       catalogs
     }
 
-  def iframes() :Future[Seq[DashboardIframes]] = {
+ /* def iframes() :Future[Seq[DashboardIframes]] = {
     val wsClient = AhcWSClient()
     val metabaseSessionUrl =  localUrl + "/metabase/session"
     val metabasePublic = localUrl + "/metabase/public_card/"
@@ -132,6 +132,21 @@ class DashboardRepositoryProd extends DashboardRepository{
     }
     result
    // Future(Seq(DashboardIframes(None,None,None)))
+  } */
+
+  def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
+    val wsClient = AhcWSClient()
+    val metabasePublic = localUrl + "/metabase/public_card/" + metaUser
+    val request = wsClient.url(metabasePublic).get()
+    request.map { response =>
+      val json = response.json.as[Seq[JsValue]]
+      json.map(x => {
+        val uuid = (x \ "public_uuid").get.as[String]
+        val title = (x \ "name").get.as[String]
+        val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+        DashboardIframes(Some(url), Some("metabase"), Some(title))
+      })
+    }
   }
 
 }

@@ -20,5 +20,6 @@ server.pid
 *.eml
 *.sc
 /conf/production.conf
+/conf/integration.conf
 /dist/
 .cache

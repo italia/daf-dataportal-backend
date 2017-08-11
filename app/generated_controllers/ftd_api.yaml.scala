@@ -40,7 +40,7 @@ import utils.SecurePasswordHashing
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                        
+                                                                                                                                                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -124,7 +124,7 @@ package ftd_api.yaml {
         }
         val dashboardIframes = dashboardIframesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
-            val iframes = DashboardRegistry.dashboardService.iframes()
+            val iframes = DashboardRegistry.dashboardService.iframes("ale.ercolani@gmail.com")
             DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
         }

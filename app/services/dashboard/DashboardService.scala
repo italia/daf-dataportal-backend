@@ -32,8 +32,8 @@ trait DashboardServiceComponent {
        dashboardRepository.tables()
     }
 
-    def iframes() :Future[Seq[DashboardIframes]] = {
-      dashboardRepository.iframes()
+    def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
+      dashboardRepository.iframes(metaUser)
     }
   }
 }

@@ -2,6 +2,7 @@ package controllers.dashboard
 
 import javax.inject._
 
+import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
 
@@ -10,8 +11,9 @@ import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 
 
+
 @Singleton
-class SupersetController @Inject() (ws: WSClient, config: ConfigurationProvider) extends Controller {
+class SupersetController @Inject() ( ws: WSClient, config: ConfigurationProvider) extends Controller {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -24,4 +26,34 @@ class SupersetController @Inject() (ws: WSClient, config: ConfigurationProvider)
       Ok(results)
     }
   }
+
+  val conf = Configuration.load(Environment.simple())
+  val URL : String = conf.getString("superset.url").get
+  val user = conf.getString("superset.user").get
+  val pass = conf.getString("superset.pass").get
+
+  def session() = Action.async { implicit request =>
+    val data = Json.obj(
+      "email" -> user,
+      "password" -> pass
+    )
+    val responseWs: Future[WSResponse] = ws.url(URL + "/login/").post(data)
+    responseWs.map { response =>
+      println(response.cookie("session"))
+      println(response.header("Set-Cookie"))
+      val session = response.cookie("session").get.toString
+      Ok(session)
+    }
+  }
+
+  def publicSlice(sessionCookie :String) =  Action.async { implicit request =>
+    println("ALE")
+    val responseWs = ws.url(URL + "slicemodelview/api/read")
+      .withHeaders("Cookie" -> sessionCookie).get()
+    responseWs.map { response =>
+      println(response.json)
+      Ok(response.json)
+    }
+  }
+
 }

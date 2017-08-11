@@ -13,7 +13,7 @@ trait DashboardRepository {
    def save(upFile :File,tableName :String, fileType :String) :Success
    def update(upFile :File,tableName :String, fileType :String) :Success
    def tables(): Seq[Catalog]
-   def iframes(): Future[Seq[DashboardIframes]]
+   def iframes(metaUser :String): Future[Seq[DashboardIframes]]
 }
 
 object DashboardRepository {

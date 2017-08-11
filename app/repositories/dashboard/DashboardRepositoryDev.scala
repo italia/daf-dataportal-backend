@@ -62,7 +62,7 @@ class DashboardRepositoryDev extends DashboardRepository{
      Seq(Catalog(None), Catalog(None))
   }
 
-  def iframes() :Future[Seq[DashboardIframes]] = {
+  def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
     Future(Seq(DashboardIframes(None,None,None)))
   }
 

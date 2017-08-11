@@ -47,9 +47,11 @@ DELETE /ckan/purgeOrganization/:orgId           controllers.ckan.CkanController.
 # Dashboard
 
 GET /superset/iframes controllers.dashboard.SupersetController.getIframes()
+GET /superset/session   controllers.dashboard.SupersetController.session()
+GET /superset/public_slice/:sessionCookie  controllers.dashboard.SupersetController.publicSlice(sessionCookie :String)
 
 GET /metabase/session controllers.dashboard.MetabaseController.session()
-GET /metabase/public_card/:sessionId controllers.dashboard.MetabaseController.publicCard(sessionId :String)
+GET /metabase/public_card/:metaUser controllers.dashboard.MetabaseController.publicCard(metaUser :String)
 
 
 
