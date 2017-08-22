@@ -14,8 +14,10 @@ import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.io.Source
+import scala.util
+import scala.util.{Failure, Try}
 
 /**
   * Created by ale on 14/04/17.
@@ -33,6 +35,8 @@ class DashboardRepositoryProd extends DashboardRepository{
   private val mongoPort = ConfigReader.getDbPort
 
   private val localUrl = ConfigReader.getLocalUrl
+
+  private val supersetUser = ConfigReader.getSupersetUser
 
   def save(upFile :File,tableName :String, fileType :String) :Success = {
     val message = s"Table created  $tableName"
@@ -110,35 +114,16 @@ class DashboardRepositoryProd extends DashboardRepository{
       catalogs
     }
 
- /* def iframes() :Future[Seq[DashboardIframes]] = {
-    val wsClient = AhcWSClient()
-    val metabaseSessionUrl =  localUrl + "/metabase/session"
-    val metabasePublic = localUrl + "/metabase/public_card/"
-    val sessionFuture: Future[WSResponse] = wsClient.url(metabaseSessionUrl).get
-    val metabaseReq: Future[WSResponse] = for {
-      session   <- sessionFuture.map {_.body}
-      jsonPublic <- wsClient.url(metabasePublic + session ).get()
-    } yield jsonPublic
-
-    val result: Future[Seq[DashboardIframes]] = metabaseReq.map { response =>
-      println(response.json)
-      val json = response.json.as[Seq[JsValue]]
-      json.map(x => {
-        val uuid = (x \ "public_uuid").get.as[String]
-        val title = (x \ "name").get.as[String]
-        val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title))
-      })
-    }
-    result
-   // Future(Seq(DashboardIframes(None,None,None)))
-  } */
 
   def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
     val wsClient = AhcWSClient()
     val metabasePublic = localUrl + "/metabase/public_card/" + metaUser
+    val supersetPublic = localUrl + "/superset/public_slice/" + supersetUser
+
     val request = wsClient.url(metabasePublic).get()
-    request.map { response =>
+    val requestIframes = wsClient.url(supersetPublic).get()
+
+    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
       val json = response.json.as[Seq[JsValue]]
       json.map(x => {
         val uuid = (x \ "public_uuid").get.as[String]
@@ -147,6 +132,41 @@ class DashboardRepositoryProd extends DashboardRepository{
         DashboardIframes(Some(url), Some("metabase"), Some(title))
       })
     }
+
+    val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
+      val json = response.json.as[Seq[JsValue]]
+      json.map(x => {
+        val slice_link = (x \ "slice_link").get.as[String]
+        val title = (x \ "viz_type").get.as[String]
+        val src = slice_link.slice(slice_link.indexOf("\"") + 1,slice_link.lastIndexOf("\"")) + "&standalone=true"
+        val url = ConfigReader.getSupersetUrl + src
+        DashboardIframes(Some(url), Some("superset"), Some(title))
+      })
+    }
+
+    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase,superset)
+
+    def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
+        f.map(scala.util.Success(_)).recover{ case t: Throwable => Failure( t ) }
+
+    val withFailed: Seq[Future[Try[Seq[DashboardIframes]]]] = services.map(futureToFutureTry(_))
+
+    // Can also be done more concisely (but less efficiently) as:
+    // f.map(Success(_)).recover{ case t: Throwable => Failure( t ) }
+    // NOTE: you might also want to move this into an enrichment class
+    //def mapValue[T]( f: Future[Seq[T]] ): Future[Try[Seq[T]]] = {
+    //  val prom = Promise[Try[Seq[T]]]()
+    //  f onComplete prom.success
+    //  prom.future
+    //}
+
+    val servicesWithFailed  = Future.sequence(withFailed)
+
+    val servicesSuccesses: Future[Seq[Try[Seq[DashboardIframes]]]] = servicesWithFailed.map(_.filter(_.isSuccess))
+
+    val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
+
+    results
   }
 
 }

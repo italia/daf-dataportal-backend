@@ -36,25 +36,43 @@ class MetabaseController @Inject() (ws: WSClient, cache: CacheApi ,config: Confi
       responseWs.map { response =>
         val resp = (response.json \ "id").as[String]
         println("Ale " + resp)
-        cache.set(metauser, resp, 14 days)
+        cache.set("metabase." + metauser, resp, 14 days)
         Ok(resp)
       }
   }
 
   def publicCard(metauser :String) =  Action.async { implicit request =>
-    val sessionId  = cache.get[String](metauser).getOrElse("test")
+    val sessionId  = cache.get[String]("metabase." + metauser).getOrElse("test")
     val responseWs = ws.url(URL + "/api/card/public")
       .withHeaders(("X-Metabase-Session", sessionId)).get()
     responseWs.map { response =>
       if(response.status == 401) {
-        val sessionFuture = ws.url("http://localhost:9000/metabase/session").get()
-        val session: Try[WSResponse] = Await.ready(sessionFuture, 3 seconds).value.get
-        val ex: String = session match {
-          case Success(v) => v.body
+        val sessionFuture: Future[String] = ws.url("http://localhost:9000/metabase/session").get().map(_.body)
+        val publicCardFuture = ws.url(URL + "/api/card/public")
+          .withHeaders(("X-Metabase-Session", sessionId)).get()
+        val chained: Future[WSResponse] = for {
+          session <- sessionFuture
+          publicCards <- publicCardFuture
+        } yield publicCards
+       // val awaitedResponse: Try[WSResponse] = Await.ready(chained, 3 seconds).value.get
+       // val result: JsValue = awaitedResponse match {
+       //       case Success(v) => v.json
+       //       case Failure(_) => throw new RuntimeException("error")
+       // }
+        val result: Future[WSResponse] = for {
+          session <- sessionFuture
+          cards <- ws.url(URL + "/api/card/public")
+            .withHeaders(("X-Metabase-Session", session)).get()
+        } yield  cards
+        val responseTry: Try[WSResponse] = Await.ready(result, 3 seconds).value.get
+        val response: JsValue = responseTry match {
+          case Success(v) => v.json
           case Failure(_) => throw new RuntimeException("error")
         }
+        Ok(response)
+      } else {
+        Ok(response.json)
       }
-      Ok(response.json)
 
     }
   }

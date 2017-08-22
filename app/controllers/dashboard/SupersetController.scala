@@ -2,6 +2,7 @@ package controllers.dashboard
 
 import javax.inject._
 
+import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
@@ -13,9 +14,14 @@ import play.api.inject.ConfigurationProvider
 
 
 @Singleton
-class SupersetController @Inject() ( ws: WSClient, config: ConfigurationProvider) extends Controller {
+class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: ConfigurationProvider) extends Controller {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+  val conf = Configuration.load(Environment.simple())
+  val URL : String = conf.getString("superset.url").get
+  val user = conf.getString("superset.user").get
+  val pass = conf.getString("superset.pass").get
 
   def getIframes() = Action.async { implicit request =>
     val iframeJson = ws.url("http://localhost:8088/slicemodelview/api/read")
@@ -27,14 +33,10 @@ class SupersetController @Inject() ( ws: WSClient, config: ConfigurationProvider
     }
   }
 
-  val conf = Configuration.load(Environment.simple())
-  val URL : String = conf.getString("superset.url").get
-  val user = conf.getString("superset.user").get
-  val pass = conf.getString("superset.pass").get
 
   def session() = Action.async { implicit request =>
     val data = Json.obj(
-      "email" -> user,
+      "username" -> user,
       "password" -> pass
     )
     val responseWs: Future[WSResponse] = ws.url(URL + "/login/").post(data)
@@ -42,17 +44,20 @@ class SupersetController @Inject() ( ws: WSClient, config: ConfigurationProvider
       println(response.cookie("session"))
       println(response.header("Set-Cookie"))
       val session = response.cookie("session").get.toString
+      cache.set("superset." + user , session)
       Ok(session)
     }
   }
 
-  def publicSlice(sessionCookie :String) =  Action.async { implicit request =>
-    println("ALE")
+  def publicSlice(user :String) =  Action.async { implicit request =>
+    val sessionCookie = cache.get[String]("superset." + user).get
+    println(sessionCookie)
     val responseWs = ws.url(URL + "slicemodelview/api/read")
-      .withHeaders("Cookie" -> sessionCookie).get()
+      .withHeaders("cookie" -> sessionCookie).get()
     responseWs.map { response =>
       println(response.json)
-      Ok(response.json)
+
+      Ok((response.json \ "result").get)
     }
   }
 

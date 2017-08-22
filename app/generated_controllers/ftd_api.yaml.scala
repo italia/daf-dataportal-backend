@@ -40,7 +40,7 @@ import utils.SecurePasswordHashing
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                            
+                                                                                                                                                                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -272,6 +272,12 @@ package ftd_api.yaml {
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuser
         }
+        val savedashboard = savedashboardAction { input: (String, String, Dashboard) =>
+            val (user, dashboard, layout) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
+        }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
@@ -334,12 +340,10 @@ package ftd_api.yaml {
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanorganizationList
         }
-        val getmonitorCatalogs = getmonitorCatalogsAction { (apikey: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
-            val catalogs = ComponentRegistry.monitorService.allCatalogs()
-            GetmonitorCatalogs200(catalogs)
-            //   NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
+        val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
         }
         val createTable = createTableAction { input: (File, String, String, String) =>
             val (upfile, tableName, fileType, apikey) = input
@@ -348,6 +352,16 @@ package ftd_api.yaml {
             CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
+    
+     // Dead code for absent methodFtd_apiYaml.getmonitorCatalogs
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
+            val catalogs = ComponentRegistry.monitorService.allCatalogs()
+            GetmonitorCatalogs200(catalogs)
+            //   NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
+     */
+
     
      // Dead code for absent methodFtd_apiYaml.testauto
      /*

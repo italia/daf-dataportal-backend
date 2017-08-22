@@ -17,6 +17,10 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val metabaseURL= playConfig.getString("metabase.url")
   val metauser = playConfig.getString("metabase.user")
   val metapass = playConfig.getString("metabase.pass")
+
+  val supersetURL= playConfig.getString("superset.url")
+  val supersetUser = playConfig.getString("superset.user")
+  val supersetPass = playConfig.getString("superset.pass")
 }
 
 object ConfigReader {
@@ -30,4 +34,9 @@ object ConfigReader {
   def getMetabaseUrl = config.metabaseURL.getOrElse("http://localhost:13479")
   def getMetaUser = config.metauser.getOrElse("ale.ercolani@gmail.com")
   def getMetaPass = config.metapass.getOrElse("password")
+
+  def getSupersetUrl = config.supersetURL.getOrElse("http://localhost:8088")
+  def getSupersetUser = config.supersetUser.getOrElse("alessandro")
+  def getSupersetPass = config.supersetPass.getOrElse("password")
+
 }

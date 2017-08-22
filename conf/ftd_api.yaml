@@ -13,6 +13,7 @@ info:
     name: Creative Commons 4.0 International
     url: http://creativecommons.org/licenses/by/4.0/
 #host : XXX.XXX.XX.XXX:8000
+#host: datipubblici.default.svc.cluster.local:9000
 host: localhost:9000
 # will be prefixed to all paths
 basePath: /dati-gov/v1
@@ -28,6 +29,7 @@ paths:
         List of names of all catalogs
       tags:
         - Monitor
+      operationId: monitorcatalogs
       parameters:
       - name: apikey
         in: query
@@ -437,6 +439,45 @@ paths:
               items:
                 $ref: '#/definitions/DashboardIframes'
           default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
+  "/dashboard/save/{user}/{dashboard}":
+    post:
+      tags:
+      - Dashboard
+      summary: Save Dashboard
+      operationId: savedashboard
+      produces:
+        - application/json
+      consumes:
+         - application/json
+      parameters:
+      - name: user
+        in: path
+        description: user identifier
+        required: true
+        type: string
+      - name: dashboard
+        in: path
+        description: dashboard identifier
+        required: true
+        type: string
+      - name: layout
+        in: body
+        description: Dataset Catalog
+        required: true
+        schema:
+          #$ref: "./imports/dataset.yaml#/definitions/Dataset"
+          $ref: '#/definitions/Dashboard'
+      responses:
+        200:
+          description: Success Message
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Success'
+        default:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
@@ -1216,4 +1257,16 @@ definitions:
       message:
         type: string
       fields:
+        type: string
+  Dashboard:
+    type: object
+    properties:
+      user:
+        type: string
+      layout:
+        type: string
+      status:
+        type: integer
+        format: int32
+      _id:
         type: string
