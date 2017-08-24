@@ -197,6 +197,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     dashboards
   }
 
+
   def dashboardById(user: String, id: String) :Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
@@ -219,11 +220,13 @@ class DashboardRepositoryProd extends DashboardRepository{
   def saveDashboard(dashboard: Dashboard): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val json: JsValue = Json.toJson(dashboard)
+    val id = dashboard.title.get
+    val query = MongoDBObject("title" -> id)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    val inserted: casbah.TypeImports.WriteResult = coll.insert(obj)
+    val inserted: casbah.TypeImports.WriteResult = coll.update(query,obj,true)
     val response = Success(Some("Inserted"),Some("Inserted"))
     response
 

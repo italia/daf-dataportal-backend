@@ -489,7 +489,7 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
-  "/dashboards-get/{dashboard_id}":
+  "/dashboards/{dashboard_id}":
     get:
       tags:
       - Dashboard
