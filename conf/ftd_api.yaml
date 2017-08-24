@@ -514,6 +514,31 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/dashboards/{dashboard_id}":
+    delete:
+      tags:
+      - Dashboard
+      summary: get dashboard by id
+      operationId: deletedashboard
+      consumes:
+         - application/json
+      produces:
+         - application/json
+      parameters:
+      - name: dashboard_id
+        in: path
+        description: id of dashboard
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/ckan/create/dataset":
     tags:
       - Ckan
@@ -1298,7 +1323,7 @@ definitions:
         type: string
       layout:
         type: string
-      widget:
+      widgets:
         type: string
       title:
         type: string
@@ -1307,7 +1332,7 @@ definitions:
         format: int32
       _id:
         type: string
-        $ref: '#/definitions/ObjectId'
+      #  $ref: '#/definitions/ObjectId'
   ObjectId:
     type: object
     properties:

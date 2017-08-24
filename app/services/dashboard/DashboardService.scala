@@ -47,6 +47,10 @@ trait DashboardServiceComponent {
     def saveDashboard(dashboard: Dashboard): Success = {
         dashboardRepository.saveDashboard(dashboard)
     }
+
+    def deleteDashboard(dashboardId :String): Success = {
+      dashboardRepository.deleteDashboard(dashboardId)
+    }
   }
 }
 

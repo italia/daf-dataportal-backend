@@ -17,6 +17,7 @@ trait DashboardRepository {
    def dashboards(user :String): Seq[Dashboard]
    def dashboardById(user: String, id: String) :Dashboard
    def saveDashboard(dashboard: Dashboard): Success
+   def deleteDashboard(dashboardId :String): Success
 }
 
 object DashboardRepository {

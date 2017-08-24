@@ -78,4 +78,8 @@ class DashboardRepositoryDev extends DashboardRepository{
      Success(None,None)
   }
 
+  def deleteDashboard(dashboardId: String): Success = {
+    Success(None,None)
+  }
+
 }

@@ -188,10 +188,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
     val dashboards = dashboardsJsResult match {
-      case s: JsSuccess[Seq[Dashboard]] => {
-        s.get.foreach(x => {println(x._id.get.$oid.get)})
-        s.get
-      }
+      case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
     dashboards
@@ -230,6 +227,16 @@ class DashboardRepositoryProd extends DashboardRepository{
     val response = Success(Some("Inserted"),Some("Inserted"))
     response
 
+  }
+
+  def deleteDashboard(dashboardId: String): Success = {
+    val query = MongoDBObject("_id" -> dashboardId)
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("dashboards")
+    val removed = coll.remove(query)
+    val response = Success(Some("Deleted"),Some("Deleted"))
+    response
   }
 
 }

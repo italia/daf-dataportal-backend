@@ -40,7 +40,7 @@ import utils.SecurePasswordHashing
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -218,10 +218,10 @@ package ftd_api.yaml {
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuserorganizationList
         }
-        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
-            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
+        val deletedashboard = deletedashboardAction { (dashboard_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletedashboard
+            Deletedashboard200(DashboardRegistry.dashboardService.deleteDashboard(dashboard_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deletedashboard
         }
         val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
@@ -386,6 +386,14 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsid
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsid
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.dashboardsbyid
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
+            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
      */
 
     
