@@ -40,7 +40,7 @@ import utils.SecurePasswordHashing
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -179,6 +179,11 @@ package ftd_api.yaml {
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createckandataset
         }
+        val dashboards = dashboardsAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
+            Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
+        }
         val getckandatasetListWithRes = getckandatasetListWithResAction { input: (ResourceSize, ResourceSize) =>
             val (limit, offset) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckandatasetListWithRes
@@ -219,6 +224,12 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
             AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
+        }
+        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
+            val save = DashboardRegistry.dashboardService.saveDashboard(dashboard)
+            Savedashboard200(save)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
         val createckanorganization = createckanorganizationAction { (organization: Organization) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckanorganization
@@ -271,12 +282,6 @@ package ftd_api.yaml {
                 case Left(error) => Getckanuser401(Error(None,Option(error),None))
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuser
-        }
-        val savedashboard = savedashboardAction { input: (String, String, Dashboard) =>
-            val (user, dashboard, layout) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
@@ -340,6 +345,11 @@ package ftd_api.yaml {
             }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanorganizationList
         }
+        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
+            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
+        }
         val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
             NotImplementedYet
@@ -368,6 +378,14 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.testauto
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.testauto
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.dashboardsid
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsid
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsid
      */
 
     

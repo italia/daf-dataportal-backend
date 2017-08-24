@@ -21,6 +21,10 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val supersetURL= playConfig.getString("superset.url")
   val supersetUser = playConfig.getString("superset.user")
   val supersetPass = playConfig.getString("superset.pass")
+
+  val userName :Option[String] = playConfig.getString("mongo.username")
+  val password :Option[String] = playConfig.getString("mongo.password")
+  val database :Option[String] = playConfig.getString("mongo.database")
 }
 
 object ConfigReader {
@@ -38,5 +42,9 @@ object ConfigReader {
   def getSupersetUrl = config.supersetURL.getOrElse("http://localhost:8088")
   def getSupersetUser = config.supersetUser.getOrElse("alessandro")
   def getSupersetPass = config.supersetPass.getOrElse("password")
+
+  def database :String = config.database.getOrElse("monitor_mdb")
+  def password :String = config.password.getOrElse("")
+  def userName :String = config.userName.getOrElse("")
 
 }

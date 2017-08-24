@@ -2,7 +2,7 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, DashboardIframes, Success}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success}
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
 
@@ -34,6 +34,18 @@ trait DashboardServiceComponent {
 
     def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
       dashboardRepository.iframes(metaUser)
+    }
+
+    def dashboards(user :String): Seq[Dashboard] = {
+       dashboardRepository.dashboards(user)
+    }
+
+    def dashboardById(user: String, id: String) :Dashboard = {
+      dashboardRepository.dashboardById(user, id)
+    }
+
+    def saveDashboard(dashboard: Dashboard): Success = {
+        dashboardRepository.saveDashboard(dashboard)
     }
   }
 }

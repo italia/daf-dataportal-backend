@@ -3,7 +3,7 @@ package repositories.dashboard
 import java.io.File
 import java.util.Date
 
-import ftd_api.yaml.{Catalog, DashboardIframes, Success}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -64,6 +64,18 @@ class DashboardRepositoryDev extends DashboardRepository{
 
   def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
     Future(Seq(DashboardIframes(None,None,None)))
+  }
+
+  def dashboards(user :String): Seq[Dashboard] = {
+    Seq(Dashboard(None,None,None,None,None,None))
+  }
+
+  def dashboardById(user: String, id: String) :Dashboard = {
+    Dashboard(None,None,None,None,None,None)
+  }
+
+  def saveDashboard(dashboard: Dashboard): Success = {
+     Success(None,None)
   }
 
 }

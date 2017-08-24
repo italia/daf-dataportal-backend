@@ -2,7 +2,7 @@ package repositories.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, DashboardIframes, Success}
+import ftd_api.yaml.{Catalog, DashboardIframes, Success, Dashboard}
 
 import scala.concurrent.Future
 
@@ -14,6 +14,9 @@ trait DashboardRepository {
    def update(upFile :File,tableName :String, fileType :String) :Success
    def tables(): Seq[Catalog]
    def iframes(metaUser :String): Future[Seq[DashboardIframes]]
+   def dashboards(user :String): Seq[Dashboard]
+   def dashboardById(user: String, id: String) :Dashboard
+   def saveDashboard(dashboard: Dashboard): Success
 }
 
 object DashboardRepository {

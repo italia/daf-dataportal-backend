@@ -6,17 +6,18 @@ import java.util.Date
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.mongodb.DBObject
-import com.mongodb.casbah.MongoClient
-import ftd_api.yaml.{Catalog, DashboardIframes, Success}
+import com.mongodb.{DBObject, casbah}
+import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
+import com.mongodb.casbah.{MongoClient, TypeImports}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success}
+import org.bson.types.ObjectId
 import play.api.libs.json._
-import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
-import scala.concurrent.{Future, Promise}
+import scala.collection.immutable.List
+import scala.concurrent.Future
 import scala.io.Source
-import scala.util
 import scala.util.{Failure, Try}
 
 /**
@@ -37,6 +38,13 @@ class DashboardRepositoryProd extends DashboardRepository{
   private val localUrl = ConfigReader.getLocalUrl
 
   private val supersetUser = ConfigReader.getSupersetUser
+
+  private val userName = ConfigReader.userName
+  private val source = ConfigReader.database
+  private val password = ConfigReader.password
+
+  val server = new ServerAddress(mongoHost, 27017)
+  val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
   def save(upFile :File,tableName :String, fileType :String) :Success = {
     val message = s"Table created  $tableName"
@@ -167,6 +175,58 @@ class DashboardRepositoryProd extends DashboardRepository{
     val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
 
     results
+  }
+
+  def dashboards(user :String): Seq[Dashboard] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("dashboards")
+    val results = coll.find().toList
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(results)
+    val json = Json.parse(jsonString)
+    println(json)
+    val dashboardsJsResult = json.validate[Seq[Dashboard]]
+    val dashboards = dashboardsJsResult match {
+      case s: JsSuccess[Seq[Dashboard]] => {
+        s.get.foreach(x => {println(x._id.get.$oid.get)})
+        s.get
+      }
+      case e: JsError => Seq()
+    }
+    dashboards
+  }
+
+  def dashboardById(user: String, id: String) :Dashboard = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("dashboards")
+   // val objectId = new ObjectId(id)
+   // val query = MongoDBObject("_id" -> objectId)
+   val query = MongoDBObject("title" -> id)
+    val result = coll.findOne(query)
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(result)
+    val json = Json.parse(jsonString)
+    val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
+    val dashboard: Dashboard = dashboardJsResult match {
+      case s: JsSuccess[Dashboard] => s.get
+      case e: JsError => Dashboard(None,None,None,None,None,None)
+    }
+    dashboard
+  }
+
+  def saveDashboard(dashboard: Dashboard): Success = {
+    import ftd_api.yaml.ResponseWrites.DashboardWrites
+    val json: JsValue = Json.toJson(dashboard)
+    val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("dashboards")
+    val inserted: casbah.TypeImports.WriteResult = coll.insert(obj)
+    val response = Success(Some("Inserted"),Some("Inserted"))
+    response
+
   }
 
 }

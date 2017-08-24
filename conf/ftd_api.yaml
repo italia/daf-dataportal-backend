@@ -442,7 +442,7 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
-  "/dashboard/save/{user}/{dashboard}":
+  "/dashboards/save":
     post:
       tags:
       - Dashboard
@@ -453,34 +453,67 @@ paths:
       consumes:
          - application/json
       parameters:
-      - name: user
-        in: path
-        description: user identifier
-        required: true
-        type: string
       - name: dashboard
-        in: path
-        description: dashboard identifier
-        required: true
-        type: string
-      - name: layout
         in: body
-        description: Dataset Catalog
+        description: Dashboard to Save
         required: true
         schema:
-          #$ref: "./imports/dataset.yaml#/definitions/Dataset"
           $ref: '#/definitions/Dashboard'
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/dashboards":
+    get:
+      tags:
+      - Dashboard
+      summary: Get Dashboards
+      operationId: dashboards
+      produces:
+        - application/json
+      consumes:
+         - application/json
       responses:
         200:
           description: Success Message
           schema:
             type: array
             items:
-              $ref: '#/definitions/Success'
+              $ref: '#/definitions/Dashboard'
         default:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/dashboards-get/{dashboard_id}":
+    get:
+      tags:
+      - Dashboard
+      summary: get dashboard by id
+      operationId: dashboardsbyid
+      consumes:
+         - application/json
+      produces:
+         - application/json
+      parameters:
+      - name: dashboard_id
+        in: path
+        description: id of dashboard
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Dashboard"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/ckan/create/dataset":
     tags:
       - Ckan
@@ -1265,8 +1298,18 @@ definitions:
         type: string
       layout:
         type: string
+      widget:
+        type: string
+      title:
+        type: string
       status:
         type: integer
         format: int32
       _id:
+        type: string
+        $ref: '#/definitions/ObjectId'
+  ObjectId:
+    type: object
+    properties:
+      $oid:
         type: string
