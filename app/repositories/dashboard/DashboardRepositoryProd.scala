@@ -217,8 +217,8 @@ class DashboardRepositoryProd extends DashboardRepository{
   def saveDashboard(dashboard: Dashboard): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val json: JsValue = Json.toJson(dashboard)
-    val id = dashboard.title.get
-    val query = MongoDBObject("title" -> id)
+    val id = dashboard._id.get
+    val query = MongoDBObject("_id" -> id)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
