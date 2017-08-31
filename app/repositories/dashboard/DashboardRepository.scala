@@ -2,7 +2,7 @@ package repositories.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, DashboardIframes, Success, Dashboard}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 
 import scala.concurrent.Future
 
@@ -18,6 +18,10 @@ trait DashboardRepository {
    def dashboardById(user: String, id: String) :Dashboard
    def saveDashboard(dashboard: Dashboard): Success
    def deleteDashboard(dashboardId :String): Success
+   def stories(user :String): Seq[UserStory]
+   def storyById(user: String, id: String) :UserStory
+   def saveStory(story: UserStory): Success
+   def deleteStory(storyId :String): Success
 }
 
 object DashboardRepository {

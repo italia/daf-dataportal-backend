@@ -3,7 +3,7 @@ package repositories.dashboard
 import java.io.File
 import java.util.Date
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -79,6 +79,22 @@ class DashboardRepositoryDev extends DashboardRepository{
   }
 
   def deleteDashboard(dashboardId: String): Success = {
+    Success(None,None)
+  }
+
+  def stories(user :String): Seq[UserStory] = {
+    Seq(UserStory(None,None,None,None,None,None,None,None,None))
+  }
+
+  def storyById(user: String, id: String) :UserStory = {
+    UserStory(None,None,None,None,None,None,None,None,None)
+  }
+
+  def saveStory(story: UserStory): Success = {
+    Success(None,None)
+  }
+
+  def deleteStory(storyId :String): Success = {
     Success(None,None)
   }
 

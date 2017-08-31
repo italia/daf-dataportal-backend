@@ -2,15 +2,14 @@ package repositories.dashboard
 
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
-import java.util.Date
+import java.util.{Date, UUID}
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb.{DBObject, casbah}
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, TypeImports}
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success}
-import org.bson.types.ObjectId
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -53,8 +52,10 @@ class DashboardRepositoryProd extends DashboardRepository{
     copyFile.mkdirs()
     val copyFilePath = copyFile.toPath
     Files.copy(upFile.toPath, copyFilePath, StandardCopyOption.REPLACE_EXISTING)
-    val mongoClient = MongoClient(mongoHost, mongoPort)
-    val db = mongoClient("monitor_mdb")
+//    val mongoClient = MongoClient(mongoHost, mongoPort)
+//    val db = mongoClient("monitor_mdb")
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
     val coll = db(tableName)
     if(fileType.toLowerCase.equals("json")){
       val fileString = Source.fromFile(upFile).getLines().mkString
@@ -90,8 +91,8 @@ class DashboardRepositoryProd extends DashboardRepository{
     val fileString = Source.fromFile(upFile).getLines().mkString
     val jsonArray: Option[JsArray] = DashboardUtil.toJson(fileString)
     val readyToBeSaved = DashboardUtil.convertToJsonString(jsonArray)
-    val mongoClient = MongoClient(mongoHost, mongoPort)
-    val db = mongoClient("monitor_mdb")
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
     val coll = db(tableName)
     coll.drop()
     if(fileType.toLowerCase.equals("json")){
@@ -114,8 +115,8 @@ class DashboardRepositoryProd extends DashboardRepository{
   }
 
     def tables() :Seq[Catalog] = {
-      val mongoClient = MongoClient(mongoHost, mongoPort)
-      val db = mongoClient("monitor_mdb")
+      val mongoClient = MongoClient(server, List(credentials))
+      val db = mongoClient(source)
       val collections = db.collectionNames()
       val catalogs = collections.map(x => Catalog(Some(x))).toSeq
       mongoClient.close()
@@ -199,9 +200,9 @@ class DashboardRepositoryProd extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-   // val objectId = new ObjectId(id)
-   // val query = MongoDBObject("_id" -> objectId)
-   val query = MongoDBObject("title" -> id)
+  //  val objectId = new org.bson.types.ObjectId(id)
+    val query = MongoDBObject("id" -> id)
+  // val query = MongoDBObject("title" -> id)
     val result = coll.findOne(query)
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(result)
@@ -216,24 +217,104 @@ class DashboardRepositoryProd extends DashboardRepository{
 
   def saveDashboard(dashboard: Dashboard): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
-    val json: JsValue = Json.toJson(dashboard)
-    val id = dashboard._id.get
-    val query = MongoDBObject("_id" -> id)
-    val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+    val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    val inserted: casbah.TypeImports.WriteResult = coll.update(query,obj,true)
+    id match {
+      case Some(x) => {
+        val json: JsValue = Json.toJson(dashboard)
+        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        val query = MongoDBObject("id" -> x)
+        coll.update(query, obj)
+      }
+      case None => {
+        val uid = UUID.randomUUID().toString;
+        val newDash = dashboard.copy(id = Some(uid))
+        val json: JsValue = Json.toJson(newDash)
+        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        coll.save(obj)}
+    }
     val response = Success(Some("Inserted"),Some("Inserted"))
     response
 
   }
 
   def deleteDashboard(dashboardId: String): Success = {
-    val query = MongoDBObject("_id" -> dashboardId)
+    val query = MongoDBObject("id" -> dashboardId)
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
+    val removed = coll.remove(query)
+    val response = Success(Some("Deleted"),Some("Deleted"))
+    response
+  }
+
+  def stories(user :String): Seq[UserStory] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("stories")
+    val results = coll.find().toList
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(results)
+    val json = Json.parse(jsonString)
+    println(json)
+    val storiesJsResult = json.validate[Seq[UserStory]]
+    val stories = storiesJsResult match {
+      case s: JsSuccess[Seq[UserStory]] => s.get
+      case e: JsError => Seq()
+    }
+    stories
+  }
+
+  def storyById(user: String, id: String) :UserStory = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("stories")
+    //  val objectId = new org.bson.types.ObjectId(id)
+    val query = MongoDBObject("id" -> id)
+    // val query = MongoDBObject("title" -> id)
+    val result = coll.findOne(query)
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(result)
+    val json = Json.parse(jsonString)
+    val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
+    val story: UserStory = storyJsResult match {
+      case s: JsSuccess[UserStory] => s.get
+      case e: JsError => UserStory(None,None,None,None,None,None,None,None,None)
+    }
+    story
+  }
+
+  def saveStory(story: UserStory): Success = {
+    import ftd_api.yaml.ResponseWrites.UserStoryWrites
+    val id = story.id
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("stories")
+    id match {
+      case Some(x) => {
+        val json: JsValue = Json.toJson(story)
+        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        val query = MongoDBObject("id" -> x)
+        coll.update(query, obj)
+      }
+      case None => {
+        val uid = UUID.randomUUID().toString;
+        val newStory = story.copy(id = Some(uid))
+        val json: JsValue = Json.toJson(newStory)
+        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        coll.save(obj)}
+    }
+    val response = Success(Some("Inserted"),Some("Inserted"))
+    response
+  }
+
+  def deleteStory(storyId :String): Success = {
+    val query = MongoDBObject("id" -> storyId)
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("stories")
     val removed = coll.remove(query)
     val response = Success(Some("Deleted"),Some("Deleted"))
     response

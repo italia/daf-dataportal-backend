@@ -442,7 +442,27 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
-  "/dashboards/save":
+  "/dashboards":
+    get:
+      tags:
+      - Dashboard
+      summary: Get Dashboards
+      operationId: dashboards
+      produces:
+        - application/json
+      consumes:
+         - application/json
+      responses:
+        200:
+          description: Success Message
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Dashboard'
+        default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
     post:
       tags:
       - Dashboard
@@ -468,27 +488,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/dashboards":
-    get:
-      tags:
-      - Dashboard
-      summary: Get Dashboards
-      operationId: dashboards
-      produces:
-        - application/json
-      consumes:
-         - application/json
-      responses:
-        200:
-          description: Success Message
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/Dashboard'
-        default:
-            description: Unexpected error
-            schema:
-              $ref: '#/definitions/Error'
   "/dashboards/{dashboard_id}":
     get:
       tags:
@@ -514,7 +513,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/dashboards/{dashboard_id}":
     delete:
       tags:
       - Dashboard
@@ -539,443 +537,103 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/ckan/create/dataset":
-    tags:
-      - Ckan
-    post:
-      description: Create ckan dataset for ....
-      operationId: createckandataset
+  "/user-stories":
+    get:
+      tags:
+      - UserStory
+      summary: Get UserStories
+      operationId: stories
       produces:
-      - application/json
-      parameters:
-      - name: dataset
-        in: body
-        description: Dataset Catalog
-        required: true
-        schema:
-          #$ref: "./imports/dataset.yaml#/definitions/Dataset"
-          $ref: '#/definitions/Dataset'
+        - application/json
+      consumes:
+         - application/json
       responses:
         200:
-          description: Success
+          description: Success Message
           schema:
-            type: object
-            $ref: '#/definitions/Success'
-        401:
-          description: Error Message
+            type: array
+            items:
+              $ref: '#/definitions/UserStory'
+        default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
+    post:
+      tags:
+      - UserStory
+      summary: Save UserStory
+      operationId: savestories
+      produces:
+        - application/json
+      consumes:
+         - application/json
+      parameters:
+      - name: story
+        in: body
+        description: Dashboard to Save
+        required: true
+        schema:
+          $ref: '#/definitions/UserStory'
+      responses:
+        '200':
+          description: successful operation
           schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Success"
         default:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/ckan/datasets/{dataset_id}":
-    tags:
-      - Ckan
+  "/user-stories/{story_id}":
     get:
-      description: Get ckan dataset for ....
-      operationId: getckandatasetbyid
+      tags:
+      - UserStory
+      summary: get dashboard by id
+      operationId: storiesbyid
+      consumes:
+         - application/json
       produces:
-      - application/json
+         - application/json
       parameters:
-      - name: dataset_id
+      - name: story_id
         in: path
-        description: DatasetId
+        description: id of dashboard
         required: true
         type: string
       responses:
-        200:
-          description: Dataset
+        '200':
+          description: successful operation
           schema:
-            type: object
-            $ref: '#/definitions/Dataset'
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/UserStory"
         default:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/ckan/create/organization":
-    tags:
-      - Ckan
-    post:
-      description: Create ckan organization
-      operationId: createckanorganization
+    delete:
+      tags:
+      - UserStory
+      summary: delete by id
+      operationId: deletestory
+      consumes:
+         - application/json
       produces:
-      - application/json
+         - application/json
       parameters:
-      - name: organization
-        in: body
-        description: Organization
+      - name: story_id
+        in: path
+        description: id of dashboard
         required: true
-        schema:
-          $ref: '#/definitions/Organization'
+        type: string
       responses:
-        200:
-          description: Success
+        '200':
+          description: successful operation
           schema:
-            type: object
-            $ref: '#/definitions/Success'
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
+            "$ref": "#/definitions/Success"
         default:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
 
-  "/ckan/update/organization/{org_id}":
-    tags:
-      - Ckan
-    put:
-      description: Update ckan organization
-      operationId: updateckanorganization
-      produces:
-      - application/json
-      parameters:
-      - name: org_id
-        in: path
-        description: OrganizationId or Name
-        required: true
-        type: string
-      - name: organization
-        in: body
-        description: Organization
-        required: true
-        schema:
-          $ref: '#/definitions/Organization'
-      responses:
-        200:
-          description: Success
-          schema:
-            type: object
-            $ref: '#/definitions/Success'
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/organization/{org_id}":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan organization
-      operationId: getckanorganizationbyid
-      produces:
-      - application/json
-      parameters:
-      - name: org_id
-        in: path
-        description: OrganizationId or Name
-        required: true
-        type: string
-      responses:
-        200:
-          description: Dataset
-          schema:
-            type: object
-            $ref: '#/definitions/Organization'
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/organizations":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan organization list
-      operationId: getckanorganizationList
-      produces:
-      - application/json
-      responses:
-        200:
-          description: An array of Organization names
-          schema:
-            type: array
-            items:
-              type: string
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/userOrganizations/{username}":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan organizations created by the user
-      operationId: getckanuserorganizationList
-      produces:
-      - application/json
-      parameters:
-      - name: username
-        in: path
-        description: Username
-        required: true
-        type: string
-      responses:
-        200:
-          description: An array of Organizations
-          schema:
-            type: array
-            items:
-              "$ref": "#/definitions/Organization"
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/datasets":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan dataset list
-      operationId: getckandatasetList
-      produces:
-      - application/json
-      responses:
-        200:
-          description: An array of Dataset names
-          schema:
-            type: array
-            items:
-              type: string
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/datasetsWithResources":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan dataset list with all infos associated.
-      operationId: getckandatasetListWithRes
-      produces:
-      - application/json
-      parameters:
-      - name: limit
-        in: query
-        description: If given, the list of datasets will be broken into pages
-        type: integer
-      - name: offset
-        in: query
-        description: When limit is given, the offset to start returning packages from
-        type: integer
-      responses:
-        200:
-          description: List of datasets. The list is sorted most-recently-modified first.
-          schema:
-            type: array
-            items:
-              "$ref": "#/definitions/Dataset"
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/searchDataset":
-    tags:
-      - Ckan
-    get:
-      description: Search ckan datasets with all infos associated.
-      operationId: searchdataset
-      produces:
-      - application/json
-      parameters:
-      - name: q
-        in: query
-        description: The solr query
-        type: string
-      - name: sort
-        in: query
-        description: Sorting of the search results
-        type: string
-      - name: rows
-        in: query
-        description: The number of matching rows to return
-        type: integer
-      responses:
-        200:
-          description: List of datasets. The list is sorted most-recently-modified first.
-          schema:
-            type: array
-            items:
-              "$ref": "#/definitions/Dataset"
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/create/user":
-    tags:
-      - Ckan
-    post:
-      description: Create a user
-      operationId: createckanuser
-      produces:
-      - application/json
-      parameters:
-      - name: user
-        in: body
-        description: User
-        required: true
-        schema:
-          $ref: '#/definitions/User'
-      responses:
-        200:
-          description: Success
-          schema:
-            type: object
-            $ref: '#/definitions/Success'
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/users":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan user list
-      operationId: getckanuserList
-      produces:
-      - application/json
-      responses:
-        200:
-          description: An array of Users
-          schema:
-            type: array
-            items:
-              "$ref": "#/definitions/User"
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/verifyCredentials":
-      tags:
-        - Ckan
-      post:
-        description: Verify username & pwd
-        operationId: verifycredentials
-        produces:
-        - application/json
-        parameters:
-        - name: credentials
-          in: body
-          description: Credentials
-          required: true
-          schema:
-            $ref: '#/definitions/Credentials'
-        responses:
-          200:
-            description: Success
-            schema:
-              type: object
-              $ref: '#/definitions/Success'
-          401:
-            description: Error Message
-            schema:
-              $ref: '#/definitions/Error'
-          default:
-            description: Unexpected error
-            schema:
-              $ref: '#/definitions/Error'
-  "/ckan/user/{username}":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan user info (from mongodb)
-      operationId: getckanuser
-      produces:
-      - application/json
-      parameters:
-      - name: username
-        in: path
-        description: Username
-        required: true
-        type: string
-      responses:
-        200:
-          description: User
-          schema:
-            type: object
-            $ref: '#/definitions/User'
-        401:
-          description: Error Message
-          schema:
-            $ref: '#/definitions/Error'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-  "/ckan/multi":
-    tags:
-      - Ckan
-    get:
-      description: Get ckan dataset for ....
-      operationId: testmulti
-      produces:
-      - application/json
-      responses:
-        200:
-          description: DatasetTest
-          schema:
-            type: object
-            $ref: '#/definitions/DatasetTest'
-        401:
-          description: Error Message
-          schema:
-            type: object
-            properties:
-               error:
-                  type: string
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
 definitions:
-  DatasetTest:
-    properties:
-       test_multi:
-         type: string
-         description: Name of catalog
-       groups:
-        type: array
-        items:
-          $ref: '#/definitions/Group'
   Catalog:
     properties:
        name:
@@ -1015,274 +673,6 @@ definitions:
       catalog_name:
          type : string
          description : Name of catalog
-  Dataset:
-    #type: Object
-    properties:
-      alternate_identifier:
-        type: string
-      author:
-        type: string
-      author_email:
-        type: string
-      #conforms_to:
-       # type: string
-      #contact:
-        #type: string
-      #creation_date:
-        #type: string
-      #creator_identifier:
-        #type: string
-      #creator_name:
-        #type: string
-      #creator_user_id:
-        #type: string
-      #encoding:
-        #type: string
-      #fields_description:
-        #type: string
-      frequency:
-        type: string
-        required: true
-      #geographical_geonames_url:
-        #type: string
-      #geographical_name:
-        #type: string
-      groups:
-        type: array
-        items:
-          $ref: '#/definitions/Group'
-      holder_identifier:
-        type: string
-        required: true
-      holder_name:
-        type: string
-        required: true
-      identifier:
-        type: string
-        required: true
-
-      #is_version_of:
-        #type: string
-      #isopen:
-        #type: boolean
-      #issued:
-        #type: string
-      #language:
-        #type: string
-      license_id:
-        type: string
-      license_title:
-        type: string
-      #maintainer:
-        #type: string
-      #maintainer_email:
-        #type: string
-      #metadata_created:
-        #type: string
-      #metadata_modified:
-        #type: string
-      modified:
-        type: string
-        required: true
-      name:
-        type: string
-        required: true
-      notes:
-        type: string
-        required: true
-      #num_resources:
-        #type: integer
-      #num_tags:
-        #type: integer
-      organization:
-        $ref: '#/definitions/Organization'
-      owner_org:
-        type: string
-      #private:
-        #type: boolean
-      publisher_identifier:
-        type: string
-        required: true
-      publisher_name:
-        type: string
-        required: true
-      relationships_as_object:
-        type: array
-        items:
-          $ref: '#/definitions/Relationship'
-      relationships_as_subject:
-        type: array
-        items:
-          $ref: '#/definitions/Relationship'
-      resources:
-        type: array
-        items:
-          $ref: '#/definitions/Resource'
-      #revision_id:
-        #type: string
-      #site_url:
-       # type: string
-      #state:
-        #type: string
-      tags:
-        type: array
-        items:
-          $ref: '#/definitions/Tag'
-      #temporal_end:
-        #type: string
-      #temporal_start:
-        #type: string
-      theme:
-        type: string
-        required: true
-      #title:
-        #type: string
-      #type:
-        #type: string
-      #url:
-        #type: string
-      #version:
-        #type: string
-  Group:
-    type: object
-    properties:
-      display_name:
-        type: string
-      description:
-        type: string
-      image_display_url:
-        type: string
-      title:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-  Organization:
-    type: object
-    properties:
-      approval_status:
-        type: string
-      created:
-        type: string
-      description:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      image_url:
-        type: string
-      is_organization:
-        type: boolean
-      name:
-        type: string
-        required: true
-      revision_id:
-        type: string
-      state:
-        type: string
-      title:
-        type: string
-      type:
-        type: string
-      users:
-        type: array
-        items:
-          $ref: '#/definitions/UserOrg'
-  Relationship:
-    type: object
-    properties:
-      subject:
-        type: string
-      object:
-        type: string
-      type:
-        type: string
-      comment:
-        type: string
-  Resource:
-    type: object
-    properties:
-      cache_last_updated:
-        type: string
-      cache_url:
-        type: string
-      created:
-        type: string
-      datastore_active:
-        type: boolean
-      description:
-        type: string
-      distribution_format:
-        type: string
-      format:
-        type: string
-      hash:
-        type: string
-      id:
-        type: string
-      last_modified:
-        type: string
-      mimetype:
-        type: string
-      mimetype_inner:
-        type: string
-      name:
-        type: string
-      package_id:
-        type: string
-      position:
-        type: integer
-      resource_type:
-        type: string
-      revision_id:
-        type: string
-      size:
-        type: integer
-      state:
-        type: string
-      url:
-        type: string
-      #url_type:
-        #type: string
-      #webstore_last_updated:
-        #type: string
-      #webstore_url:
-        #type: string
-  Tag:
-    type: object
-    properties:
-      display_name:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      state:
-        type: string
-      vocabulary_id:
-        type: string
-  User:
-    type: object
-    properties:
-      name:
-        type: string
-      email:
-        type: string
-      password:
-        type: string
-      fullname:
-        type: string
-      about:
-        type: string
-  UserOrg:
-    type: object
-    properties:
-      name:
-        type: string
-      capacity:
-        type: string
   Credentials:
     type: object
     properties:
@@ -1330,11 +720,52 @@ definitions:
       status:
         type: integer
         format: int32
-      _id:
+      id:
         type: string
-      #  $ref: '#/definitions/ObjectId'
-  ObjectId:
+       # $ref: '#/definitions/Oid'
+  UserStory:
+    type: object
+    properties:
+      id:
+        type: string
+      user:
+        type: string
+      title:
+        type: string
+      published:
+        type: boolean
+      subtitle:
+        type: string
+      graph:
+        $ref: '#/definitions/Graph'
+      text:
+        type: string
+      image:
+        $ref: '#/definitions/Image'
+      footer:
+        type:
+          string
+  Oid:
     type: object
     properties:
       $oid:
+        type: string
+  Image:
+    type: object
+    properties:
+      url:
+        type: string
+      caption:
+        type: string
+  Graph:
+    type: object
+    properties:
+      props:
+        $ref: '#/definitions/Props'
+      title:
+        type: string
+  Props:
+    type: object
+    properties:
+      url:
         type: string

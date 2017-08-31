@@ -25,13 +25,13 @@ import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.libs.json.JsValue
 import play.libs.Json
-import services.ckan.CkanRegistry
 import play.api.libs.json.{JsError,JsResult,JsSuccess}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json.{JsArray,JsString}
 import scala.concurrent.Future
 import utils.SecurePasswordHashing
+import repositories.dashboard.DashboardRepository
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -40,7 +40,7 @@ import utils.SecurePasswordHashing
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -63,58 +63,16 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val searchdataset = searchdatasetAction { input: (DistributionLabel, DistributionLabel, ResourceSize) =>
-            val (q, sort, rows) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchdataset
-            val datasetsFuture: Future[JsResult[Seq[Dataset]]] = CkanRegistry.ckanService.searchDatasets(input)
-            val eitherDatasets: Future[Either[String, Seq[Dataset]]] = datasetsFuture.map(result => {
-                result match {
-                    case s: JsSuccess[Seq[Dataset]] => Right(s.get)
-                    case e: JsError => Left("error, no datasets")
-                }
-            })
-            // Getckandatasetbyid200(dataset)
-            eitherDatasets.flatMap {
-                case Right(dataset) => Searchdataset200(dataset)
-                case Left(error) => Searchdataset401(Error(None,Option(error),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchdataset
+        val stories = storiesAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
+            Stories200(DashboardRegistry.dashboardService.stories("ale"))
+           // NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
         }
-        val getckanorganizationbyid = getckanorganizationbyidAction { (org_id: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckanorganizationbyid
-            val orgFuture: Future[JsResult[Organization]] = CkanRegistry.ckanService.getOrganization(org_id)
-            val eitherOrg: Future[Either[String, Organization]] = orgFuture.map(result => {
-                result match {
-                    case s: JsSuccess[Organization] => Right(s.get)
-                    case e: JsError => Left("error no organization with that id")
-                }
-            })
-
-            eitherOrg.flatMap {
-                case Right(organization) => Getckanorganizationbyid200(organization)
-                case Left(error) => Getckanorganizationbyid401(Error(None,Option(error),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanorganizationbyid
-        }
-        val getckandatasetList = getckandatasetListAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckandatasetList
-            val eitherOut: Future[Either[Error, Seq[String]]] = CkanRegistry.ckanService.getDatasets().map(result =>{
-                result match {
-                    case s: JsArray => Right(s.as[Seq[String]])
-                    case _ => Left(GENERIC_ERROR)
-                }
-            })
-
-            eitherOut.flatMap {
-                case Right(list) => GetckandatasetList200(list)
-                case Left(error) => GetckandatasetList401(error)
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckandatasetList
-        }
-        val testmulti = testmultiAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.testmulti
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.testmulti
+        val savestories = savestoriesAction { (story: UserStory) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
+            Savestories200(DashboardRegistry.dashboardService.saveStory(story))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
@@ -155,68 +113,32 @@ package ftd_api.yaml {
             AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
-        val getckanuserList = getckanuserListAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckanuserList
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuserList
+        val storiesbyid = storiesbyidAction { (story_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
+            Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
-        val verifycredentials = verifycredentialsAction { (credentials: Credentials) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.verifycredentials
-            //NotImplementedYet
-            //val jsonv : JsValue = ResponseWrites.DatasetWrites.writes(dataset)
-            CkanRegistry.ckanService.verifyCredentials(credentials) match {
-                case true => Verifycredentials200(Success(Some("Success"), Some("User verified")))
-                case _ =>  Verifycredentials401(Error(None,Some("Wrong Username or Password"),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.verifycredentials
-        }
-        val createckandataset = createckandatasetAction { (dataset: Dataset) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckandataset
-            val jsonv : JsValue = ResponseWrites.DatasetWrites.writes(dataset)
-            CkanRegistry.ckanService.createDataset(jsonv)flatMap {
-                case "true" => Createckandataset200(Success(Some("Success"), Some("dataset created")))
-                case _ =>  Createckandataset401(Error(None,Some("An Error occurred"),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.createckandataset
+        val deletestory = deletestoryAction { (story_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletestory
+            Deletestory200(DashboardRegistry.dashboardService.deleteStory(story_id))
+           // Delete
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deletestory
         }
         val dashboards = dashboardsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
-        val getckandatasetListWithRes = getckandatasetListWithResAction { input: (ResourceSize, ResourceSize) =>
-            val (limit, offset) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckandatasetListWithRes
-            val datasetsFuture: Future[JsResult[Seq[Dataset]]] = CkanRegistry.ckanService.getDatasetsWithRes(input)
-            val eitherDatasets: Future[Either[String, Seq[Dataset]]] = datasetsFuture.map(result => {
-                result match {
-                    case s: JsSuccess[Seq[Dataset]] => Right(s.get)
-                    case e: JsError => Left("error, no datasets")
-                }
-            })
-            // Getckandatasetbyid200(dataset)
-            eitherDatasets.flatMap {
-                case Right(dataset) => GetckandatasetListWithRes200(dataset)
-                case Left(error) => GetckandatasetListWithRes401(Error(None,Option(error),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckandatasetListWithRes
+        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
+            val save = DashboardRegistry.dashboardService.saveDashboard(dashboard)
+            Savedashboard200(save)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val getckanuserorganizationList = getckanuserorganizationListAction { (username: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckanuserorganizationList
-            //NotImplementedYet
-            val orgsFuture: Future[JsResult[Seq[Organization]]] = CkanRegistry.ckanService.getUserOrganizations(username)
-            val eitherOrgs: Future[Either[String, Seq[Organization]]] = orgsFuture.map(result => {
-                result match {
-                    case s: JsSuccess[Seq[Organization]] => Right(s.get)
-                    case e: JsError => Left("error, no organization")
-                }
-            })
-            // Getckandatasetbyid200(dataset)
-            eitherOrgs.flatMap {
-                case Right(orgs) => GetckanuserorganizationList200(orgs)
-                case Left(error) => GetckanuserorganizationList401(Error(None,Option(error),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuserorganizationList
+        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
+            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
         }
         val deletedashboard = deletedashboardAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletedashboard
@@ -229,22 +151,6 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
             AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
-        }
-        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
-            val save = DashboardRegistry.dashboardService.saveDashboard(dashboard)
-            Savedashboard200(save)
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
-        }
-        val createckanorganization = createckanorganizationAction { (organization: Organization) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckanorganization
-            val jsonv : JsValue = ResponseWrites.OrganizationWrites.writes(organization)
-
-            CkanRegistry.ckanService.createOrganization(jsonv)flatMap {
-                case "true" => Createckanorganization200(Success(Some("Success"), Some("organization created")))
-                case _ =>  Createckanorganization401(GENERIC_ERROR)
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.createckanorganization
         }
         val catalogDatasetCount = catalogDatasetCountAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -260,49 +166,11 @@ package ftd_api.yaml {
             CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
         }
-        val updateckanorganization = updateckanorganizationAction { input: (String, Organization) =>
-            val (org_id, organization) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateckanorganization
-            //NotImplementedYet
-            val jsonv : JsValue = ResponseWrites.OrganizationWrites.writes(organization)
-
-            CkanRegistry.ckanService.updateOrganization(org_id,jsonv)flatMap {
-                case "true" => Updateckanorganization200(Success(Some("Success"), Some("organization updated")))
-                case _ =>  Updateckanorganization401(GENERIC_ERROR)
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateckanorganization
-        }
-        val getckanuser = getckanuserAction { (username: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckanuser
-            //NotImplementedYet
-            val userResult: JsResult[User] = CkanRegistry.ckanService.getMongoUser(username)
-            val eitherUser: Either[String, User] = userResult match {
-                    case s: JsSuccess[User] => Right(s.get)
-                    case e: JsError => Left("error no user with that name")
-                }
-
-
-            eitherUser match {
-                case Right(user) => Getckanuser200(user)
-                case Left(error) => Getckanuser401(Error(None,Option(error),None))
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanuser
-        }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
             AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
-        }
-        val createckanuser = createckanuserAction { (user: User) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckanuser
-            //NotImplementedYet
-            val jsonv : JsValue = ResponseWrites.UserWrites.writes(user)
-            CkanRegistry.ckanService.createUser(jsonv)flatMap {
-                case "true" => Createckanuser200(Success(Some("Success"), Some("user created")))
-                case _ =>  Createckanuser401(GENERIC_ERROR)
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.createckanuser
         }
         val updateTable = updateTableAction { input: (File, String, String, String) =>
             val (upfile, tableName, fileType, apikey) = input
@@ -311,44 +179,12 @@ package ftd_api.yaml {
             UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
         }
-        val getckandatasetbyid = getckandatasetbyidAction { (dataset_id: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckandatasetbyid
-            val datasetFuture: Future[JsResult[Dataset]] = CkanRegistry.ckanService.testDataset(dataset_id)
-            val eitherDataset: Future[Either[String, Dataset]] = datasetFuture.map(result => {
-                result match {
-                    case s: JsSuccess[Dataset] => Right(s.get)
-                    case e: JsError => Left("error no dataset with that id")
-                }
-            })
-
-            eitherDataset.flatMap {
-                case Right(dataset) => Getckandatasetbyid200(dataset)
-                case Left(error) => Getckandatasetbyid401(Error(None,Option(error),None))
-            }
-           // NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckandatasetbyid
-        }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogGroup(catalogName)
             CatalogDistrubutionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
-        }
-        val getckanorganizationList = getckanorganizationListAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getckanorganizationList
-            val eitherOut: Future[Either[Error, Seq[String]]] = CkanRegistry.ckanService.getOrganizations().map(result =>{
-                result match {
-                    case s: JsArray => Right(s.as[Seq[String]])
-                    case _ => Left(GENERIC_ERROR)
-                }
-            })
-
-            eitherOut.flatMap {
-                case Right(list) => GetckanorganizationList200(list)
-                case Left(error) => GetckanorganizationList401(error)
-            }
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getckanorganizationList
         }
         val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
@@ -362,50 +198,6 @@ package ftd_api.yaml {
             CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
-    
-     // Dead code for absent methodFtd_apiYaml.getmonitorCatalogs
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
-            val catalogs = ComponentRegistry.monitorService.allCatalogs()
-            GetmonitorCatalogs200(catalogs)
-            //   NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getmonitorCatalogs
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.testauto
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.testauto
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.testauto
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.dashboardsid
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsid
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsid
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.dashboardsbyid
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
-            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.createckandatase
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createckandatase
-            val jsonval: JsValue = play.api.libs.json.Json.parse( Json toJson dataset )
-            ComponentRegistry.monitorService.createDataset(jsonval)
-            Createckandataset200()
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.createckandataset
-     */
-
     
     }
 }

@@ -2,7 +2,7 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
 
@@ -50,6 +50,22 @@ trait DashboardServiceComponent {
 
     def deleteDashboard(dashboardId :String): Success = {
       dashboardRepository.deleteDashboard(dashboardId)
+    }
+
+    def stories(user :String): Seq[UserStory] = {
+      dashboardRepository.stories(user)
+    }
+
+    def storyById(user: String, id: String) :UserStory = {
+      dashboardRepository.storyById(user,id)
+    }
+
+    def saveStory(story: UserStory): Success = {
+      dashboardRepository.saveStory(story)
+    }
+
+    def deleteStory(storyId :String): Success = {
+      dashboardRepository.deleteStory(storyId)
     }
   }
 }
