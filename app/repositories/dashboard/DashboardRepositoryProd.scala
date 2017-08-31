@@ -292,11 +292,15 @@ class DashboardRepositoryProd extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
+    var saved = ""
+    var operation = ""
     id match {
       case Some(x) => {
         val json: JsValue = Json.toJson(story)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
         val query = MongoDBObject("id" -> x)
+        saved = id.get
+        operation = "updated"
         coll.update(query, obj)
       }
       case None => {
@@ -304,9 +308,12 @@ class DashboardRepositoryProd extends DashboardRepository{
         val newStory = story.copy(id = Some(uid))
         val json: JsValue = Json.toJson(newStory)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        saved = id.get
+        operation = "inserted"
         coll.save(obj)}
+
     }
-    val response = Success(Some("Inserted"),Some("Inserted"))
+    val response = Success(Some(saved),Some(operation))
     response
   }
 
