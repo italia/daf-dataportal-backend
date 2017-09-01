@@ -51,10 +51,11 @@ object DashboardUtil {
     val data: mutable.Seq[Array[String]] = lines.slice(1, (lines.length))
     val result: mutable.Seq[Map[String, JsValue]] = data.map{ xs =>
       val jsons = xs.zipWithIndex.map{case (value , in) =>{
-        val toCast: Any = Try(value.toInt).getOrElse(value)
+        val toCast: Any = Try(value.toInt).getOrElse(Try(value.toDouble).getOrElse(value))
         val casted: JsValue = toCast match {
           case x: Int => JsNumber(x)
           case y: String => JsString(y)
+          case z: Double => JsNumber(z)
         }
         (headers(in) -> casted)
       }
