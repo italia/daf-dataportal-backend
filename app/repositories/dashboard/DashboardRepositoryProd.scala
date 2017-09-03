@@ -6,6 +6,7 @@ import java.util.{Date, UUID}
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import com.mongodb
 import com.mongodb.{DBObject, casbah}
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, TypeImports}
@@ -230,7 +231,7 @@ class DashboardRepositoryProd extends DashboardRepository{
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        coll.update(query, obj)
+        val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
       }
       case None => {
         val uid = UUID.randomUUID().toString;
