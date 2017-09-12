@@ -133,15 +133,6 @@ class DashboardRepositoryProd extends DashboardRepository{
     val request = wsClient.url(metabasePublic).get()
     val requestIframes = wsClient.url(supersetPublic).get()
 
-    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
-      val json = response.json.as[Seq[JsValue]]
-      json.map(x => {
-        val uuid = (x \ "public_uuid").get.as[String]
-        val title = (x \ "name").get.as[String]
-        val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title))
-      })
-    }
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
       val json = response.json.as[Seq[JsValue]]
@@ -153,6 +144,18 @@ class DashboardRepositoryProd extends DashboardRepository{
         DashboardIframes(Some(url), Some("superset"), Some(title))
       })
     }
+
+    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
+      val json = response.json.as[Seq[JsValue]]
+      json.map(x => {
+        val uuid = (x \ "public_uuid").get.as[String]
+        val title = (x \ "name").get.as[String]
+        val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+        DashboardIframes(Some(url), Some("metabase"), Some(title))
+      })
+    }
+
+
 
     val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase,superset)
 

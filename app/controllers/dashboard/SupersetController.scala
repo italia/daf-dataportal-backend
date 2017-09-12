@@ -7,9 +7,11 @@ import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
+import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 
 
@@ -22,6 +24,8 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   val URL : String = conf.getString("superset.url").get
   val user = conf.getString("superset.user").get
   val pass = conf.getString("superset.pass").get
+
+  val local = conf.getString("app.local.url").get
 
   def getIframes() = Action.async { implicit request =>
     val iframeJson = ws.url("http://localhost:8088/slicemodelview/api/read")
@@ -49,9 +53,8 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
     }
   }
 
-  def publicSlice(user :String) =  Action.async { implicit request =>
+  def publicSlice2(user :String) =  Action.async { implicit request =>
     val sessionCookie = cache.get[String]("superset." + user).get
-    println(sessionCookie)
     val responseWs = ws.url(URL + "slicemodelview/api/read")
       .withHeaders("cookie" -> sessionCookie).get()
     responseWs.map { response =>
@@ -61,4 +64,35 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
     }
   }
 
+  def publicSlice(user :String) = Action.async { implicit request =>
+    val sessionCookie = cache.get[String]("superset." + user).getOrElse("test")
+    val responseWs = ws.url(URL + "slicemodelview/api/read")
+      .withHeaders("cookie" -> sessionCookie).get()
+
+    responseWs.map { response =>
+      if (response.status == 401) {
+        val sessionFuture: Future[String] = ws.url(local + "/superset/session").get().map(_.body)
+
+        val result: Future[WSResponse] = for {
+          session <- sessionFuture
+          cards <- ws.url(URL + "slicemodelview/api/read")
+            .withHeaders(("cookie", session)).get()
+        } yield cards
+
+        //val responseTry: Try[WSResponse] = Await.ready(result, 3 seconds).value.get
+
+        val rr: WSResponse = Await.result(result, 10 seconds)
+
+      //  val jsonResponse: JsValue = responseTry match {
+      //    case Success(v) => (v.json \ "result").get
+      //    case Failure(_) => throw new RuntimeException("error")
+      //  }
+      //  Ok(jsonResponse)
+        val rrjson = (rr.json \ "result").get
+        Ok(rrjson)
+      } else {
+        Ok((response.json \ "result").get)
+      }
+    }
+  }
 }

@@ -41,8 +41,13 @@ object DashboardUtil {
     SEPARATORS(max._2)
   }
 
+
   def trasformMap(file :File): Seq[Map[String,JsValue]] = {
-    val header = Source.fromFile(file).getLines().toList.head
+    // val header = Source.fromFile(file).getLines().toList.head
+    //  val separator = inferSeparator(header)
+    val src = Source.fromFile(file)
+    val it = src.getLines
+    val header = it.next()
     val separator = inferSeparator(header)
     val reader = new CSVReader(new FileReader(file), separator)
     val csvLines: util.List[Array[String]] = reader.readAll
@@ -63,6 +68,7 @@ object DashboardUtil {
       }
       jsons.toMap
     }
+    src.close()
     result.toSeq
   }
 }
