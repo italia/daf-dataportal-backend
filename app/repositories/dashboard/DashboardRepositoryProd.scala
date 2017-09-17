@@ -245,6 +245,7 @@ class DashboardRepositoryProd extends DashboardRepository{
         operation = "inserted"
         coll.save(obj)}
     }
+    mongoClient.close()
     val response = Success(Some(saved),Some(operation))
     response
 
@@ -323,6 +324,7 @@ class DashboardRepositoryProd extends DashboardRepository{
         coll.save(obj)}
 
     }
+    mongoClient.close()
     val response = Success(Some(saved),Some(operation))
     response
   }
