@@ -19,19 +19,12 @@ import javax.inject._
 
 import java.io.File
 
-import scala.math.BigInt
-import play.api.libs.json.JsNumber
+import it.gov.daf.common.authentication.Authentication
+import org.pac4j.play.store.PlaySessionStore
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
-import play.api.libs.json.JsValue
-import play.libs.Json
-import play.api.libs.json.{JsError,JsResult,JsSuccess}
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.libs.json.{JsArray,JsString}
-import scala.concurrent.Future
-import utils.SecurePasswordHashing
-import repositories.dashboard.DashboardRepository
+import play.api.Configuration
+import it.gov.daf.catalogmanager.utilities.WebServiceUtil
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -40,11 +33,12 @@ import repositories.dashboard.DashboardRepository
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
-
+        val configuration: Configuration,
+        val playSessionStore: PlaySessionStore,
         // ----- End of unmanaged code area for injections Ftd_apiYaml
         val messagesApi: MessagesApi,
         lifecycle: ApplicationLifecycle,
@@ -52,6 +46,7 @@ package ftd_api.yaml {
     ) extends Ftd_apiYamlBase {
         // ----- Start of unmanaged code area for constructor Ftd_apiYaml
 
+        Authentication(configuration, playSessionStore)
         val GENERIC_ERROR=Error(None,Some("An Error occurred"),None)
 
         // ----- End of unmanaged code area for constructor Ftd_apiYaml
@@ -65,7 +60,9 @@ package ftd_api.yaml {
         }
         val stories = storiesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
-            Stories200(DashboardRegistry.dashboardService.stories("ale"))
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            Stories200(DashboardRegistry.dashboardService.stories(credentials._1.get))
+            //Stories200(DashboardRegistry.dashboardService.stories("ale"))
            // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
         }
@@ -80,9 +77,11 @@ package ftd_api.yaml {
             DashboardTables200(tables)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardTables
         }
-        val dashboardIframes = dashboardIframesAction { (apikey: String) =>  
+        val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
-            val iframes = DashboardRegistry.dashboardService.iframes("alessandro@teamdigitale.governo.it")
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            //val iframes = DashboardRegistry.dashboardService.iframes("alessandro@teamdigitale.governo.it")
+            val iframes = DashboardRegistry.dashboardService.iframes(credentials._1.get)
             DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
         }
@@ -115,7 +114,9 @@ package ftd_api.yaml {
         }
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
-            Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            Storiesbyid200(DashboardRegistry.dashboardService.storyById(credentials._1.get, story_id))
+            //Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
         val deletestory = deletestoryAction { (story_id: String) =>  
@@ -126,7 +127,9 @@ package ftd_api.yaml {
         }
         val dashboards = dashboardsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
-            Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials._1.get))
+            //Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
         val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  

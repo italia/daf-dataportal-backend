@@ -125,10 +125,10 @@ class DashboardRepositoryProd extends DashboardRepository{
     }
 
 
-  def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
+  def iframes(user :String) :Future[Seq[DashboardIframes]] = {
     val wsClient = AhcWSClient()
-    val metabasePublic = localUrl + "/metabase/public_card/" + metaUser
-    val supersetPublic = localUrl + "/superset/public_slice/" + supersetUser
+    val metabasePublic = localUrl + "/metabase/public_card/" + user
+    val supersetPublic = localUrl + "/superset/public_slice/" + user
 
     val request = wsClient.url(metabasePublic).get()
     val requestIframes = wsClient.url(supersetPublic).get()

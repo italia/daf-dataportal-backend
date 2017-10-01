@@ -25,6 +25,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val userName :Option[String] = playConfig.getString("mongo.username")
   val password :Option[String] = playConfig.getString("mongo.password")
   val database :Option[String] = playConfig.getString("mongo.database")
+
+  val securityManHost :Option[String] = playConfig.getString("security.manager.host")
+
 }
 
 object ConfigReader {
@@ -46,5 +49,7 @@ object ConfigReader {
   def database :String = config.database.getOrElse("monitor_mdb")
   def password :String = config.password.getOrElse("")
   def userName :String = config.userName.getOrElse("")
+  def securityManHost :String = config.securityManHost.getOrElse("xxx")
+
 
 }

@@ -3,6 +3,8 @@ package controllers.dashboard
 
 import javax.inject._
 
+import it.gov.daf.sso.client.LoginClientRemote
+import it.gov.daf.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
@@ -11,6 +13,7 @@ import play.api.libs.ws._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
+import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
@@ -46,6 +49,20 @@ class MetabaseController @Inject() (ws: WSClient,
       }
   }
 
+
+  def publicCard(metauser :String) =  Action.async { implicit request =>
+
+    val sim = SecuredInvocationManager.instance(LoginClientRemote.instance())
+
+    println("wee-->"+URL + "/api/card/public")
+    def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
+      ws.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie","metabase.SESSION_ID="+cookie)).get()
+
+    sim.manageServiceCall( new LoginInfo(metauser,null,"metabase"),callPublicSlice ).map{Ok(_)}
+
+  }
+
+  /*
   def publicCard(metauser :String) =  Action.async { implicit request =>
     val sessionId  = cache.get[String]("metabase." + metauser).getOrElse("test")
     val url = URL + "/api/card/public"
@@ -73,6 +90,6 @@ class MetabaseController @Inject() (ws: WSClient,
       }
 
     }
-  }
+  }*/
 
 }

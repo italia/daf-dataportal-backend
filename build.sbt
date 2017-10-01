@@ -45,7 +45,9 @@ libraryDependencies ++= Seq(
   "org.scalatestplus.play"  %% "scalatestplus-play" % "1.5.1" % Test,
   "org.mongodb" %% "casbah" % "3.1.1",
   "net.sf.opencsv" % "opencsv" % "2.3",
-  "me.lessis" %% "base64" % "0.2.0"
+  "me.lessis" %% "base64" % "0.2.0",
+  "it.gov.daf" %% "common" % "1.0-SNAPSHOT",
+  "com.github.cb372" %% "scalacache-guava" % "0.9.4"
 )
 
 
@@ -57,6 +59,8 @@ resolvers ++= Seq(
   Resolver.mavenLocal,
   "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/"
 )
+
+playScalaCustomTemplateLocation := Some(baseDirectory.value / "templates")
 
 routesGenerator := InjectedRoutesGenerator
 
