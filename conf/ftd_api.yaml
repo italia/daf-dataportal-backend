@@ -13,8 +13,8 @@ info:
     name: Creative Commons 4.0 International
     url: http://creativecommons.org/licenses/by/4.0/
 #host : XXX.XXX.XX.XXX:8000
-#host: datipubblici.default.svc.cluster.local:9000
-host: localhost:9000
+host: datipubblici.default.svc.cluster.local:9000
+#host: localhost:9000
 # will be prefixed to all paths
 basePath: /dati-gov/v1
 produces:
