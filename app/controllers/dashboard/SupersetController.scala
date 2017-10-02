@@ -76,7 +76,8 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
         val result: Future[WSResponse] = for {
           session <- sessionFuture
           cards <- ws.url(URL + "slicemodelview/api/read")
-            .withHeaders(("cookie", session)).get()
+            .withHeaders(("cookie", session))
+            .get()
         } yield cards
 
         //val responseTry: Try[WSResponse] = Await.ready(result, 3 seconds).value.get
