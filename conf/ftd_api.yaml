@@ -716,6 +716,9 @@ definitions:
         format: int32
       id:
         type: string
+      timestamp:
+        type: string
+        format: date-time
        # $ref: '#/definitions/Oid'
   UserStory:
     type: object
@@ -739,6 +742,9 @@ definitions:
       footer:
         type:
           string
+      timestamp:
+        type: string
+        format: date-time
   Oid:
     type: object
     properties:

@@ -3,6 +3,7 @@ package repositories.dashboard
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
+import java.time.ZonedDateTime
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -214,12 +215,12 @@ class DashboardRepositoryProd extends DashboardRepository{
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     val dashboard: Dashboard = dashboardJsResult match {
       case s: JsSuccess[Dashboard] => s.get
-      case e: JsError => Dashboard(None,None,None,None,None,None)
+      case e: JsError => Dashboard(None,None,None,None,None,None,None)
     }
     dashboard
   }
 
-  def saveDashboard(dashboard: Dashboard): Success = {
+  def saveDashboard(dashboard: Dashboard, user :String): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -238,7 +239,8 @@ class DashboardRepositoryProd extends DashboardRepository{
       }
       case None => {
         val uid = UUID.randomUUID().toString;
-        val newDash = dashboard.copy(id = Some(uid))
+        val timestamps = ZonedDateTime.now();
+        val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
         val json: JsValue = Json.toJson(newDash)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
         saved = uid
@@ -292,12 +294,12 @@ class DashboardRepositoryProd extends DashboardRepository{
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None,None,None,None,None,None,None,None,None)
+      case e: JsError => UserStory(None,None,None,None,None,None,None,None,None, None)
     }
     story
   }
 
-  def saveStory(story: UserStory): Success = {
+  def saveStory(story: UserStory, user :String): Success = {
     import ftd_api.yaml.ResponseWrites.UserStoryWrites
     val id = story.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -316,7 +318,8 @@ class DashboardRepositoryProd extends DashboardRepository{
       }
       case None => {
         val uid = UUID.randomUUID().toString;
-        val newStory = story.copy(id = Some(uid))
+        val timestamps = ZonedDateTime.now();
+        val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
         val json: JsValue = Json.toJson(newStory)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
         saved = uid

@@ -67,14 +67,14 @@ class DashboardRepositoryDev extends DashboardRepository{
   }
 
   def dashboards(user :String): Seq[Dashboard] = {
-    Seq(Dashboard(None,None,None,None,None,None))
+    Seq(Dashboard(None,None,None,None,None,None, None))
   }
 
   def dashboardById(user: String, id: String) :Dashboard = {
-    Dashboard(None,None,None,None,None,None)
+    Dashboard(None,None,None,None,None,None, None)
   }
 
-  def saveDashboard(dashboard: Dashboard): Success = {
+  def saveDashboard(dashboard: Dashboard, user :String): Success = {
      Success(None,None)
   }
 
@@ -83,14 +83,14 @@ class DashboardRepositoryDev extends DashboardRepository{
   }
 
   def stories(user :String): Seq[UserStory] = {
-    Seq(UserStory(None,None,None,None,None,None,None,None,None))
+    Seq(UserStory(None,None,None,None,None,None,None,None,None, None))
   }
 
   def storyById(user: String, id: String) :UserStory = {
-    UserStory(None,None,None,None,None,None,None,None,None)
+    UserStory(None,None,None,None,None,None,None,None,None,None)
   }
 
-  def saveStory(story: UserStory): Success = {
+  def saveStory(story: UserStory, user :String): Success = {
     Success(None,None)
   }
 

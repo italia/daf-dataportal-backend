@@ -33,7 +33,7 @@ import it.gov.daf.catalogmanager.utilities.WebServiceUtil
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -68,7 +68,8 @@ package ftd_api.yaml {
         }
         val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
-            Savestories200(DashboardRegistry.dashboardService.saveStory(story))
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            Savestories200(DashboardRegistry.dashboardService.saveStory(story,credentials._1.get))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
@@ -134,7 +135,9 @@ package ftd_api.yaml {
         }
         val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
-            val save = DashboardRegistry.dashboardService.saveDashboard(dashboard)
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val user = credentials._1.get
+            val save = DashboardRegistry.dashboardService.saveDashboard(dashboard, user)
             Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }

@@ -44,8 +44,8 @@ trait DashboardServiceComponent {
       dashboardRepository.dashboardById(user, id)
     }
 
-    def saveDashboard(dashboard: Dashboard): Success = {
-        dashboardRepository.saveDashboard(dashboard)
+    def saveDashboard(dashboard: Dashboard, user :String): Success = {
+        dashboardRepository.saveDashboard(dashboard, user)
     }
 
     def deleteDashboard(dashboardId :String): Success = {
@@ -60,8 +60,8 @@ trait DashboardServiceComponent {
       dashboardRepository.storyById(user,id)
     }
 
-    def saveStory(story: UserStory): Success = {
-      dashboardRepository.saveStory(story)
+    def saveStory(story: UserStory, user :String): Success = {
+      dashboardRepository.saveStory(story, user)
     }
 
     def deleteStory(storyId :String): Success = {
