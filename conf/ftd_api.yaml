@@ -425,12 +425,6 @@ paths:
         operationId: dashboardIframes
         produces:
          - application/json
-        parameters:
-        - name: apikey
-          in: query
-          description: Api key
-          required: true
-          type: string
         responses:
           200:
             description: An array of iFrames

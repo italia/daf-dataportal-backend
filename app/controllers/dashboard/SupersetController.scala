@@ -2,6 +2,8 @@ package controllers.dashboard
 
 import javax.inject._
 
+import it.gov.daf.sso.client.LoginClientRemote
+import it.gov.daf.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
@@ -10,6 +12,8 @@ import play.api.libs.ws._
 import scala.concurrent.{Await, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
+import play.api.libs.ws.ahc.AhcWSClient
+
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
@@ -65,6 +69,20 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   }
 
   def publicSlice(user :String) = Action.async { implicit request =>
+
+    val sim = SecuredInvocationManager.instance(LoginClientRemote.instance())
+
+    def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
+      ws.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
+
+    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json\ "result").get)}
+
+  }
+
+
+
+  /*
+  def publicSlice(user :String) = Action.async { implicit request =>
     val sessionCookie = cache.get[String]("superset." + user).getOrElse("test")
     val responseWs = ws.url(URL + "slicemodelview/api/read")
       .withHeaders("cookie" -> sessionCookie).get()
@@ -95,5 +113,8 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
         Ok((response.json \ "result").get)
       }
     }
-  }
+  }*/
+
+
+
 }

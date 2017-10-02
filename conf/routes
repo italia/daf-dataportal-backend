@@ -28,7 +28,7 @@ GET   /catalogs     controllers.monitor.MonitorQueryController.catalogs
 
 GET /superset/iframes controllers.dashboard.SupersetController.getIframes()
 GET /superset/session   controllers.dashboard.SupersetController.session()
-GET /superset/public_slice/:sessionCookie  controllers.dashboard.SupersetController.publicSlice(sessionCookie :String)
+GET /superset/public_slice/:user  controllers.dashboard.SupersetController.publicSlice(user :String)
 
 GET /metabase/session controllers.dashboard.MetabaseController.session()
 GET /metabase/public_card/:metaUser controllers.dashboard.MetabaseController.publicCard(metaUser :String)
