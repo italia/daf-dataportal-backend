@@ -215,7 +215,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     val dashboard: Dashboard = dashboardJsResult match {
       case s: JsSuccess[Dashboard] => s.get
-      case e: JsError => Dashboard(None,None,None,None,None,None,None)
+      case e: JsError => Dashboard(None,None,None,None,None,None,None,None)
     }
     dashboard
   }

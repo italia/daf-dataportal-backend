@@ -354,6 +354,39 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/dashboard/snapshot/{snapshot_id}":
+      post:
+        tags:
+        - Dashboard
+        summary: Upload snapshot
+        operationId: createSnapshot
+        consumes:
+           - multipart/form-data
+        parameters:
+        - in: formData
+          name: upfile
+          type: file
+          required: true
+          description: The file to upload
+        - name: snapshot_id
+          in: path
+          description: Snapshot identifier
+          required: true
+          type: string
+        - name: apikey
+          in: query
+          description: Api key
+          required: true
+          type: string
+        responses:
+          '200':
+            description: successful operation
+            schema:
+              "$ref": "#/definitions/Success"
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/dashboard/update/{tableName}/{fileType}":
     put:
       tags:
@@ -719,6 +752,8 @@ definitions:
       timestamp:
         type: string
         format: date-time
+      subtitle:
+        type: string
        # $ref: '#/definitions/Oid'
   UserStory:
     type: object
@@ -745,6 +780,8 @@ definitions:
       timestamp:
         type: string
         format: date-time
+      subtitle:
+        type: string
   Oid:
     type: object
     properties:

@@ -67,11 +67,11 @@ class DashboardRepositoryDev extends DashboardRepository{
   }
 
   def dashboards(user :String): Seq[Dashboard] = {
-    Seq(Dashboard(None,None,None,None,None,None, None))
+    Seq(Dashboard(None,None,None,None,None,None, None, None))
   }
 
   def dashboardById(user: String, id: String) :Dashboard = {
-    Dashboard(None,None,None,None,None,None, None)
+    Dashboard(None,None,None,None,None,None, None, None)
   }
 
   def saveDashboard(dashboard: Dashboard, user :String): Success = {
