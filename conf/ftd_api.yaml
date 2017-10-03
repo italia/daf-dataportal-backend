@@ -769,12 +769,12 @@ definitions:
         format: int32
       subtitle:
         type: string
-      graph:
+      graph1:
         $ref: '#/definitions/Graph'
       text:
         type: string
-      image:
-        $ref: '#/definitions/Image'
+      graph2:
+        $ref: '#/definitions/Graph'
       footer:
         type:
           string
