@@ -765,7 +765,8 @@ definitions:
       title:
         type: string
       published:
-        type: boolean
+        type: integer
+        format: int32
       subtitle:
         type: string
       graph:

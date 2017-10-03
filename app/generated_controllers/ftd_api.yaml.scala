@@ -34,7 +34,7 @@ import play.Environment
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                            
+                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -64,7 +64,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createSnapshot
             //println(Environment.simple().rootPath().toString)
             upfile.renameTo(new File("public/img", snapshot_id + ".png"));
-            NotImplementedYet
+            CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
         val stories = storiesAction {  _ =>  
