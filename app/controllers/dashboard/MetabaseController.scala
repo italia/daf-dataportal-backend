@@ -29,7 +29,7 @@ class MetabaseController @Inject() (ws: WSClient,
  // import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val conf = Configuration.load(Environment.simple())
-  val URL : String = conf.getString("metabase.url").get
+  val URL = conf.getString("metabase.url").get
   val metauser = conf.getString("metabase.user").get
   val metapass = conf.getString("metabase.pass").get
 
@@ -56,7 +56,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
     println("wee-->"+URL + "/api/card/public")
     def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
-      ws.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie","metabase.SESSION_ID="+cookie)).get()
+      ws.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
     sim.manageServiceCall( new LoginInfo(metauser,null,"metabase"),callPublicSlice ).map{Ok(_)}
 
