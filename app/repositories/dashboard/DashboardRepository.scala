@@ -16,11 +16,11 @@ trait DashboardRepository {
    def iframes(metaUser :String): Future[Seq[DashboardIframes]]
    def dashboards(user :String): Seq[Dashboard]
    def dashboardById(user: String, id: String) :Dashboard
-   def saveDashboard(dashboard: Dashboard): Success
+   def saveDashboard(dashboard: Dashboard, user :String): Success
    def deleteDashboard(dashboardId :String): Success
    def stories(user :String): Seq[UserStory]
    def storyById(user: String, id: String) :UserStory
-   def saveStory(story: UserStory): Success
+   def saveStory(story: UserStory, user :String): Success
    def deleteStory(storyId :String): Success
 }
 

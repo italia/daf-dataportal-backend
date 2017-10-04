@@ -34,7 +34,8 @@ GET /metabase/session controllers.dashboard.MetabaseController.session()
 GET /metabase/public_card/:metaUser controllers.dashboard.MetabaseController.publicCard(metaUser :String)
 
 
-
+GET         /img/*file      controllers.Assets.versioned(path="/public/img", file: Asset)
 GET         /*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
+
 
 GET   /test controllers.HomeController.index
