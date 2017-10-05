@@ -56,7 +56,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
     println("wee-->"+URL + "/api/card/public")
     def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
-      ws.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
+      wsClient.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
     sim.manageServiceCall( new LoginInfo(metauser,null,"metabase"),callPublicSlice ).map{Ok(_)}
 

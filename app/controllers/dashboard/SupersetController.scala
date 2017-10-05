@@ -73,7 +73,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
     val sim = SecuredInvocationManager.instance(LoginClientRemote.instance())
 
     def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
-      ws.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
+      wsClient.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
 
     sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json\ "result").get)}
 
