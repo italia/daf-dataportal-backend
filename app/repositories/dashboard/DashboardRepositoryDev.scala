@@ -82,7 +82,7 @@ class DashboardRepositoryDev extends DashboardRepository{
     Success(None,None)
   }
 
-  def stories(user :String): Seq[UserStory] = {
+  def stories(user :String, status :Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
     Seq(UserStory(None,None,None,None,None,None,None,None,None, None))
   }
 

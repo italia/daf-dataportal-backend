@@ -52,8 +52,8 @@ trait DashboardServiceComponent {
       dashboardRepository.deleteDashboard(dashboardId)
     }
 
-    def stories(user :String): Seq[UserStory] = {
-      dashboardRepository.stories(user)
+    def stories(user :String, status: Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
+      dashboardRepository.stories(user, status, page, limit)
     }
 
     def storyById(user: String, id: String) :UserStory = {

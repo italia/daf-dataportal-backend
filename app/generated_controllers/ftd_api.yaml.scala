@@ -34,7 +34,7 @@ import play.Environment
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                    
+                                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -67,10 +67,12 @@ package ftd_api.yaml {
             CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
-        val stories = storiesAction {  _ =>  
+        val stories = storiesAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
+            val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-            Stories200(DashboardRegistry.dashboardService.stories(credentials._1.get))
+            // Temporary without authorization
+            //val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            Stories200(DashboardRegistry.dashboardService.stories("unknown", status, page, limit))
             //Stories200(DashboardRegistry.dashboardService.stories("ale"))
            // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
@@ -124,8 +126,9 @@ package ftd_api.yaml {
         }
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-            Storiesbyid200(DashboardRegistry.dashboardService.storyById(credentials._1.get, story_id))
+            //val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            // Temporary removed
+            Storiesbyid200(DashboardRegistry.dashboardService.storyById("", story_id))
             //Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
@@ -135,7 +138,8 @@ package ftd_api.yaml {
            // Delete
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletestory
         }
-        val dashboards = dashboardsAction {  _ =>  
+        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
+            val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
             Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials._1.get))

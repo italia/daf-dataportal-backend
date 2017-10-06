@@ -18,7 +18,7 @@ trait DashboardRepository {
    def dashboardById(user: String, id: String) :Dashboard
    def saveDashboard(dashboard: Dashboard, user :String): Success
    def deleteDashboard(dashboardId :String): Success
-   def stories(user :String): Seq[UserStory]
+   def stories(user :String, status :Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory]
    def storyById(user: String, id: String) :UserStory
    def saveStory(story: UserStory, user :String): Success
    def deleteStory(storyId :String): Success
