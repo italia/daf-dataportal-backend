@@ -126,8 +126,9 @@ package ftd_api.yaml {
         }
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-            Storiesbyid200(DashboardRegistry.dashboardService.storyById(credentials._1.get, story_id))
+            //val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            // Temporary removed
+            Storiesbyid200(DashboardRegistry.dashboardService.storyById("", story_id))
             //Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
