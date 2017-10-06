@@ -200,6 +200,23 @@ class DashboardRepositoryProd extends DashboardRepository{
     dashboards
   }
 
+  def dashboardsPublic(user :String): Seq[Dashboard] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("dashboards")
+    val results = coll.find().toList
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(results)
+    val json = Json.parse(jsonString)
+    println(json)
+    val dashboardsJsResult = json.validate[Seq[Dashboard]]
+    val dashboards = dashboardsJsResult match {
+      case s: JsSuccess[Seq[Dashboard]] => s.get
+      case e: JsError => Seq()
+    }
+    dashboards
+  }
+
 
   def dashboardById(user: String, id: String) :Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
@@ -263,7 +280,30 @@ class DashboardRepositoryProd extends DashboardRepository{
     response
   }
 
-  def stories(user :String): Seq[UserStory] = {
+  def stories(user :String, status :Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val query = status match {
+      case Some(x) => MongoDBObject("published" -> x)
+      case None => MongoDBObject()
+    }
+    val coll = db("stories")
+    val results = coll.find(query)
+      .skip(page.getOrElse(1))
+      .limit(limit.getOrElse(100)).toList
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(results)
+    val json = Json.parse(jsonString)
+    println(json)
+    val storiesJsResult = json.validate[Seq[UserStory]]
+    val stories = storiesJsResult match {
+      case s: JsSuccess[Seq[UserStory]] => s.get
+      case e: JsError => Seq()
+    }
+    stories
+  }
+
+  def storiesPublic(user :String): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
