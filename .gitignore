@@ -13,6 +13,7 @@ bin/
 /modules
 /project/project
 /project/target
+/public/img
 /target
 tmp/
 test-result
