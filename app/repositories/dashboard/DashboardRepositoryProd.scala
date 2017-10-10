@@ -1,6 +1,7 @@
 package repositories.dashboard
 
 import java.io.File
+import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
@@ -139,10 +140,16 @@ class DashboardRepositoryProd extends DashboardRepository{
       val json = response.json.as[Seq[JsValue]]
       json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
+        val decodeSuperst = java.net.URLDecoder.decode(slice_link, "UTF-8");
+        val uri = new URL(decodeSuperst)
+        val queryString = uri.getQuery.split("&")(0)
+        val valore =  queryString.split("=")(1)
+        val identifierJson = Json.parse(valore)
+        val slice_id = (identifierJson \ "slice_id").asOpt[Int].toString
         val title = (x \ "viz_type").get.as[String]
         val src = slice_link.slice(slice_link.indexOf("\"") + 1,slice_link.lastIndexOf("\"")) + "&standalone=true"
         val url = ConfigReader.getSupersetUrl + src
-        DashboardIframes(Some(url), Some("superset"), Some(title))
+        DashboardIframes(Some(url), Some("superset"), Some(title), Some(slice_id))
       })
     }
 
@@ -152,7 +159,7 @@ class DashboardRepositoryProd extends DashboardRepository{
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title))
+        DashboardIframes(Some(url), Some("metabase"), Some(title), None)
       })
     }
 
