@@ -160,7 +160,7 @@ class DashboardRepositoryProd extends DashboardRepository{
           DashboardIframes(None, None, None, None)
           val identifierJson = Json.parse(valore)
           val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
-          DashboardIframes(Some(url), Some("superset"), Some(title), Some(slice_id.toString))
+          DashboardIframes(Some(url), Some("superset"), Some(title), Some("superset_" + slice_id.toString))
         }
       })
 
@@ -177,7 +177,7 @@ class DashboardRepositoryProd extends DashboardRepository{
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title), None)
+        DashboardIframes(Some(url), Some("metabase"), Some(title), Some("metabase_" + uuid))
       })
     }
 
