@@ -144,7 +144,7 @@ class DashboardRepositoryProd extends DashboardRepository{
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
       val json = response.json.as[Seq[JsValue]]
-      val test = json.map(x => {
+      val iframes = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
         val title = (x \ "viz_type").get.as[String]
         val src = slice_link.slice(slice_link.indexOf("\"") + 1,slice_link.lastIndexOf("\"")) + "&standalone=true"
@@ -164,11 +164,11 @@ class DashboardRepositoryProd extends DashboardRepository{
         }
       })
 
-      test.filter {
+      iframes.filter {
         case DashboardIframes(Some(_),_,_,_) => true
         case _ => false
       }
-      
+
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
