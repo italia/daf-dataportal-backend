@@ -129,28 +129,46 @@ class DashboardRepositoryProd extends DashboardRepository{
 
   def iframes(user :String) :Future[Seq[DashboardIframes]] = {
     val wsClient = AhcWSClient()
+
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
 
     val request = wsClient.url(metabasePublic).get()
+     // .andThen { case _ => wsClient.close() }
+     // .andThen { case _ => system.terminate() }
+
     val requestIframes = wsClient.url(supersetPublic).get()
+    //  .andThen { case _ => wsClient.close() }
+    //  .andThen { case _ => system.terminate() }
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
       val json = response.json.as[Seq[JsValue]]
-      json.map(x => {
+      val test = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
-        val decodeSuperst = java.net.URLDecoder.decode(slice_link, "UTF-8");
-        val uri = new URL(decodeSuperst)
-        val queryString = uri.getQuery.split("&")(0)
-        val valore =  queryString.split("=")(1)
-        val identifierJson = Json.parse(valore)
-        val slice_id = (identifierJson \ "slice_id").asOpt[Int].toString
         val title = (x \ "viz_type").get.as[String]
         val src = slice_link.slice(slice_link.indexOf("\"") + 1,slice_link.lastIndexOf("\"")) + "&standalone=true"
         val url = ConfigReader.getSupersetUrl + src
-        DashboardIframes(Some(url), Some("superset"), Some(title), Some(slice_id))
+        val decodeSuperst = java.net.URLDecoder.decode(url, "UTF-8");
+        val uri = new URL(decodeSuperst)
+        val queryString = uri.getQuery.split("&")(0)
+        val valore =  queryString.split("=")(1)
+        if (valore.contains("{\"code")){
+          DashboardIframes(None, None, None, None)
+        } else
+        {
+          DashboardIframes(None, None, None, None)
+          val identifierJson = Json.parse(valore)
+          val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
+          DashboardIframes(Some(url), Some("superset"), Some(title), Some(slice_id.toString))
+        }
       })
+
+      test.filter {
+        case DashboardIframes(Some(_),_,_,_) => true
+        case _ => false
+      }
+      
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
