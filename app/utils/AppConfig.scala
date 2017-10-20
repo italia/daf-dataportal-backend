@@ -28,6 +28,8 @@ class AppConfig @Inject()(playConfig: Configuration) {
 
   val securityManHost :Option[String] = playConfig.getString("security.manager.host")
 
+  val cookieExpiration :Option[Long] = playConfig.getLong("cookie.expiration")
+
 }
 
 object ConfigReader {
@@ -50,6 +52,8 @@ object ConfigReader {
   def password :String = config.password.getOrElse("")
   def userName :String = config.userName.getOrElse("")
   def securityManHost :String = config.securityManHost.getOrElse("xxx")
+
+  def cookieExpiration:Long = config.cookieExpiration.getOrElse(30L)// 30 min by default
 
 
 }

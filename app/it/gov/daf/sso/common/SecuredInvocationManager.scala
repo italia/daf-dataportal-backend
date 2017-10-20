@@ -6,6 +6,8 @@ import org.asynchttpclient.DefaultAsyncHttpClientConfig
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
+import utils.ConfigReader
+
 import scala.concurrent.Future
 
 class SecuredInvocationManager(loginClient:LoginClient) {
@@ -16,19 +18,20 @@ class SecuredInvocationManager(loginClient:LoginClient) {
   implicit val materializer = ActorMaterializer()
   private val sslconfig = new DefaultAsyncHttpClientConfig.Builder().setAcceptAnyCertificate(true).build
   private val _loginClient=loginClient
+  private val cacheWrapper = CacheWrapper.init(ConfigReader.cookieExpiration,0L)
 
 
   private def callService( wsClient:AhcWSClient, loginInfo:LoginInfo, serviceFetch:(String,AhcWSClient)=> Future[WSResponse]):Future[WSResponse] = {
 
     println("callService ("+loginInfo+")")
 
-    val cookieOpt = CacheWrapper.getCookie(loginInfo.appName,loginInfo.user)
+    val cookieOpt = cacheWrapper.getCookie(loginInfo.appName,loginInfo.user)
 
     if( cookieOpt.isEmpty )
 
       _loginClient.login(loginInfo, wsClient).flatMap { cookie =>
 
-        CacheWrapper.putCookie(loginInfo.appName,loginInfo.user,cookie)
+        cacheWrapper.putCookie(loginInfo.appName,loginInfo.user,cookie)
 
         serviceFetch(cookie, wsClient).map({ response =>
           println("RESPONSE1 ("+loginInfo+"):"+response.body)
@@ -61,7 +64,7 @@ class SecuredInvocationManager(loginClient:LoginClient) {
 
       if(response.status == 401){
         println("Unauthorized!!")
-        CacheWrapper.deleteCookie(loginInfo.appName,loginInfo.user)
+        cacheWrapper.deleteCookie(loginInfo.appName,loginInfo.user)
         callService(wsClient,loginInfo,serviceFetch).map(_.json)
           .andThen { case _ => wsClient.close() }
           .andThen { case _ => system.terminate() }
