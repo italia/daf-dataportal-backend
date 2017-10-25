@@ -3,8 +3,8 @@ package controllers.dashboard
 
 import javax.inject._
 
-import it.gov.daf.sso.client.LoginClientRemote
-import it.gov.daf.sso.common.{LoginInfo, SecuredInvocationManager}
+import it.gov.daf.common.sso.client.LoginClientRemote
+import it.gov.daf.common.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
@@ -16,8 +16,6 @@ import play.api.inject.ConfigurationProvider
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
-
 
 
 @Singleton
@@ -34,6 +32,8 @@ class MetabaseController @Inject() (ws: WSClient,
   val metapass = conf.getString("metabase.pass").get
 
   val local = conf.getString("app.local.url").get
+
+  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
   def session() = Action.async { implicit request =>
     val data = Json.obj(
@@ -52,7 +52,6 @@ class MetabaseController @Inject() (ws: WSClient,
 
   def publicCard(metauser :String) =  Action.async { implicit request =>
 
-    val sim = SecuredInvocationManager.instance(LoginClientRemote.instance())
 
     println("wee-->"+URL + "/api/card/public")
     def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
