@@ -10,9 +10,9 @@ organization in ThisBuild := "it.gov.daf"
 
 name := "daf-datipubblici"
 
-version in ThisBuild := "1.0-alpha"
+version in ThisBuild := "1.0-alpha.1"
 
-val commonVersion = "1.0-alpha"
+val commonVersion = "1.0-alpha.1"
 val playVersion = "2.5.14"
 
 
