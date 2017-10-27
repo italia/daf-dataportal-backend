@@ -24,8 +24,7 @@ import org.pac4j.play.store.PlaySessionStore
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
-import it.gov.daf.catalogmanager.utilities.WebServiceUtil
-import play.Environment
+import it.gov.daf.common.utils.WebServiceUtil
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -34,7 +33,7 @@ import play.Environment
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                            
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
