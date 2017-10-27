@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: datipubblici
-        image: 10.98.74.120:5000/daf-datipubblici:1.0.0-SNAPSHOT
+        image: 10.98.74.120:5000/daf-datipubblici:1.0-alpha.1
         imagePullPolicy: Always
         lifecycle:
           postStart:

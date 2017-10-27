@@ -138,8 +138,8 @@ class DashboardRepositoryProd extends DashboardRepository{
      // .andThen { case _ => system.terminate() }
 
     val requestIframes = wsClient.url(supersetPublic).get()
-    //  .andThen { case _ => wsClient.close() }
-    //  .andThen { case _ => system.terminate() }
+     //  .andThen { case _ => wsClient.close() }
+     //  .andThen { case _ => system.terminate() }
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
@@ -151,16 +151,19 @@ class DashboardRepositoryProd extends DashboardRepository{
         val url = ConfigReader.getSupersetUrl + src
         val decodeSuperst = java.net.URLDecoder.decode(url, "UTF-8");
         val uri = new URL(decodeSuperst)
-        val queryString = uri.getQuery.split("&")(0)
-        val valore =  queryString.split("=")(1)
+        val queryString = uri.getQuery.split("&",2)(0)
+        val valore =  queryString.split("=",2)(1)
         if (valore.contains("{\"code")){
           DashboardIframes(None, None, None, None)
         } else
         {
-          DashboardIframes(None, None, None, None)
-          val identifierJson = Json.parse(valore)
+        try {
+          val identifierJson = Json.parse(s"""$valore""")
           val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
           DashboardIframes(Some(url), Some("superset"), Some(title), Some("superset_" + slice_id.toString))
+        } catch {
+          case e: Exception => e.printStackTrace();println("ERROR");DashboardIframes(None,None,None,None)
+        }
         }
       })
 
@@ -168,7 +171,6 @@ class DashboardRepositoryProd extends DashboardRepository{
         case DashboardIframes(Some(_),_,_,_) => true
         case _ => false
       }
-
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
