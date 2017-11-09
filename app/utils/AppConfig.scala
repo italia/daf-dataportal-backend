@@ -24,6 +24,8 @@ class AppConfig @Inject()(playConfig: Configuration) {
 
   val grafanaURL= playConfig.getString("grafana.url")
 
+  val tdMetabaseURL = playConfig.getString("tdmetabase.url")
+
   val userName :Option[String] = playConfig.getString("mongo.username")
   val password :Option[String] = playConfig.getString("mongo.password")
   val database :Option[String] = playConfig.getString("mongo.database")
@@ -51,6 +53,8 @@ object ConfigReader {
   def getSupersetPass = config.supersetPass.getOrElse("password")
 
   def getGrafanaUrl = config.grafanaURL.getOrElse("TO DO")
+
+  def getTdMetabaseURL = config.tdMetabaseURL.getOrElse("https://dashboard.teamdigitale.governo.it")
 
   def database :String = config.database.getOrElse("monitor_mdb")
   def password :String = config.password.getOrElse("")
