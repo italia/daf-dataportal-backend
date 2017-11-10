@@ -2,6 +2,8 @@ package controllers.dashboard
 
 import javax.inject._
 
+import it.gov.daf.common.sso.client.LoginClientRemote
+import it.gov.daf.common.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
@@ -26,8 +28,14 @@ class GrafanaController @Inject() (ws: WSClient,
   // TMP for test purpose
   val apiKey = conf.getString("grafana.apiKey").get
 
+  val local = conf.getString("app.local.url").get
 
-  def snapshots = Action.async { implicit request =>
+  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
+
+
+
+  // Con apiKey statica
+  def snapshots(grafanauser :String) = Action.async { implicit request =>
     println("ALEOOOOOOOOO")
     println(URL)
     println(apiKey)
@@ -38,5 +46,16 @@ class GrafanaController @Inject() (ws: WSClient,
       Ok(response.json)
     }
   }
+
+
+ /* def snapshots(grafanauser :String) =  Action.async { implicit request =>
+
+    println("wee-->"+URL + "/api/dashboard/snapshots")
+    def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
+      wsClient.url(URL + "/api/dashboard/snapshots").withHeaders(("Cookie",cookie)).get()
+
+    sim.manageServiceCall( new LoginInfo(grafanauser,null,"grafana"),callPublicSlice ).map{Ok(_)}
+
+  } */
 
 }

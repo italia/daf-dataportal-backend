@@ -5,6 +5,7 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
+import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -22,11 +23,12 @@ import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
 
+
 /**
   * Created by ale on 14/04/17.
   */
 
-class DashboardRepositoryProd extends DashboardRepository{
+class DashboardRepositoryProd  extends DashboardRepository{
 
   import ftd_api.yaml.BodyReads._
   import scala.concurrent.ExecutionContext.Implicits._
@@ -132,7 +134,7 @@ class DashboardRepositoryProd extends DashboardRepository{
 
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
-    val grafanaPublic = localUrl + "/grafana/snapshots"
+   // val grafanaPublic = localUrl + "/grafana/snapshots/" + user
     val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
@@ -143,7 +145,7 @@ class DashboardRepositoryProd extends DashboardRepository{
      //  .andThen { case _ => wsClient.close() }
      //  .andThen { case _ => system.terminate() }
 
-    val requestSnapshots = wsClient.url(grafanaPublic).get()
+  //  val requestSnapshots = wsClient.url(grafanaPublic).get()
 
     val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
@@ -200,7 +202,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     }
 
 
-    val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
+  /*  val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
       val json = response.json.as[Seq[JsValue]]
       json.map(x => {
         println("QUI VEDIAMO")
@@ -211,10 +213,10 @@ class DashboardRepositoryProd extends DashboardRepository{
         val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
         DashboardIframes(Some(url), Some("grafana"), Some(title), Some("grafana_" + id.toString))
       })
-    }
+    } */
 
 
-    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase,superset, grafana, tdMetabase)
+    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase,superset, tdMetabase)// List(metabase,superset, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
         f.map(scala.util.Success(_)).recover{ case t: Throwable => Failure( t ) }
@@ -311,8 +313,8 @@ class DashboardRepositoryProd extends DashboardRepository{
         val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
       }
       case None => {
-        val uid = UUID.randomUUID().toString;
-        val timestamps = ZonedDateTime.now();
+        val uid = UUID.randomUUID().toString
+        val timestamps = ZonedDateTime.now()
         val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
         val json: JsValue = Json.toJson(newDash)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]

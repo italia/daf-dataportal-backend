@@ -701,6 +701,35 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/plot/{iframe_id}/{sizexsize}":
+    get:
+      tags:
+      - Snapshots
+      summary: get snapshota
+      operationId: snapshotbyid
+      parameters:
+      - name: iframe_id
+        in: path
+        description: id of iframes
+        required: true
+        type: string
+      - name: sizexsize
+        in: path
+        description: sizexsize must be one of the following  100x100 400x300 280x500 356x280
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Logo image in PNG format
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 
 definitions:
   Catalog:

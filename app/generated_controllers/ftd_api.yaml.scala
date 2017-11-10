@@ -33,7 +33,7 @@ import it.gov.daf.common.utils.WebServiceUtil
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                    
+                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -136,6 +136,13 @@ package ftd_api.yaml {
             Deletestory200(DashboardRegistry.dashboardService.deleteStory(story_id))
            // Delete
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletestory
+        }
+        val snapshotbyid = snapshotbyidAction { input: (String, String) =>
+            val (iframe_id, sizexsize) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
+            Snapshotbyid200
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
         }
         val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
             val (status, page, limit) = input
