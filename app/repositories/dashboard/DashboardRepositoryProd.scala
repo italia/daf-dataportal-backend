@@ -134,7 +134,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
 
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
-   // val grafanaPublic = localUrl + "/grafana/snapshots/" + user
+    val grafanaPublic = localUrl + "/grafana/snapshots/" + user
     val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
@@ -145,7 +145,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
      //  .andThen { case _ => wsClient.close() }
      //  .andThen { case _ => system.terminate() }
 
-  //  val requestSnapshots = wsClient.url(grafanaPublic).get()
+    val requestSnapshots = wsClient.url(grafanaPublic).get()
 
     val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
@@ -202,7 +202,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
     }
 
 
-  /*  val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
+    val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
       val json = response.json.as[Seq[JsValue]]
       json.map(x => {
         println("QUI VEDIAMO")
@@ -213,10 +213,10 @@ class DashboardRepositoryProd  extends DashboardRepository{
         val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
         DashboardIframes(Some(url), Some("grafana"), Some(title), Some("grafana_" + id.toString))
       })
-    } */
+    }
 
 
-    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase,superset, tdMetabase)// List(metabase,superset, grafana, tdMetabase)
+    val services: Seq[Future[Seq[DashboardIframes]]] =  List(metabase,superset, grafana, tdMetabase) //List(metabase,superset, tdMetabase)//
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
         f.map(scala.util.Success(_)).recover{ case t: Throwable => Failure( t ) }
