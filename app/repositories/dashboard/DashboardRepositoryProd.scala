@@ -301,26 +301,29 @@ class DashboardRepositoryProd  extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    var saved = ""
-    var operation = ""
-    id match {
-      case Some(x) => {
-        val json: JsValue = Json.toJson(dashboard)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        val query = MongoDBObject("id" -> x)
-        saved = id.get
-        operation = "updated"
-        val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
+    var saved = "Not Saved"
+    var operation = "Not Saved"
+    if (dashboard.title.isEmpty || dashboard.title == None) {
+      id match {
+        case Some(x) => {
+          val json: JsValue = Json.toJson(dashboard)
+          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+          val query = MongoDBObject("id" -> x)
+          saved = id.get
+          operation = "updated"
+          val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
+        }
+        case None => {
+          val uid = UUID.randomUUID().toString
+          val timestamps = ZonedDateTime.now()
+          val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
+          val json: JsValue = Json.toJson(newDash)
+          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+          saved = uid
+          operation = "inserted"
+          coll.save(obj)
+        }
       }
-      case None => {
-        val uid = UUID.randomUUID().toString
-        val timestamps = ZonedDateTime.now()
-        val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-        val json: JsValue = Json.toJson(newDash)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        saved = uid
-        operation = "inserted"
-        coll.save(obj)}
     }
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))
@@ -404,27 +407,30 @@ class DashboardRepositoryProd  extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    var saved = ""
-    var operation = ""
-    id match {
-      case Some(x) => {
-        val json: JsValue = Json.toJson(story)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        val query = MongoDBObject("id" -> x)
-        saved = id.get
-        operation = "updated"
-        coll.update(query, obj)
-      }
-      case None => {
-        val uid = UUID.randomUUID().toString;
-        val timestamps = ZonedDateTime.now();
-        val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-        val json: JsValue = Json.toJson(newStory)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        saved = uid
-        operation = "inserted"
-        coll.save(obj)}
+    var saved = "Not Saved"
+    var operation = "Not Saved"
+    if (story.title.isEmpty || story.title == None) {
+      id match {
+        case Some(x) => {
+          val json: JsValue = Json.toJson(story)
+          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+          val query = MongoDBObject("id" -> x)
+          saved = id.get
+          operation = "updated"
+          coll.update(query, obj)
+        }
+        case None => {
+          val uid = UUID.randomUUID().toString;
+          val timestamps = ZonedDateTime.now();
+          val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
+          val json: JsValue = Json.toJson(newStory)
+          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+          saved = uid
+          operation = "inserted"
+          coll.save(obj)
+        }
 
+      }
     }
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))

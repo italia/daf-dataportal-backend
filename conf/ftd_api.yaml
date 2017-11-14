@@ -878,3 +878,7 @@ definitions:
     properties:
       url:
         type: string
+      identifier:
+        type: string
+      origin:
+        type: string
