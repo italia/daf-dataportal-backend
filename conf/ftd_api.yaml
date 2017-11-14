@@ -719,13 +719,11 @@ paths:
         required: true
         type: string
       responses:
-        '200':
-          description: Logo image in PNG format
-          content:
-            image/png:
-              schema:
-                type: string
-                format: binary
+        200:
+          description: The JWT token
+          schema:
+            type: string
+            format: base64
         default:
           description: Unexpected error
           schema:

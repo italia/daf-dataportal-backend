@@ -25,6 +25,23 @@ import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
 import it.gov.daf.common.utils.WebServiceUtil
+import akka.util.ByteString
+import play.api.libs.ws.WSClient
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits.global
+import java.io.{ByteArrayInputStream,InputStreamReader}
+import java.util.Base64
+import com.google.common.base.Charsets
+import com.google.common.io.{ByteStreams,CharStreams}
+import scala.io.BufferedSource
+import com.google.common.io.ByteStreams
+import com.google.common.io.ByteStreams
+import com.google.common.io.ByteStreams
+import com.google.common.io.ByteStreams
+import com.google.common.io.ByteStreams
+import com.google.common.io.ByteStreams
+import scala.concurrent.Future
+import play.api.Environment
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -33,12 +50,13 @@ import it.gov.daf.common.utils.WebServiceUtil
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                
+                                                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
         val configuration: Configuration,
         val playSessionStore: PlaySessionStore,
+        val ws: WSClient,
         // ----- End of unmanaged code area for injections Ftd_apiYaml
         val messagesApi: MessagesApi,
         lifecycle: ApplicationLifecycle,
@@ -140,7 +158,19 @@ package ftd_api.yaml {
         val snapshotbyid = snapshotbyidAction { input: (String, String) =>
             val (iframe_id, sizexsize) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
-            NotImplementedYet
+            //Snapshotbyid200()
+            //import scala.concurrent.ExecutionContext.Implicits.global
+            val conf = Configuration.load(Environment.simple())
+            val URL : String = conf.getString("daf-cacher.url").get
+
+            val url = URL + iframe_id + "/" + sizexsize
+            val response = ws.url(url).get().map(x => {
+                x.bodyAsBytes
+                val d = x.bodyAsBytes.toArray
+                println(d)
+                Base64.getEncoder.encodeToString(d)
+            })
+            Snapshotbyid200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
         }
         val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
@@ -222,6 +252,23 @@ package ftd_api.yaml {
             CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
+    
+     // Dead code for absent methodFtd_apiYaml.getsport
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.sport
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
+
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
+     */
+
     
     }
 }

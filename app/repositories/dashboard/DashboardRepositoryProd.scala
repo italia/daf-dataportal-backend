@@ -245,7 +245,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    val results = coll.find().toList
+    val results = coll.find().sort(MongoDBObject("timestamp" -> -1)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
@@ -347,6 +347,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
     }
     val coll = db("stories")
     val results = coll.find(query)
+      .sort(MongoDBObject("timestamp" -> -1))
       .skip(page.getOrElse(1))
       .limit(limit.getOrElse(100)).toList
     mongoClient.close
@@ -365,7 +366,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    val results = coll.find().toList
+    val results = coll.find().sort(MongoDBObject("timestamp" -> -1)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
