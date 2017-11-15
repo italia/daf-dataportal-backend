@@ -13,9 +13,11 @@ import com.mongodb
 import com.mongodb.{DBObject, casbah}
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, TypeImports}
+import controllers.dashboard.SupersetController
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
+import play.api.mvc.{Action, AnyContent}
 import utils.ConfigReader
 
 import scala.collection.immutable.List
@@ -28,7 +30,7 @@ import scala.util.{Failure, Try}
   * Created by ale on 14/04/17.
   */
 
-class DashboardRepositoryProd  extends DashboardRepository{
+class DashboardRepositoryProd extends DashboardRepository{
 
   import ftd_api.yaml.BodyReads._
   import scala.concurrent.ExecutionContext.Implicits._
@@ -303,7 +305,7 @@ class DashboardRepositoryProd  extends DashboardRepository{
     val coll = db("dashboards")
     var saved = "Not Saved"
     var operation = "Not Saved"
-    if (dashboard.title.isEmpty || dashboard.title == None) {
+
       id match {
         case Some(x) => {
           val json: JsValue = Json.toJson(dashboard)
@@ -314,16 +316,17 @@ class DashboardRepositoryProd  extends DashboardRepository{
           val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
         }
         case None => {
-          val uid = UUID.randomUUID().toString
-          val timestamps = ZonedDateTime.now()
-          val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-          val json: JsValue = Json.toJson(newDash)
-          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-          saved = uid
-          operation = "inserted"
-          coll.save(obj)
+          if (!dashboard.title.isEmpty || dashboard.title != None) {
+            val uid = UUID.randomUUID().toString
+            val timestamps = ZonedDateTime.now()
+            val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
+            val json: JsValue = Json.toJson(newDash)
+            val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+            saved = uid
+            operation = "inserted"
+            coll.save(obj)
+          }
         }
-      }
     }
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))
@@ -409,7 +412,6 @@ class DashboardRepositoryProd  extends DashboardRepository{
     val coll = db("stories")
     var saved = "Not Saved"
     var operation = "Not Saved"
-    if (story.title.isEmpty || story.title == None) {
       id match {
         case Some(x) => {
           val json: JsValue = Json.toJson(story)
@@ -420,17 +422,17 @@ class DashboardRepositoryProd  extends DashboardRepository{
           coll.update(query, obj)
         }
         case None => {
-          val uid = UUID.randomUUID().toString;
-          val timestamps = ZonedDateTime.now();
-          val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-          val json: JsValue = Json.toJson(newStory)
-          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-          saved = uid
-          operation = "inserted"
-          coll.save(obj)
+          if (story.title.isEmpty || story.title == None) {
+            val uid = UUID.randomUUID().toString
+            val timestamps = ZonedDateTime.now()
+            val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
+            val json: JsValue = Json.toJson(newStory)
+            val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+            saved = uid
+            operation = "inserted"
+            coll.save(obj)
+          }
         }
-
-      }
     }
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))

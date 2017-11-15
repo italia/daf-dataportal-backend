@@ -48,7 +48,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "3.1.1",
   "net.sf.opencsv" % "opencsv" % "2.3",
   "me.lessis" %% "base64" % "0.2.0",
-  "it.gov.daf" %% "common" % "1.0-alpha.1",
+  "it.gov.daf" %% "common" % "1.0.1-SNAPSHOT",
   "com.github.cb372" %% "scalacache-guava" % "0.9.4"
 )
 

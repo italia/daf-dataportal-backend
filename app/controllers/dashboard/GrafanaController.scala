@@ -35,7 +35,7 @@ class GrafanaController @Inject() (ws: WSClient,
 
 
   // Con apiKey statica
-  /*def snapshots(grafanauser :String) = Action.async { implicit request =>
+  def snapshots(grafanauser :String) = Action.async { implicit request =>
     println("ALEOOOOOOOOO")
     println(URL)
     println(apiKey)
@@ -45,9 +45,9 @@ class GrafanaController @Inject() (ws: WSClient,
       println(response.json)
       Ok(response.json)
     }
-  } */
+  }
 
-
+/*
   def snapshots(grafanauser :String) =  Action.async { implicit request =>
 
     println("wee-->"+URL + "/api/dashboard/snapshots")
@@ -55,6 +55,6 @@ class GrafanaController @Inject() (ws: WSClient,
       wsClient.url(URL + "/api/dashboard/snapshots").withHeaders(("grafana_sess", cookie),("Cookie",cookie)).get()
 
     sim.manageServiceCall( new LoginInfo(grafanauser,null,"grafana"),callPublicSlice ).map{Ok(_)}
-  }
+  } */
 
 }
