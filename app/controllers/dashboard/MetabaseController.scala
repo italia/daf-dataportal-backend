@@ -21,7 +21,8 @@ import scala.concurrent.duration._
 @Singleton
 class MetabaseController @Inject() (ws: WSClient,
                                     cache: CacheApi ,
-                                    config: ConfigurationProvider
+                                    config: ConfigurationProvider,
+                                    sim: SecuredInvocationManager
                                     )(implicit context: ExecutionContext) extends Controller {
 
  // import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -33,7 +34,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
   val local = conf.getString("app.local.url").get
 
-  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
+  //val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
   def session() = Action.async { implicit request =>
     val data = Json.obj(
