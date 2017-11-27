@@ -2,15 +2,15 @@ package repositories.dashboard
 
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
-import java.util.{Date, UUID}
 import java.time.ZonedDateTime
+import java.util.{Date, UUID}
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
-import com.mongodb.{DBObject, casbah}
+import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.{MongoClient, TypeImports}
+import com.mongodb.casbah.{MongoClient, MongoDB}
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
@@ -28,6 +28,7 @@ import scala.util.{Failure, Try}
 class DashboardRepositoryProd extends DashboardRepository{
 
   import ftd_api.yaml.BodyReads._
+
   import scala.concurrent.ExecutionContext.Implicits._
 
   implicit val system = ActorSystem()
@@ -241,7 +242,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
-    val db = mongoClient(source)
+    val db: MongoDB = mongoClient(source)
     val coll = db("dashboards")
     var saved = ""
     var operation = ""
