@@ -19,8 +19,11 @@ import javax.inject._
 
 import java.io.File
 
+import de.zalando.play.controllers.PlayBodyParsing._
+import it.gov.daf.catalogmanager.utilities.WebServiceUtil
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
+import play.api.Configuration
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
@@ -42,6 +45,8 @@ import com.google.common.io.ByteStreams
 import com.google.common.io.ByteStreams
 import scala.concurrent.Future
 import play.api.Environment
+import scala.concurrent.Future
+import services.settings.SettingsRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -50,7 +55,7 @@ import play.api.Environment
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -75,6 +80,25 @@ package ftd_api.yaml {
             CatalogDistributionLicense200(distributions)
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
+        }
+        val getsettings = getsettingsAction { (organization: String) =>
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsettings
+            Getsettings200(SettingsRegistry.settingsService.settingsByName(organization))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getsettings
+        }
+        val saveSettings = saveSettingsAction { input: (String, Settings) =>
+            val (organization, settings) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveSettings
+            //            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
+            val response = SettingsRegistry.settingsService.saveSettings(organization, settings)
+          SaveSettings200(response)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveSettings
+        }
+        val deleteSettings = deleteSettingsAction { input: (DistributionLabel, Settings) =>
+            val (organization, settings) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSettings
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSettings
         }
         val createSnapshot = createSnapshotAction { input: (File, String, String) =>
             val (upfile, snapshot_id, apikey) = input
@@ -260,7 +284,7 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
      */
 
-    
+
      // Dead code for absent methodFtd_apiYaml.sport
      /*
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
@@ -269,6 +293,6 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
      */
 
-    
+
     }
 }

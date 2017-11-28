@@ -38,8 +38,8 @@ GET /grafana/snapshots/:grafanauser controllers.dashboard.GrafanaController.snap
 GET /tdmetabase/session controllers.dashboard.TeamDashboardController.tdMetaSession()
 GET /tdmetabase/public_card controllers.dashboard.TeamDashboardController.tdMetaPublicCard()
 
-GET /dati-gov/img/*file      controllers.Assets.versioned(path="/public/img", file: Asset)
-GET /dati-gov/*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
+GET         /dati-gov/img/*file      controllers.Assets.versioned(path="/public/img", file: Asset)
+GET         /dati-gov/*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
 
 
 GET   /test controllers.HomeController.index
