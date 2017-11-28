@@ -1,25 +1,30 @@
 package repositories.dashboard
 
 import java.io.File
+import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
-import java.time.ZonedDateTime
 import java.util.{Date, UUID}
+import java.time.ZonedDateTime
+import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
-import com.mongodb.DBObject
+import com.mongodb.{DBObject, casbah}
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.{MongoClient, MongoDB}
+import com.mongodb.casbah.{MongoClient, TypeImports}
+import controllers.dashboard.SupersetController
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
+import play.api.mvc.{Action, AnyContent}
 import utils.ConfigReader
 
 import scala.collection.immutable.List
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
+
 
 /**
   * Created by ale on 14/04/17.
@@ -28,7 +33,6 @@ import scala.util.{Failure, Try}
 class DashboardRepositoryProd extends DashboardRepository{
 
   import ftd_api.yaml.BodyReads._
-
   import scala.concurrent.ExecutionContext.Implicits._
 
   implicit val system = ActorSystem()
@@ -129,22 +133,54 @@ class DashboardRepositoryProd extends DashboardRepository{
 
   def iframes(user :String) :Future[Seq[DashboardIframes]] = {
     val wsClient = AhcWSClient()
+
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
+    val grafanaPublic = localUrl + "/grafana/snapshots/" + user
+    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
+     // .andThen { case _ => wsClient.close() }
+     // .andThen { case _ => system.terminate() }
+
     val requestIframes = wsClient.url(supersetPublic).get()
+     //  .andThen { case _ => wsClient.close() }
+     //  .andThen { case _ => system.terminate() }
+
+    val requestSnapshots = wsClient.url(grafanaPublic).get()
+
+    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
       val json = response.json.as[Seq[JsValue]]
-      json.map(x => {
+      val iframes = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
         val title = (x \ "viz_type").get.as[String]
         val src = slice_link.slice(slice_link.indexOf("\"") + 1,slice_link.lastIndexOf("\"")) + "&standalone=true"
         val url = ConfigReader.getSupersetUrl + src
-        DashboardIframes(Some(url), Some("superset"), Some(title))
+        val decodeSuperst = java.net.URLDecoder.decode(url, "UTF-8");
+        val uri = new URL(decodeSuperst)
+        val queryString = uri.getQuery.split("&",2)(0)
+        val valore =  queryString.split("=",2)(1)
+        if (valore.contains("{\"code")){
+          DashboardIframes(None, None, None, None)
+        } else
+        {
+        try {
+          val identifierJson = Json.parse(s"""$valore""")
+          val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
+          DashboardIframes(Some(url), Some("superset"), Some(title), Some("superset_" + slice_id.toString))
+        } catch {
+          case e: Exception => e.printStackTrace();println("ERROR");DashboardIframes(None,None,None,None)
+        }
+        }
       })
+
+      iframes.filter {
+        case DashboardIframes(Some(_),_,_,_) => true
+        case _ => false
+      }
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
@@ -153,13 +189,36 @@ class DashboardRepositoryProd extends DashboardRepository{
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title))
+        DashboardIframes(Some(url), Some("metabase"), Some(title), Some("metabase_" + uuid))
+      })
+    }
+
+    val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
+      val json = response.json.as[Seq[JsValue]]
+      json.map( x => {
+        val uuid = (x \ "public_uuid").get.as[String]
+        val title = (x \ "name").get.as[String]
+        val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
+        DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
       })
     }
 
 
+    val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
+      val json = response.json.as[Seq[JsValue]]
+      json.map(x => {
+        println("QUI VEDIAMO")
+        println(x)
+        val uuid = (x \ "key").get.as[String]
+        val id = (x \ "id").get.as[Int]
+        val title = (x \ "name").get.as[String]
+        val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
+        DashboardIframes(Some(url), Some("grafana"), Some(title), Some("grafana_" + id.toString))
+      })
+    }
 
-    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase,superset)
+
+    val services: Seq[Future[Seq[DashboardIframes]]] =  List(metabase,superset, grafana, tdMetabase) //List(metabase,superset, tdMetabase)//
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
         f.map(scala.util.Success(_)).recover{ case t: Throwable => Failure( t ) }
@@ -188,7 +247,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    val results = coll.find().toList
+    val results = coll.find().sort(MongoDBObject("timestamp" -> -1)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
@@ -242,28 +301,32 @@ class DashboardRepositoryProd extends DashboardRepository{
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
-    val db: MongoDB = mongoClient(source)
+    val db = mongoClient(source)
     val coll = db("dashboards")
-    var saved = ""
-    var operation = ""
-    id match {
-      case Some(x) => {
-        val json: JsValue = Json.toJson(dashboard)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        val query = MongoDBObject("id" -> x)
-        saved = id.get
-        operation = "updated"
-        val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
-      }
-      case None => {
-        val uid = UUID.randomUUID().toString;
-        val timestamps = ZonedDateTime.now();
-        val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-        val json: JsValue = Json.toJson(newDash)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        saved = uid
-        operation = "inserted"
-        coll.save(obj)}
+    var saved = "Not Saved"
+    var operation = "Not Saved"
+
+      id match {
+        case Some(x) => {
+          val json: JsValue = Json.toJson(dashboard)
+          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+          val query = MongoDBObject("id" -> x)
+          saved = id.get
+          operation = "updated"
+          val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
+        }
+        case None => {
+          if (!dashboard.title.isEmpty || dashboard.title != None) {
+            val uid = UUID.randomUUID().toString
+            val timestamps = ZonedDateTime.now()
+            val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
+            val json: JsValue = Json.toJson(newDash)
+            val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+            saved = uid
+            operation = "inserted"
+            coll.save(obj)
+          }
+        }
     }
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))
@@ -290,6 +353,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     }
     val coll = db("stories")
     val results = coll.find(query)
+      .sort(MongoDBObject("timestamp" -> -1))
       .skip(page.getOrElse(1))
       .limit(limit.getOrElse(100)).toList
     mongoClient.close
@@ -308,7 +372,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    val results = coll.find().toList
+    val results = coll.find().sort(MongoDBObject("timestamp" -> -1)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
@@ -346,27 +410,29 @@ class DashboardRepositoryProd extends DashboardRepository{
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    var saved = ""
-    var operation = ""
-    id match {
-      case Some(x) => {
-        val json: JsValue = Json.toJson(story)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        val query = MongoDBObject("id" -> x)
-        saved = id.get
-        operation = "updated"
-        coll.update(query, obj)
-      }
-      case None => {
-        val uid = UUID.randomUUID().toString;
-        val timestamps = ZonedDateTime.now();
-        val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-        val json: JsValue = Json.toJson(newStory)
-        val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        saved = uid
-        operation = "inserted"
-        coll.save(obj)}
-
+    var saved = "Not Saved"
+    var operation = "Not Saved"
+      id match {
+        case Some(x) => {
+          val json: JsValue = Json.toJson(story)
+          val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+          val query = MongoDBObject("id" -> x)
+          saved = id.get
+          operation = "updated"
+          coll.update(query, obj)
+        }
+        case None => {
+          if (story.title.isEmpty || story.title == None) {
+            val uid = UUID.randomUUID().toString
+            val timestamps = ZonedDateTime.now()
+            val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
+            val json: JsValue = Json.toJson(newStory)
+            val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+            saved = uid
+            operation = "inserted"
+            coll.save(obj)
+          }
+        }
     }
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))

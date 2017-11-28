@@ -701,6 +701,33 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/plot/{iframe_id}/{sizexsize}":
+    get:
+      tags:
+      - Snapshots
+      summary: get snapshota
+      operationId: snapshotbyid
+      parameters:
+      - name: iframe_id
+        in: path
+        description: id of iframes
+        required: true
+        type: string
+      - name: sizexsize
+        in: path
+        description: sizexsize must be one of the following  100x100 400x300 280x500 356x280
+        required: true
+        type: string
+      responses:
+        200:
+          description: The JWT token
+          schema:
+            type: string
+            format: base64
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/settings":
     delete:
       tags:
@@ -838,6 +865,8 @@ definitions:
         type: string
       title:
         type: string
+      identifier:
+        type: string
   Error:
     type: object
     properties:
@@ -959,4 +988,8 @@ definitions:
     type: object
     properties:
       url:
+        type: string
+      identifier:
+        type: string
+      origin:
         type: string

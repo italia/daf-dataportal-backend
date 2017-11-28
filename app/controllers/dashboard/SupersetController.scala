@@ -2,8 +2,8 @@ package controllers.dashboard
 
 import javax.inject._
 
-import it.gov.daf.sso.client.LoginClientRemote
-import it.gov.daf.sso.common.{LoginInfo, SecuredInvocationManager}
+import it.gov.daf.common.sso.client.LoginClientRemote
+import it.gov.daf.common.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
@@ -13,10 +13,6 @@ import scala.concurrent.{Await, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 import play.api.libs.ws.ahc.AhcWSClient
-
-import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
-
 
 
 @Singleton
@@ -30,6 +26,8 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   val pass = conf.getString("superset.pass").get
 
   val local = conf.getString("app.local.url").get
+
+  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
   def getIframes() = Action.async { implicit request =>
     val iframeJson = ws.url("http://localhost:8088/slicemodelview/api/read")
@@ -70,7 +68,6 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
 
   def publicSlice(user :String) = Action.async { implicit request =>
 
-    val sim = SecuredInvocationManager.instance(LoginClientRemote.instance())
 
     def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
       wsClient.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
