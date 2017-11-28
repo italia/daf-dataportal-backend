@@ -85,8 +85,13 @@ class SettingsRepositoryProd extends SettingsRepository {
   private def getSettingsByName(name: String, db: MongoDB) = {
     val coll = db("settings")
     val query = MongoDBObject("organization" -> name)
-    val result = coll.findOne(query)
-    result
+    try{
+      val result = coll.findOne(query)
+      result
+    } catch{
+      case _ => None
+    }
+
   }
 
   override def settingsByName(name: String) = {
@@ -94,14 +99,27 @@ class SettingsRepositoryProd extends SettingsRepository {
     val db: MongoDB = mongoClient(source)
     val result = getSettingsByName(name, db)
     mongoClient.close()
-    val jsonString = com.mongodb.util.JSON.serialize(result)
-    val json = Json.parse(jsonString)
-    val settingsJsResult = json.validate[Settings]
-    val settings = settingsJsResult match {
-      case s: JsSuccess[Settings] => s.get
-      case _: JsError => Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+    result match{
+      case Some(_) => {
+        val jsonString = com.mongodb.util.JSON.serialize(result)
+        val json = Json.parse(jsonString)
+        val settingsJsResult = json.validate[Settings]
+        val settings = settingsJsResult match {
+          case s: JsSuccess[Settings] => s.get
+          case _: JsError => Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+        }
+        settings
+      }
+      case None => Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None)
     }
-    settings
+//    val jsonString = com.mongodb.util.JSON.serialize(result)
+//    val json = Json.parse(jsonString)
+//    val settingsJsResult = json.validate[Settings]
+//    val settings = settingsJsResult match {
+//      case s: JsSuccess[Settings] => s.get
+//      case _: JsError => Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+//    }
+//    settings
   }
 
   //only for test

@@ -36,7 +36,7 @@ import services.settings.SettingsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                        
+                                                                                                                                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -69,7 +69,7 @@ package ftd_api.yaml {
         val saveSettings = saveSettingsAction { input: (String, Settings) =>
             val (organization, settings) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveSettings
-//            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
+            //            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
             val response = SettingsRegistry.settingsService.saveSettings(organization, settings)
           SaveSettings200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.saveSettings
