@@ -701,6 +701,138 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/plot/{iframe_id}/{sizexsize}":
+    get:
+      tags:
+      - Snapshots
+      summary: get snapshota
+      operationId: snapshotbyid
+      parameters:
+      - name: iframe_id
+        in: path
+        description: id of iframes
+        required: true
+        type: string
+      - name: sizexsize
+        in: path
+        description: sizexsize must be one of the following  100x100 400x300 280x500 356x280
+        required: true
+        type: string
+      responses:
+        200:
+          description: The JWT token
+          schema:
+            type: string
+            format: base64
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  "/infer/schema/{fileType}":
+    post:
+      tags:
+      - Ingestion Form
+      summary: Infer schema
+      operationId: inferschema
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        required: true
+        description: The file to upload
+      - name: fileType
+        in: path
+        description: csv o json enum not working
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+              $ref: '#/definitions/Inferred'
+  "/settings":
+    delete:
+      tags:
+      - Settings
+      summary: Delete Settings
+      operationId: deleteSettings
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: organization
+          in: query
+          description: the name of the organization
+          type: string
+        - name: settings
+          in: body
+          description: the settings of the organization
+          required: true
+          schema:
+            $ref: '#/definitions/Settings'
+      responses:
+        200:
+          description: Settings delete
+          schema:
+            $ref: '#/definitions/Settings'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      tags:
+      - Settings
+      summary: Get Settings
+      oparationId: settingsByName
+      produces:
+        - application/json
+      parameters:
+        - name: organization
+          in: query
+          description: the name of the organization
+          required: true
+          type: string
+      responses:
+        200:
+          description: Settings of the organization
+          schema:
+              $ref: '#/definitions/Settings'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+      - Settings
+      summary: Save Settings
+      operationId: saveSettings
+      consumes:
+        - application/json
+      parameters:
+      - name: organization
+        in: query
+        description: the name of the organization
+        required: true
+        type: string
+      - name: settings
+        in: body
+        description: settings to save
+        required: true
+        schema:
+          $ref: '#/definitions/Settings'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 
 definitions:
   Catalog:
@@ -798,6 +930,37 @@ definitions:
         format: date-time
       subtitle:
         type: string
+  Settings:
+    type: object
+    properties:
+      theme:
+        type: string
+      headerLogo:
+        type: string
+      headerSiglaTool:
+        type: string
+      headerDescTool:
+        type: string
+      twitterURL:
+        type: string
+      mediumURL:
+        type: string
+      notizieURL:
+        type: string
+      forumURL:
+        type: string
+      footerLogoAGID:
+        type: string
+      footerLogoGov:
+        type: string
+      footerLogoDevITA:
+        type: string
+      footerNomeEnte:
+        type: string
+      footerPrivacy:
+        type: string
+      footerLegal:
+        type: string
        # $ref: '#/definitions/Oid'
   UserStory:
     type: object
@@ -851,3 +1014,31 @@ definitions:
     properties:
       url:
         type: string
+      identifier:
+        type: string
+      origin:
+        type: string
+  Inferred:
+    type: object
+    properties:
+      separator:
+        type: string
+      format:
+        type: string
+      inferredType:
+          type: array
+          items:
+            $ref: '#/definitions/InferredType'
+  InferredType:
+    type: object
+    properties:
+      column_name:
+        type: string
+      data:
+        type: array
+        items:
+          type: string
+      inferredType:
+        type: array
+        items:
+          type: string
