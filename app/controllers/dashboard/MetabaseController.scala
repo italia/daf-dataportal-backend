@@ -13,7 +13,6 @@ import play.api.libs.ws._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
-import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.duration._
 
@@ -55,7 +54,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
 
     println("wee-->"+URL + "/api/card/public")
-    def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
+    def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
     sim.manageServiceCall( new LoginInfo(metauser,null,"metabase"),callPublicSlice ).map{Ok(_)}
