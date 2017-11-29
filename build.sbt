@@ -52,8 +52,6 @@ libraryDependencies ++= Seq(
   "me.lessis" %% "base64" % "0.2.0",
   "it.gov.daf" %% "common" % "1.0.2-SNAPSHOT",
   "com.github.cb372" %% "scalacache-guava" % "0.9.4",
-  "it.gov.daf" %% "common" % "1.0.1-SNAPSHOT",
-  "com.github.cb372" %% "scalacache-guava" % "0.9.4",
   "com.chuusai" %% "shapeless" % "2.3.2",
   "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0",
   "com.sksamuel.avro4s" %% "avro4s-json" % "1.8.0" //,
