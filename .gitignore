@@ -14,6 +14,7 @@ bin/
 /project/project
 /project/target
 /public/img
+/client
 /target
 tmp/
 test-result
@@ -24,3 +25,4 @@ server.pid
 /conf/integration.conf
 /dist/
 .cache
+.DS_Store

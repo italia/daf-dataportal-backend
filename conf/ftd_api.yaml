@@ -728,6 +728,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
   "/infer/schema/{fileType}":
     post:
       tags:
@@ -752,10 +753,87 @@ paths:
           description: successful operation
           schema:
               $ref: '#/definitions/Inferred'
+  "/settings":
+    delete:
+      tags:
+      - Settings
+      summary: Delete Settings
+      operationId: deleteSettings
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: organization
+          in: query
+          description: the name of the organization
+          type: string
+        - name: settings
+          in: body
+          description: the settings of the organization
+          required: true
+          schema:
+            $ref: '#/definitions/Settings'
+      responses:
+        200:
+          description: Settings delete
+          schema:
+            $ref: '#/definitions/Settings'
         default:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+    get:
+      tags:
+      - Settings
+      summary: Get Settings
+      oparationId: settingsByName
+      produces:
+        - application/json
+      parameters:
+        - name: organization
+          in: query
+          description: the name of the organization
+          required: true
+          type: string
+      responses:
+        200:
+          description: Settings of the organization
+          schema:
+              $ref: '#/definitions/Settings'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+      - Settings
+      summary: Save Settings
+      operationId: saveSettings
+      consumes:
+        - application/json
+      parameters:
+      - name: organization
+        in: query
+        description: the name of the organization
+        required: true
+        type: string
+      - name: settings
+        in: body
+        description: settings to save
+        required: true
+        schema:
+          $ref: '#/definitions/Settings'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
 definitions:
   Catalog:
     properties:
@@ -851,6 +929,37 @@ definitions:
         type: string
         format: date-time
       subtitle:
+        type: string
+  Settings:
+    type: object
+    properties:
+      theme:
+        type: string
+      headerLogo:
+        type: string
+      headerSiglaTool:
+        type: string
+      headerDescTool:
+        type: string
+      twitterURL:
+        type: string
+      mediumURL:
+        type: string
+      notizieURL:
+        type: string
+      forumURL:
+        type: string
+      footerLogoAGID:
+        type: string
+      footerLogoGov:
+        type: string
+      footerLogoDevITA:
+        type: string
+      footerNomeEnte:
+        type: string
+      footerPrivacy:
+        type: string
+      footerLegal:
         type: string
        # $ref: '#/definitions/Oid'
   UserStory:
