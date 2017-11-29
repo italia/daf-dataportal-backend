@@ -728,7 +728,34 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/infer/schema/{fileType}":
+    post:
+      tags:
+      - Ingestion Form
+      summary: Infer schema
+      operationId: inferschema
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        required: true
+        description: The file to upload
+      - name: fileType
+        in: path
+        description: csv o json enum not working
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+              $ref: '#/definitions/Inferred'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -882,3 +909,27 @@ definitions:
         type: string
       origin:
         type: string
+  Inferred:
+    type: object
+    properties:
+      separator:
+        type: string
+      format:
+        type: string
+      inferredType:
+          type: array
+          items:
+            $ref: '#/definitions/InferredType'
+  InferredType:
+    type: object
+    properties:
+      column_name:
+        type: string
+      data:
+        type: array
+        items:
+          type: string
+      inferredType:
+        type: array
+        items:
+          type: string

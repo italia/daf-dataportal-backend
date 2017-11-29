@@ -12,7 +12,9 @@ name := "daf-datipubblici"
 
 //version in ThisBuild := "1.0.1-SNAPSHOT"
 
-version in ThisBuild := "1.0-alpha.1"
+//version in ThisBuild := "1.0-alpha.1"
+
+version in ThisBuild := "1.0.1-SNAPSHOT"
 
 val playVersion = "2.5.14"
 
@@ -49,7 +51,11 @@ libraryDependencies ++= Seq(
   "net.sf.opencsv" % "opencsv" % "2.3",
   "me.lessis" %% "base64" % "0.2.0",
   "it.gov.daf" %% "common" % "1.0.1-SNAPSHOT",
-  "com.github.cb372" %% "scalacache-guava" % "0.9.4"
+  "com.github.cb372" %% "scalacache-guava" % "0.9.4",
+  "com.chuusai" %% "shapeless" % "2.3.2",
+  "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0",
+  "com.sksamuel.avro4s" %% "avro4s-json" % "1.8.0" //,
+//  "com.sksamuel.avro4s" %% "avro4s-generator" % "1.8.0"
 )
 
 

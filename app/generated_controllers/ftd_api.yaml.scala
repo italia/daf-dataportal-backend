@@ -42,6 +42,9 @@ import com.google.common.io.ByteStreams
 import com.google.common.io.ByteStreams
 import scala.concurrent.Future
 import play.api.Environment
+import scala.collection.immutable
+import scala.io.Source
+import play.api.libs.json._
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -50,7 +53,7 @@ import play.api.Environment
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                
+                                                                                                                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -188,6 +191,119 @@ package ftd_api.yaml {
             val save = DashboardRegistry.dashboardService.saveDashboard(dashboard, user)
             Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
+        }
+        val inferschema = inferschemaAction { input: (File, String) =>
+            val (upfile, fileType) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
+            if (fileType.equals("csv")) {
+                implicit class CastString(val s: String) {
+
+                    private val castToInt = (x: String) => Try({
+                        x.toInt;
+                        Some(("integer"))
+                    }).getOrElse(None)
+                    private val castToDouble = (x: String) => if (x.contains(".")) Try({
+                        x.toDouble;
+                        Some(("double"))
+                    }).getOrElse(None) else None
+                    private val castoToBoolean = (x: String) => Try({
+                        x.toBoolean;
+                        Some("boolean")
+                    }).getOrElse(None)
+                    private val castoToString = (x: String) => Try(Some("string")).getOrElse(None)
+
+
+                    val castingFunctions = Seq(castToInt, castToDouble, castoToBoolean, castoToString)
+
+                    def castToString: Seq[Option[String]] = castingFunctions.map(_ (s))
+
+                }
+
+                val (content, rows) = Source
+                  .fromFile(upfile)
+                  .getLines.slice(0, 100).duplicate
+
+                val rows20 = rows.slice(0, 20)
+
+                val header = content.next
+
+                def inferSeparator(header: String, supportedSeparators: Seq[String]): String = {
+                    val max = supportedSeparators.map(x => {
+                        (x, header.count(_ == x))
+                    }).maxBy(_._2)
+                    max._1
+                }
+
+                val separator = inferSeparator(header, Seq(",", ";", "|", ".|.", "\t", ":"))
+
+                val headerRows = rows20.next.split(separator)
+
+                val dataColumn = rows20
+                  .toList
+                  .flatMap(_.split(separator).zipWithIndex)
+                  .groupBy(_._2)
+                  .map(_._2)
+                  .toList
+                  .sortBy(_(0)._2)
+
+
+                val data = headerRows
+                  .zip(dataColumn)
+                  .toMap
+                  .mapValues(x => (x.map(_._1)))
+
+
+                val headers: Array[String] = header.split(separator)
+
+                val result = content.map(x => {
+                    // val contents: Array[Seq[Option[IDB]]] = x.split(separator).map(_.castTo)
+                    val row = x.split(separator)
+                    val contents: Array[Seq[String]] = x.split(separator).map(_.castToString.flatten)
+                    headers.zip(contents).toMap
+                })
+
+                val infered = result
+                  .toList
+                  .flatten
+                  .distinct
+                  .groupBy(_._1)
+                  //.mapValues(_.map(_._2).flatten)
+                  .mapValues((x => x.flatMap(_._2))
+                )
+
+
+                val total = for {
+                    (k, v1) <- infered
+                    v2 <- data.get(k)
+                } yield (InferredType(Some(k), Some(v2), Some(v1)))
+
+                Inferschema200(Inferred(Some(separator), Some("csv"), Some(total.toList)))
+            } else {
+                object JsFlattener {
+
+                    def apply(js: JsValue): JsValue = flatten(js).foldLeft(JsObject(Nil))(_++_.as[JsObject])
+
+                    def flatten(js: JsValue, prefix: String = ""): Seq[JsValue] = {
+                        js.as[JsObject].fieldSet.toSeq.flatMap{ case (key, values) =>
+                            values match {
+                                case JsBoolean(x) => Seq(Json.obj(concat(prefix, key) -> x))
+                                case JsNumber(x) => Seq(Json.obj(concat(prefix, key) -> x))
+                                case JsString(x) => Seq(Json.obj(concat(prefix, key) -> x))
+                                case JsArray(seq) => seq.zipWithIndex.flatMap{ case (x, i) => flatten(x, concat(prefix, key + s"[$i]")) }
+                                case x: JsObject => flatten(x, concat(prefix, key))
+                                case _ => Seq(Json.obj(concat(prefix, key) -> JsNull))
+                            }
+                        }
+                    }
+
+                    def concat(prefix: String, key: String): String = if(prefix.nonEmpty) s"$prefix.$key" else key
+
+                }
+                Inferschema200(Inferred(None, None, None))
+              //  Inferschema200(Seq(InferredType(None,None,None,None,None)))
+            }
+           // NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.inferschema
         }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid

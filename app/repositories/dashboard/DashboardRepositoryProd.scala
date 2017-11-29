@@ -137,7 +137,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
     val grafanaPublic = localUrl + "/grafana/snapshots/" + user
-    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
+   // val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
      // .andThen { case _ => wsClient.close() }
@@ -149,7 +149,7 @@ class DashboardRepositoryProd extends DashboardRepository{
 
     val requestSnapshots = wsClient.url(grafanaPublic).get()
 
-    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
+   // val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
@@ -193,7 +193,7 @@ class DashboardRepositoryProd extends DashboardRepository{
       })
     }
 
-    val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
+   /* val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
       val json = response.json.as[Seq[JsValue]]
       json.map( x => {
         val uuid = (x \ "public_uuid").get.as[String]
@@ -201,7 +201,7 @@ class DashboardRepositoryProd extends DashboardRepository{
         val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
         DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
       })
-    }
+    } */
 
 
     val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
@@ -218,7 +218,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     }
 
 
-    val services: Seq[Future[Seq[DashboardIframes]]] =  List(metabase,superset, grafana, tdMetabase) //List(metabase,superset, tdMetabase)//
+    val services: Seq[Future[Seq[DashboardIframes]]] =  List(metabase,superset, grafana)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
         f.map(scala.util.Success(_)).recover{ case t: Throwable => Failure( t ) }
@@ -316,15 +316,16 @@ class DashboardRepositoryProd extends DashboardRepository{
           val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
         }
         case None => {
-          if (!dashboard.title.isEmpty || dashboard.title != None) {
-            val uid = UUID.randomUUID().toString
-            val timestamps = ZonedDateTime.now()
-            val newDash = dashboard.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-            val json: JsValue = Json.toJson(newDash)
-            val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-            saved = uid
-            operation = "inserted"
-            coll.save(obj)
+          dashboard.title match {
+            case Some(x) =>
+              val uid = UUID.randomUUID ().toString
+              val timestamps = ZonedDateTime.now ()
+              val newDash = dashboard.copy (id = Some (uid), user = Some (user), timestamp = Some (timestamps) )
+              val json: JsValue = Json.toJson (newDash)
+              val obj = com.mongodb.util.JSON.parse (json.toString () ).asInstanceOf[DBObject]
+              saved = uid
+              operation = "inserted"
+              coll.save (obj)
           }
         }
     }
@@ -354,7 +355,7 @@ class DashboardRepositoryProd extends DashboardRepository{
     val coll = db("stories")
     val results = coll.find(query)
       .sort(MongoDBObject("timestamp" -> -1))
-      .skip(page.getOrElse(1))
+      .skip(page.getOrElse(0))
       .limit(limit.getOrElse(100)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
@@ -422,18 +423,21 @@ class DashboardRepositoryProd extends DashboardRepository{
           coll.update(query, obj)
         }
         case None => {
-          if (story.title.isEmpty || story.title == None) {
-            val uid = UUID.randomUUID().toString
-            val timestamps = ZonedDateTime.now()
-            val newStory = story.copy(id = Some(uid), user = Some(user), timestamp = Some(timestamps))
-            val json: JsValue = Json.toJson(newStory)
-            val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-            saved = uid
-            operation = "inserted"
-            coll.save(obj)
+          story.title match {
+            case Some(x) =>
+              val uid = UUID.randomUUID ().toString
+              val timestamps = ZonedDateTime.now ()
+              val newStory = story.copy (id = Some (uid), user = Some (user), timestamp = Some (timestamps) )
+              val json: JsValue = Json.toJson (newStory)
+              val obj = com.mongodb.util.JSON.parse (json.toString () ).asInstanceOf[DBObject]
+              saved = uid
+              operation = "inserted"
+              coll.save (obj)
+          }
+
           }
         }
-    }
+
     mongoClient.close()
     val response = Success(Some(saved),Some(operation))
     response
@@ -448,5 +452,4 @@ class DashboardRepositoryProd extends DashboardRepository{
     val response = Success(Some("Deleted"),Some("Deleted"))
     response
   }
-
 }
