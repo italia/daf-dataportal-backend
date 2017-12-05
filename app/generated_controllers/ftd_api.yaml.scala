@@ -220,7 +220,7 @@ package ftd_api.yaml {
 
                     private val castToInt = (x: String) => Try({
                         x.toInt;
-                        Some(("integer"))
+                        Some(("int"))
                     }).getOrElse(None)
                     private val castToDouble = (x: String) => if (x.contains(".")) Try({
                         x.toDouble;
