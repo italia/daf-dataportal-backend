@@ -46,6 +46,8 @@ import play.api.Environment
 import scala.io.Source
 import play.api.libs.json._
 import services.settings.SettingsRegistry
+import com.sksamuel.avro4s.json.JsonToAvroConverter
+import org.apache.avro.Schema
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -54,7 +56,7 @@ import services.settings.SettingsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -222,16 +224,18 @@ package ftd_api.yaml {
                         x.toInt;
                         Some(("int"))
                     }).getOrElse(None)
+
                     private val castToDouble = (x: String) => if (x.contains(".")) Try({
                         x.toDouble;
                         Some(("double"))
                     }).getOrElse(None) else None
+
                     private val castoToBoolean = (x: String) => Try({
                         x.toBoolean;
                         Some("boolean")
                     }).getOrElse(None)
-                    private val castoToString = (x: String) => Try(Some("string")).getOrElse(None)
 
+                    private val castoToString = (x: String) => Try(Some("string")).getOrElse(None)
 
                     val castingFunctions = Seq(castToInt, castToDouble, castoToBoolean, castoToString)
 
@@ -319,6 +323,17 @@ package ftd_api.yaml {
                     def concat(prefix: String, key: String): String = if(prefix.nonEmpty) s"$prefix.$key" else key
 
                 }
+
+                val jsonString = Source.fromFile(upfile).getLines().mkString
+                println(jsonString)
+                val jsonObj = Json.parse(jsonString)
+                val correct = jsonObj match {
+                    case x :JsArray =>  JsFlattener(x.value.head)
+                    case y :JsObject => JsFlattener(y)
+                }
+                //val flatJson = JsFlattener(jsonObj)
+
+                println(correct.toString())
                 Inferschema200(Inferred(None, None, None))
               //  Inferschema200(Seq(InferredType(None,None,None,None,None)))
             }
@@ -375,6 +390,12 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogGroup(catalogName)
             CatalogDistrubutionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
+        }
+        val saveDataForNifi = saveDataForNifiAction { input: (File, String) =>
+            val (upfile, path_to_save) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
         }
         val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs

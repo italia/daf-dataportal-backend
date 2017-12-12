@@ -32,7 +32,11 @@ lazy val client = (project in file("client")).
     )
   )).enablePlugins(SwaggerCodegenPlugin) */
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala, ApiFirstCore, ApiFirstPlayScalaCodeGenerator, ApiFirstSwaggerParser)
+lazy val root = (project in file(".")).enablePlugins(PlayScala, ApiFirstCore, ApiFirstPlayScalaCodeGenerator, ApiFirstSwaggerParser, Jolokia)
+  .settings(
+    jolokiaPort := "7000",
+    jolokiaProtocol := "http"
+  )
  // .dependsOn(client).aggregate(client)
 
 scalaVersion := "2.11.8"
@@ -66,7 +70,8 @@ resolvers ++= Seq(
   "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
   Resolver.url("sbt-plugins", url("http://dl.bintray.com/zalando/sbt-plugins"))(Resolver.ivyStylePatterns),
   Resolver.mavenLocal,
-  "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/"
+  "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/",
+  Resolver.bintrayRepo("jtescher", " sbt-plugin-releases")
 )
 
 playScalaCustomTemplateLocation := Some(baseDirectory.value / "templates")
@@ -95,7 +100,7 @@ dockerCommands := dockerCommands.value.flatMap {
 }
 
 dockerCommands += ExecCmd("ENTRYPOINT", s"bin/${name.value}", "-Dconfig.file=conf/production.conf")
-dockerExposedPorts := Seq(9000)
+dockerExposedPorts := Seq(9000, 7000)
 dockerRepository := Option("10.98.74.120:5000")
 
 
