@@ -46,6 +46,8 @@ import play.api.Environment
 import scala.io.Source
 import play.api.libs.json._
 import services.settings.SettingsRegistry
+import com.sksamuel.avro4s.json.JsonToAvroConverter
+import org.apache.avro.Schema
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -54,7 +56,7 @@ import services.settings.SettingsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -212,32 +214,13 @@ package ftd_api.yaml {
             Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
+
         val inferschema = inferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
             if (fileType.equals("csv")) {
-                implicit class CastString(val s: String) {
 
-                    private val castToInt = (x: String) => Try({
-                        x.toInt;
-                        Some(("integer"))
-                    }).getOrElse(None)
-                    private val castToDouble = (x: String) => if (x.contains(".")) Try({
-                        x.toDouble;
-                        Some(("double"))
-                    }).getOrElse(None) else None
-                    private val castoToBoolean = (x: String) => Try({
-                        x.toBoolean;
-                        Some("boolean")
-                    }).getOrElse(None)
-                    private val castoToString = (x: String) => Try(Some("string")).getOrElse(None)
-
-
-                    val castingFunctions = Seq(castToInt, castToDouble, castoToBoolean, castoToString)
-
-                    def castToString: Seq[Option[String]] = castingFunctions.map(_ (s))
-
-                }
+                import utils.InferSchema._
 
                 val (content, rows) = Source
                   .fromFile(upfile)
@@ -247,14 +230,7 @@ package ftd_api.yaml {
 
                 val header = content.next
 
-                def inferSeparator(header: String, supportedSeparators: Seq[String]): String = {
-                    val max = supportedSeparators.map(x => {
-                        (x, header.count(_ == x))
-                    }).maxBy(_._2)
-                    max._1
-                }
-
-                val separator = inferSeparator(header, Seq(",", ";", "|", ".|.", "\t", ":"))
+                val separator = inferSeparator(header, SEPARATORS)
 
                 val headerRows = rows20.next.split(separator)
 
@@ -266,12 +242,10 @@ package ftd_api.yaml {
                   .toList
                   .sortBy(_(0)._2)
 
-
                 val data = headerRows
                   .zip(dataColumn)
                   .toMap
                   .mapValues(x => (x.map(_._1)))
-
 
                 val headers: Array[String] = header.split(separator)
 
@@ -292,7 +266,7 @@ package ftd_api.yaml {
                 )
 
 
-                val total = for {
+                val total   = for {
                     (k, v1) <- infered
                     v2 <- data.get(k)
                 } yield (InferredType(Some(k), Some(v2), Some(v1)))
@@ -319,6 +293,17 @@ package ftd_api.yaml {
                     def concat(prefix: String, key: String): String = if(prefix.nonEmpty) s"$prefix.$key" else key
 
                 }
+
+                val jsonString = Source.fromFile(upfile).getLines().mkString
+                println(jsonString)
+                val jsonObj = Json.parse(jsonString)
+                val correct = jsonObj match {
+                    case x :JsArray =>  JsFlattener(x.value.head)
+                    case y :JsObject => JsFlattener(y)
+                }
+                //val flatJson = JsFlattener(jsonObj)
+
+                println(correct.toString())
                 Inferschema200(Inferred(None, None, None))
               //  Inferschema200(Seq(InferredType(None,None,None,None,None)))
             }
@@ -375,6 +360,12 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogGroup(catalogName)
             CatalogDistrubutionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
+        }
+        val saveDataForNifi = saveDataForNifiAction { input: (File, String) =>
+            val (upfile, path_to_save) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
         }
         val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
