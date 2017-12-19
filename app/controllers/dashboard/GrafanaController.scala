@@ -30,7 +30,7 @@ class GrafanaController @Inject() (ws: WSClient,
 
   val local = conf.getString("app.local.url").get
 
-  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
+//  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
 
 
