@@ -13,7 +13,6 @@ import play.api.libs.ws._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
-import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.duration._
 
@@ -21,7 +20,8 @@ import scala.concurrent.duration._
 @Singleton
 class MetabaseController @Inject() (ws: WSClient,
                                     cache: CacheApi ,
-                                    config: ConfigurationProvider
+                                    config: ConfigurationProvider,
+                                    sim: SecuredInvocationManager
                                     )(implicit context: ExecutionContext) extends Controller {
 
  // import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -33,7 +33,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
   val local = conf.getString("app.local.url").get
 
-  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
+  //val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
   def session() = Action.async { implicit request =>
     val data = Json.obj(
@@ -54,7 +54,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
 
     println("wee-->"+URL + "/api/card/public")
-    def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
+    def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
     sim.manageServiceCall( new LoginInfo(metauser,null,"metabase"),callPublicSlice ).map{Ok(_)}

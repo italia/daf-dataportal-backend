@@ -12,11 +12,10 @@ import play.api.libs.ws._
 import scala.concurrent.{Await, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
-import play.api.libs.ws.ahc.AhcWSClient
 
 
 @Singleton
-class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: ConfigurationProvider) extends Controller {
+class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: ConfigurationProvider, sim: SecuredInvocationManager) extends Controller {
 
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -27,7 +26,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
 
   val local = conf.getString("app.local.url").get
 
-  val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
+  //val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
   def getIframes() = Action.async { implicit request =>
     val iframeJson = ws.url("http://localhost:8088/slicemodelview/api/read")
@@ -69,7 +68,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   def publicSlice(user :String) = Action.async { implicit request =>
 
 
-    def callPublicSlice(cookie:String, wsClient:AhcWSClient)=
+    def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
 
     sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json\ "result").get)}
