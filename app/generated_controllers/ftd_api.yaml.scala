@@ -49,7 +49,6 @@ import services.settings.SettingsRegistry
 import com.sksamuel.avro4s.json.JsonToAvroConverter
 import org.apache.avro.Schema
 import utils.InferSchema._
-import utils.InferSchema._
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -58,7 +57,7 @@ import utils.InferSchema._
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                    
+                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -220,8 +219,6 @@ package ftd_api.yaml {
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
             if (fileType.equals("csv")) {
-
-                import utils.InferSchema._
 
                 val (content, rows) = Source
                   .fromFile(upfile)
