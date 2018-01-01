@@ -753,6 +753,30 @@ paths:
           description: successful operation
           schema:
               $ref: '#/definitions/Inferred'
+  "/infer/kylo/{fileType}":
+    post:
+      tags:
+      - Ingestion Form
+      summary: Infer schema from kylo
+      operationId: kyloInferschema
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        required: true
+        description: The file to upload
+      - name: fileType
+        in: path
+        description: csv o json enum not working
+        required: true
+        type: string
+      responses:
+        '200':
+          description: string representing a non static schema in json format
+          schema:
+            type: string
   "/save/data/{path_to_save}":
     post:
       tags:

@@ -34,13 +34,6 @@ import java.io.{ByteArrayInputStream,InputStreamReader}
 import java.util.Base64
 import com.google.common.base.Charsets
 import com.google.common.io.{ByteStreams,CharStreams}
-import scala.io.BufferedSource
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
 import scala.concurrent.Future
 import play.api.Environment
 import scala.io.Source
@@ -49,6 +42,12 @@ import services.settings.SettingsRegistry
 import com.sksamuel.avro4s.json.JsonToAvroConverter
 import org.apache.avro.Schema
 import utils.InferSchema._
+import akka.stream.scaladsl.FileIO
+import play.api.mvc.MultipartFormData.{DataPart,FilePart}
+import play.api.libs.ws.WSAuthScheme
+import org.asynchttpclient.AsyncHttpClient
+import org.asynchttpclient.request.body.multipart.StringPart
+import play.api.http.Writeable
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -57,7 +56,7 @@ import utils.InferSchema._
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                        
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -365,6 +364,23 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
         }
+
+        val kyloInferschema = kyloInferschemaAction { input: (File, String) =>
+            val (upfile, fileType) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+            // TODO refactor and parametrize when dealing with other format 
+            val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+              .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+              .post(akka.stream.scaladsl.Source(FilePart("file", "Agency_infer.csv",
+                  Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+                  """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+
+            response.flatMap(r => {
+                logger.debug(r.body)
+                KyloInferschema200(r.body)
+            })
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+        }
         val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
             NotImplementedYet
@@ -377,6 +393,26 @@ package ftd_api.yaml {
             CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
+    
+     // Dead code for absent methodFtd_apiYaml.kyloInfersch
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
+            val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+                .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+              .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
+                  Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+                  """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+
+
+            response.map(r => {
+                logger.debug(r.body)
+            })
+            
+
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+     */
+
     
      // Dead code for absent methodFtd_apiYaml.getsport
      /*
