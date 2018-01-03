@@ -19,8 +19,17 @@ import javax.inject._
 
 import java.io.File
 
+import play.api.mvc.{Action,Controller}
+import play.api.data.validation.Constraint
+import play.api.i18n.MessagesApi
+import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
+import de.zalando.play.controllers._
+import PlayBodyParsing._
+import PlayValidations._
+import scala.util._
+import javax.inject._
+import java.io.File
 import de.zalando.play.controllers.PlayBodyParsing._
-import it.gov.daf.catalogmanager.utilities.WebServiceUtil
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
 import play.api.Configuration
@@ -34,16 +43,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.io.{ByteArrayInputStream,InputStreamReader}
 import java.util.Base64
-import com.google.common.base.Charsets
-import com.google.common.io.{ByteStreams,CharStreams}
-import scala.io.BufferedSource
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import com.google.common.io.ByteStreams
-import scala.concurrent.Future
 import play.api.Environment
 import scala.concurrent.Future
 import services.settings.SettingsRegistry
@@ -55,7 +54,7 @@ import services.settings.SettingsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -81,17 +80,24 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val getsettings = getsettingsAction { (organization: String) =>
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsettings
-            Getsettings200(SettingsRegistry.settingsService.settingsByName(organization))
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getsettings
+        val settingsByName = settingsByNameAction { (organization: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
+            val response = SettingsRegistry.settingsService.settingsByName(organization)
+          if(response.isRight)
+            SettingsByName200(response.right.get)
+          else
+            SettingsByName400(response.left.get)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.settingsByName
         }
         val saveSettings = saveSettingsAction { input: (String, Settings) =>
             val (organization, settings) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveSettings
             //            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
-            val response = SettingsRegistry.settingsService.saveSettings(organization, settings)
-          SaveSettings200(response)
+      val response: Either[Error, Success] = SettingsRegistry.settingsService.saveSettings(organization, settings)
+      if (response.isRight)
+        SaveSettings200(response.right.get)
+      else
+        SaveSettings400(response.left.get)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.saveSettings
         }
         val deleteSettings = deleteSettingsAction { input: (DistributionLabel, Settings) =>
@@ -121,7 +127,7 @@ package ftd_api.yaml {
         val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-            Savestories200(DashboardRegistry.dashboardService.saveStory(story,credentials._1.get))
+      Savestories200(DashboardRegistry.dashboardService.saveStory(story, credentials._1.get))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
@@ -284,7 +290,7 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
      */
 
-
+    
      // Dead code for absent methodFtd_apiYaml.sport
      /*
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
@@ -293,6 +299,6 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
      */
 
-
+    
     }
 }

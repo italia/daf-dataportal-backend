@@ -398,7 +398,7 @@ paths:
       parameters:
       - in: formData
         name: upfile
-        required : true
+        required: true
         type: file
         description: The file to upload
       - name: tableName
@@ -762,7 +762,7 @@ paths:
       tags:
       - Settings
       summary: Get Settings
-      oparationId: settingsByName
+      operationId: settingsByName
       produces:
         - application/json
       parameters:
@@ -776,6 +776,10 @@ paths:
           description: Settings of the organization
           schema:
               $ref: '#/definitions/Settings'
+        400:
+          description: error in read setting
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -804,6 +808,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Success"
+        400:
+          description: error in object settings
+          schema:
+            "$ref": "#/definitions/Error"
         default:
           description: Unexpected error
           schema:
