@@ -12,7 +12,9 @@ name := "daf-datipubblici"
 
 //version in ThisBuild := "1.0.1-SNAPSHOT"
 
-version in ThisBuild := "1.0-alpha.1"
+//version in ThisBuild := "1.0-alpha.1"
+
+version in ThisBuild := "1.0.1-SNAPSHOT"
 
 val playVersion = "2.5.14"
 
@@ -30,7 +32,11 @@ lazy val client = (project in file("client")).
     )
   )).enablePlugins(SwaggerCodegenPlugin) */
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala, ApiFirstCore, ApiFirstPlayScalaCodeGenerator, ApiFirstSwaggerParser)
+lazy val root = (project in file(".")).enablePlugins(PlayScala, ApiFirstCore, ApiFirstPlayScalaCodeGenerator, ApiFirstSwaggerParser, Jolokia)
+  .settings(
+    jolokiaPort := "7000",
+    jolokiaProtocol := "http"
+  )
  // .dependsOn(client).aggregate(client)
 
 scalaVersion := "2.11.8"
@@ -48,8 +54,12 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "3.1.1",
   "net.sf.opencsv" % "opencsv" % "2.3",
   "me.lessis" %% "base64" % "0.2.0",
-  "it.gov.daf" %% "common" % "1.0.1-SNAPSHOT",
-  "com.github.cb372" %% "scalacache-guava" % "0.9.4"
+  "it.gov.daf" %% "common" % "1.0.2-SNAPSHOT",
+  "com.github.cb372" %% "scalacache-guava" % "0.9.4",
+  "com.chuusai" %% "shapeless" % "2.3.2",
+  "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0",
+  "com.sksamuel.avro4s" %% "avro4s-json" % "1.8.0" //,
+//  "com.sksamuel.avro4s" %% "avro4s-generator" % "1.8.0"
 )
 
 
@@ -60,7 +70,8 @@ resolvers ++= Seq(
   "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
   Resolver.url("sbt-plugins", url("http://dl.bintray.com/zalando/sbt-plugins"))(Resolver.ivyStylePatterns),
   Resolver.mavenLocal,
-  "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/"
+  "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/",
+  Resolver.bintrayRepo("jtescher", " sbt-plugin-releases")
 )
 
 playScalaCustomTemplateLocation := Some(baseDirectory.value / "templates")
@@ -89,7 +100,7 @@ dockerCommands := dockerCommands.value.flatMap {
 }
 
 dockerCommands += ExecCmd("ENTRYPOINT", s"bin/${name.value}", "-Dconfig.file=conf/production.conf")
-dockerExposedPorts := Seq(9000)
+dockerExposedPorts := Seq(9000, 7000)
 dockerRepository := Option("10.98.74.120:5000")
 
 

@@ -728,6 +728,83 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
+  "/infer/schema/{fileType}":
+    post:
+      tags:
+      - Ingestion Form
+      summary: Infer schema
+      operationId: inferschema
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        required: true
+        description: The file to upload
+      - name: fileType
+        in: path
+        description: csv o json enum not working
+        required: true
+        type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+              $ref: '#/definitions/Inferred'
+  "/infer/kylo/{fileType}":
+    post:
+      tags:
+      - Ingestion Form
+      summary: Infer schema from kylo
+      operationId: kyloInferschema
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        required: true
+        description: The file to upload
+      - name: fileType
+        in: path
+        description: csv o json enum not working
+        required: true
+        type: string
+      responses:
+        '200':
+          description: string representing a non static schema in json format
+          schema:
+            type: string
+  "/save/data/{path_to_save}":
+    post:
+      tags:
+      - Ingestion Form
+      summary: Save data if file complete and less than 10MB
+      operationId: saveDataForNifi
+      consumes:
+         - multipart/form-data
+      parameters:
+      - in: formData
+        name: upfile
+        type: file
+        required: true
+        description: The file to upload
+      - name: path_to_save
+        in: path
+        description: encoded path to save
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/settings":
     delete:
       tags:
@@ -1001,3 +1078,27 @@ definitions:
         type: string
       origin:
         type: string
+  Inferred:
+    type: object
+    properties:
+      separator:
+        type: string
+      format:
+        type: string
+      inferredType:
+          type: array
+          items:
+            $ref: '#/definitions/InferredType'
+  InferredType:
+    type: object
+    properties:
+      column_name:
+        type: string
+      data:
+        type: array
+        items:
+          type: string
+      inferredType:
+        type: array
+        items:
+          type: string

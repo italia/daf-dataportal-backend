@@ -22,4 +22,6 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
 
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.8.0")
 
+addSbtPlugin("com.jatescher" % "sbt-jolokia" % "1.1.0")
+
 //addSbtPlugin("de.zalando" % "sbt-api-first-hand" % "0.2.13")

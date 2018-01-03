@@ -40,12 +40,24 @@ import it.gov.daf.common.utils.WebServiceUtil
 import akka.util.ByteString
 import play.api.libs.ws.WSClient
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.io.{ByteArrayInputStream,InputStreamReader}
 import java.util.Base64
-import play.api.Environment
+import com.google.common.base.Charsets
+import com.google.common.io.{ByteStreams,CharStreams}
 import scala.concurrent.Future
+import play.api.Environment
+import scala.io.Source
+import play.api.libs.json._
 import services.settings.SettingsRegistry
+import com.sksamuel.avro4s.json.JsonToAvroConverter
+import org.apache.avro.Schema
+import utils.InferSchema._
+import akka.stream.scaladsl.FileIO
+import play.api.mvc.MultipartFormData.{DataPart,FilePart}
+import play.api.libs.ws.WSAuthScheme
+import org.asynchttpclient.AsyncHttpClient
+import org.asynchttpclient.request.body.multipart.StringPart
+import play.api.http.Writeable
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -54,7 +66,7 @@ import services.settings.SettingsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -80,7 +92,7 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val settingsByName = settingsByNameAction { (organization: String) =>  
+        val settingsByName = settingsByNameAction { (organization: String) =>
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
             val response = SettingsRegistry.settingsService.settingsByName(organization)
           if(response.isRight)
@@ -127,7 +139,7 @@ package ftd_api.yaml {
         val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      Savestories200(DashboardRegistry.dashboardService.saveStory(story, credentials._1.get))
+            Savestories200(DashboardRegistry.dashboardService.saveStory(story,credentials._1.get))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
@@ -219,7 +231,100 @@ package ftd_api.yaml {
             Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
+        val inferschema = inferschemaAction { input: (File, String) =>
+            val (upfile, fileType) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
+            if (fileType.equals("csv")) {
+
+                val (content, rows) = Source
+                  .fromFile(upfile)
+                  .getLines.slice(0, 100).duplicate
+
+                val rows20 = rows.slice(0, 20)
+
+                val header = content.next
+
+                val separator = inferSeparator(header, SEPARATORS)
+
+                val headerRows = rows20.next.split(separator)
+
+                val dataColumn = rows20
+                  .toList
+                  .flatMap(_.split(separator).zipWithIndex)
+                  .groupBy(_._2)
+                  .map(_._2)
+                  .toList
+                  .sortBy(_(0)._2)
+
+                val data = headerRows
+                  .zip(dataColumn)
+                  .toMap
+                  .mapValues(x => (x.map(_._1)))
+
+                val headers: Array[String] = header.split(separator)
+
+                val result = content.map(x => {
+                    // val contents: Array[Seq[Option[IDB]]] = x.split(separator).map(_.castTo)
+                    val row = x.split(separator)
+                    val contents: Array[Seq[String]] = x.split(separator).map(_.castToString.flatten)
+                    headers.zip(contents).toMap
+                })
+
+                val infered = result
+                  .toList
+                  .flatten
+                  .distinct
+                  .groupBy(_._1)
+                  //.mapValues(_.map(_._2).flatten)
+                  .mapValues((x => x.flatMap(_._2))
+                )
+
+
+                val total   = for {
+                    (k, v1) <- infered
+                    v2 <- data.get(k)
+                } yield (InferredType(Some(k), Some(v2), Some(v1)))
+
+                Inferschema200(Inferred(Some(separator), Some("csv"), Some(total.toList)))
+            } else {
+                object JsFlattener {
+
+                    def apply(js: JsValue): JsValue = flatten(js).foldLeft(JsObject(Nil))(_++_.as[JsObject])
+
+                    def flatten(js: JsValue, prefix: String = ""): Seq[JsValue] = {
+                        js.as[JsObject].fieldSet.toSeq.flatMap{ case (key, values) =>
+                            values match {
+                                case JsBoolean(x) => Seq(Json.obj(concat(prefix, key) -> x))
+                                case JsNumber(x) => Seq(Json.obj(concat(prefix, key) -> x))
+                                case JsString(x) => Seq(Json.obj(concat(prefix, key) -> x))
+                                case JsArray(seq) => seq.zipWithIndex.flatMap{ case (x, i) => flatten(x, concat(prefix, key + s"[$i]")) }
+                                case x: JsObject => flatten(x, concat(prefix, key))
+                                case _ => Seq(Json.obj(concat(prefix, key) -> JsNull))
+                            }
+                        }
+                    }
+
+                    def concat(prefix: String, key: String): String = if(prefix.nonEmpty) s"$prefix.$key" else key
+
+                }
+
+                val jsonString = Source.fromFile(upfile).getLines().mkString
+                println(jsonString)
+                val jsonObj = Json.parse(jsonString)
+                val correct = jsonObj match {
+                    case x :JsArray =>  JsFlattener(x.value.head)
+                    case y :JsObject => JsFlattener(y)
+                }
+                //val flatJson = JsFlattener(jsonObj)
+
+                println(correct.toString())
+                Inferschema200(Inferred(None, None, None))
+              //  Inferschema200(Seq(InferredType(None,None,None,None,None)))
+            }
+           // NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.inferschema
+        }
+        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
             Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
@@ -270,7 +375,30 @@ package ftd_api.yaml {
             CatalogDistrubutionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
         }
-        val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
+        val saveDataForNifi = saveDataForNifiAction { input: (File, String) =>
+            val (upfile, path_to_save) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
+        }
+
+        val kyloInferschema = kyloInferschemaAction { input: (File, String) =>
+            val (upfile, fileType) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+            // TODO refactor and parametrize when dealing with other format
+            val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+              .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+              .post(akka.stream.scaladsl.Source(FilePart("file", "Agency_infer.csv",
+                  Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+                  """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+
+            response.flatMap(r => {
+                logger.debug(r.body)
+                KyloInferschema200(r.body)
+            })
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+        }
+        val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
@@ -283,6 +411,26 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
     
+     // Dead code for absent methodFtd_apiYaml.kyloInfersch
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
+            val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+                .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+              .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
+                  Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+                  """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+
+
+            response.map(r => {
+                logger.debug(r.body)
+            })
+
+
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+     */
+
+
      // Dead code for absent methodFtd_apiYaml.getsport
      /*
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
@@ -290,7 +438,7 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
      */
 
-    
+
      // Dead code for absent methodFtd_apiYaml.sport
      /*
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
@@ -299,6 +447,6 @@ package ftd_api.yaml {
             // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
      */
 
-    
+
     }
 }
