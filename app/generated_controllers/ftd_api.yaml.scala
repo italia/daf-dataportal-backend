@@ -56,7 +56,7 @@ import play.api.http.Writeable
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -364,11 +364,10 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
         }
-
         val kyloInferschema = kyloInferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
-            // TODO refactor and parametrize when dealing with other format 
+            // TODO refactor and parametrize when dealing with other format
             val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
               .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
               .post(akka.stream.scaladsl.Source(FilePart("file", "Agency_infer.csv",
@@ -376,8 +375,8 @@ package ftd_api.yaml {
                   """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
 
             response.flatMap(r => {
-                logger.debug(r.body)
-                KyloInferschema200(r.body)
+                logger.debug(Json.stringify(r.json))
+                KyloInferschema200(Json.stringify(r.json))
             })
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
         }
