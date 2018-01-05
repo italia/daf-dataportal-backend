@@ -48,12 +48,13 @@ class SettingsRepositoryProd extends SettingsRepository {
     obj.put("organization", name)
     try {
       coll.save(obj)
-      val resultInsert = findSettingsByName(name, db)
+      val resultInsert = getSettingsByName(name, db).isDefined
       resultInsert match {
         case true => Right(Success(Some(s"Settings of organization $name saved"), Some(name)))
         case false => Left(setInsertErrorMessage(name))
       }
-    } catch {
+    }
+    catch {
       case _: Exception => Left(setInsertErrorMessage(name))
     }
   }
@@ -69,7 +70,7 @@ class SettingsRepositoryProd extends SettingsRepository {
     }
     val mongoClient = MongoClient(server, List(credentials))
     val db: MongoDB = mongoClient(source)
-    val settingsInMongo: Boolean = findSettingsByName(name, db)
+    val settingsInMongo: Boolean = getSettingsByName(name, db).isDefined
 
     val response = settingsInMongo match {
       case true => updateSettings(db, name, settings)
@@ -77,16 +78,6 @@ class SettingsRepositoryProd extends SettingsRepository {
     }
     mongoClient.close()
     response
-  }
-
-  private def findSettingsByName(name: String, db: MongoDB): Boolean = {
-    val coll = db("settings")
-    val query = MongoDBObject("organization" -> name)
-    try {
-      coll.findOne(query).isDefined
-    } catch {
-      case _: Exception => false
-    }
   }
 
   private def getSettingsByName(name: String, db: MongoDB) = {
@@ -112,7 +103,7 @@ class SettingsRepositoryProd extends SettingsRepository {
         val settingsJsResult = json.validate[Settings]
         settingsJsResult match {
           case s: JsSuccess[Settings] => Right(s.get)
-          case _: JsError => Left(Error(Some(-3), Some("Error in get settings"), Some("")))
+          case _: JsError => Left(Error(Some(0), Some("Error in get settings"), Some("")))
         }
       }
       case None => Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None))

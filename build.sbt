@@ -71,7 +71,7 @@ resolvers ++= Seq(
   Resolver.url("sbt-plugins", url("http://dl.bintray.com/zalando/sbt-plugins"))(Resolver.ivyStylePatterns),
   Resolver.mavenLocal,
   "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/",
-  Resolver.bintrayRepo("jtescher", " sbt-plugin-releases")
+  Resolver.bintrayRepo("jtescher", "sbt-plugin-releases")
 )
 
 playScalaCustomTemplateLocation := Some(baseDirectory.value / "templates")
