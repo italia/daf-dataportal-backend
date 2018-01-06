@@ -1,10 +1,10 @@
 package repositories.settings
 
-import ftd_api.yaml.{Settings, Success}
+import ftd_api.yaml.{Error, Settings, Success}
 
 trait SettingsRepository {
-  def saveSettings(name: String, settings: Settings): Success
-  def settingsByName(name: String): Settings
+  def saveSettings(name: String, settings: Settings): Either[Error, Success]
+  def settingsByName(name: String): Either[Error, Settings]
 }
 
 object SettingsRepository {

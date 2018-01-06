@@ -398,7 +398,7 @@ paths:
       parameters:
       - in: formData
         name: upfile
-        required : true
+        required: true
         type: file
         description: The file to upload
       - name: tableName
@@ -806,6 +806,33 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/settings":
+    get:
+          tags:
+          - Settings
+          summary: Get Settings
+          operationId: settingsByName
+          produces:
+            - application/json
+          parameters:
+            - name: organization
+              in: query
+              description: the name of the organization
+              required: true
+              type: string
+          responses:
+            200:
+              description: Settings of the organization
+              schema:
+                  $ref: '#/definitions/Settings'
+            400:
+              description: error in read setting
+              schema:
+                $ref: '#/definitions/Error'
+            default:
+              description: Unexpected error
+              schema:
+                $ref: '#/definitions/Error'
+  "/settings/{organization}":
     delete:
       tags:
       - Settings
@@ -817,9 +844,10 @@ paths:
         - application/json
       parameters:
         - name: organization
-          in: query
+          in: path
           description: the name of the organization
           type: string
+          required: true
         - name: settings
           in: body
           description: the settings of the organization
@@ -835,28 +863,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-    get:
-      tags:
-      - Settings
-      summary: Get Settings
-      oparationId: settingsByName
-      produces:
-        - application/json
-      parameters:
-        - name: organization
-          in: query
-          description: the name of the organization
-          required: true
-          type: string
-      responses:
-        200:
-          description: Settings of the organization
-          schema:
-              $ref: '#/definitions/Settings'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
     post:
       tags:
       - Settings
@@ -866,7 +872,7 @@ paths:
         - application/json
       parameters:
       - name: organization
-        in: query
+        in: path
         description: the name of the organization
         required: true
         type: string
@@ -881,6 +887,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Success"
+        400:
+          description: error in object settings
+          schema:
+            "$ref": "#/definitions/Error"
         default:
           description: Unexpected error
           schema:
