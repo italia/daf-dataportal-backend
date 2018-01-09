@@ -66,7 +66,7 @@ class DashboardRepositoryDev extends DashboardRepository{
     Future(Seq(DashboardIframes(None,None,None,None)))
   }
 
-  def dashboards(user :String): Seq[Dashboard] = {
+  def dashboards(user :String, status: Option[Int]): Seq[Dashboard] = {
     Seq(Dashboard(None,None,None,None,None,None, None, None))
   }
 

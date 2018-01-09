@@ -511,6 +511,7 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/save/dashboards":
     post:
       tags:
       - Dashboard
@@ -561,10 +562,11 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/delete/dashboards/{dashboard_id}":
     delete:
       tags:
       - Dashboard
-      summary: get dashboard by id
+      summary: delete dashboard by id
       operationId: deletedashboard
       consumes:
          - application/json
@@ -627,6 +629,7 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/save/user-stories":
     post:
       tags:
       - UserStory
@@ -677,6 +680,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/delete/user-stories/{story_id}":
     delete:
       tags:
       - UserStory

@@ -36,8 +36,8 @@ trait DashboardServiceComponent {
       dashboardRepository.iframes(metaUser)
     }
 
-    def dashboards(user :String): Seq[Dashboard] = {
-       dashboardRepository.dashboards(user)
+    def dashboards(user :String, status: Option[Int]): Seq[Dashboard] = {
+       dashboardRepository.dashboards(user, status)
     }
 
     def dashboardById(user: String, id: String) :Dashboard = {

@@ -71,7 +71,6 @@ class SettingsRepositoryProd extends SettingsRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val db: MongoDB = mongoClient(source)
     val settingsInMongo: Boolean = getSettingsByName(name, db).isDefined
-
     val response = settingsInMongo match {
       case true => updateSettings(db, name, settings)
       case false => insertSettings(db, name, settings)

@@ -14,7 +14,7 @@ trait DashboardRepository {
    def update(upFile :File,tableName :String, fileType :String) :Success
    def tables(): Seq[Catalog]
    def iframes(metaUser :String): Future[Seq[DashboardIframes]]
-   def dashboards(user :String): Seq[Dashboard]
+   def dashboards(user :String, status:Option[Int]): Seq[Dashboard]
    def dashboardById(user: String, id: String) :Dashboard
    def saveDashboard(dashboard: Dashboard, user :String): Success
    def deleteDashboard(dashboardId :String): Success
