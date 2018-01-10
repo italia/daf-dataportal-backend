@@ -52,7 +52,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   val server  = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
-  val serverMongoMeta = new ServerAddress("127.0.0.1", 27017)
+  val serverMongoMeta = new ServerAddress("metabase.default.svc.cluster.local", 27017)
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
 
