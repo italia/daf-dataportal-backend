@@ -49,8 +49,13 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
-  val server = new ServerAddress(mongoHost, 27017)
+  val server  = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
+
+  val serverMongoMeta = new ServerAddress("127.0.0.1", 27017)
+  val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
+
+
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -61,8 +66,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     Files.copy(upFile.toPath, copyFilePath, StandardCopyOption.REPLACE_EXISTING)
     //    val mongoClient = MongoClient(mongoHost, mongoPort)
     //    val db = mongoClient("monitor_mdb")
-    val mongoClient = MongoClient(server, List(credentials))
-    val db = mongoClient(source)
+    //val mongoClient = MongoClient(server, List(credentials))
+    //val db = mongoClient(source)
+    //val mongoClient = MongoClient(serverMongoMeta, List(credentialsMongoMeta))
+    //val db = mongoClient("metabase")
+    val mongoClient = MongoClient(serverMongoMeta, List(credentialsMongoMeta))
+    val db = mongoClient("metabase")
     val coll = db(tableName)
     if (fileType.toLowerCase.equals("json")) {
       val fileString = Source.fromFile(upFile).getLines().mkString
@@ -98,8 +107,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fileString = Source.fromFile(upFile).getLines().mkString
     val jsonArray: Option[JsArray] = DashboardUtil.toJson(fileString)
     val readyToBeSaved = DashboardUtil.convertToJsonString(jsonArray)
-    val mongoClient = MongoClient(server, List(credentials))
-    val db = mongoClient(source)
+    //val mongoClient = MongoClient(server, List(credentials))
+    //val db = mongoClient(source)
+    val mongoClient = MongoClient(serverMongoMeta, List(credentialsMongoMeta))
+    val db = mongoClient("metabase")
     val coll = db(tableName)
     coll.drop()
     if (fileType.toLowerCase.equals("json")) {
