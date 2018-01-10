@@ -818,9 +818,9 @@ paths:
           produces:
             - application/json
           parameters:
-            - name: organization
+            - name: domain
               in: query
-              description: the name of the organization
+              description: the domain of the organization
               required: true
               type: string
           responses:
@@ -836,7 +836,7 @@ paths:
               description: Unexpected error
               schema:
                 $ref: '#/definitions/Error'
-  "/settings/{organization}":
+  "/settings/{domain}":
     delete:
       tags:
       - Settings
@@ -847,9 +847,9 @@ paths:
       produces:
         - application/json
       parameters:
-        - name: organization
+        - name: domain
           in: path
-          description: the name of the organization
+          description: the domain of the organization
           type: string
           required: true
         - name: settings
@@ -875,9 +875,9 @@ paths:
       consumes:
         - application/json
       parameters:
-      - name: organization
+      - name: domain
         in: path
-        description: the name of the organization
+        description: the domain of the organization
         required: true
         type: string
       - name: settings
@@ -1027,7 +1027,8 @@ definitions:
         type: string
       footerLegal:
         type: string
-       # $ref: '#/definitions/Oid'
+      organization:
+        type: string
   UserStory:
     type: object
     properties:

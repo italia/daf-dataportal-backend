@@ -82,9 +82,9 @@ package ftd_api.yaml {
       //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val settingsByName = settingsByNameAction { (organization: String) =>  
+        val settingsByName = settingsByNameAction { (domain: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
-            val response = SettingsRegistry.settingsService.settingsByName(organization)
+            val response = SettingsRegistry.settingsService.settingsByName(domain)
       if (response.isRight)
         SettingsByName200(response.right.get)
       else
@@ -104,23 +104,6 @@ package ftd_api.yaml {
       upfile.renameTo(new File("public/img", snapshot_id + ".png"));
       CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
-        }
-        val saveSettings = saveSettingsAction { input: (String, Settings) =>
-            val (organization, settings) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveSettings
-            //            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
-      val response: Either[Error, Success] = SettingsRegistry.settingsService.saveSettings(organization, settings)
-      if (response.isRight)
-        SaveSettings200(response.right.get)
-      else
-        SaveSettings400(response.left.get)
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveSettings
-        }
-        val deleteSettings = deleteSettingsAction { input: (String, Settings) =>
-            val (organization, settings) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSettings
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSettings
         }
         val stories = storiesAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
             val (status, page, limit) = input
@@ -392,6 +375,23 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
         }
+        val saveSettings = saveSettingsAction { input: (String, Settings) =>
+            val (domain, settings) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveSettings
+            //            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
+      val response: Either[Error, Success] = SettingsRegistry.settingsService.saveSettings(domain, settings)
+      if (response.isRight)
+        SaveSettings200(response.right.get)
+      else
+        SaveSettings400(response.left.get)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveSettings
+        }
+        val deleteSettings = deleteSettingsAction { input: (String, Settings) =>
+            val (domain, settings) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSettings
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSettings
+        }
         val createTable = createTableAction { input: (File, String, String, String) =>
             val (upfile, tableName, fileType, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
@@ -402,38 +402,38 @@ package ftd_api.yaml {
     
      // Dead code for absent methodFtd_apiYaml.kyloInfersch
      /*
-       // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
-       val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
-           .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
-         .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
-             Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
-             """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+      // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
+      val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+          .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+        .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
+            Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+            """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
 
 
-       response.map(r => {
-           logger.debug(r.body)
-       })
+      response.map(r => {
+          logger.debug(r.body)
+      })
 
 
-       NotImplementedYet
-       // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+      NotImplementedYet
+      // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
      */
 
     
      // Dead code for absent methodFtd_apiYaml.getsport
      /*
-        // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
-        NotImplementedYet
-        // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
+       // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
+       NotImplementedYet
+       // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
      */
 
     
      // Dead code for absent methodFtd_apiYaml.sport
      /*
-        // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
+       // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
 
-        NotImplementedYet
-        // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
+       NotImplementedYet
+       // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
      */
 
     

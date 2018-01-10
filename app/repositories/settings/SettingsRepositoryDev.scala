@@ -10,6 +10,6 @@ class SettingsRepositoryDev extends SettingsRepository {
   }
 
   override def settingsByName(name: String) = {
-       Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None))
+       Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None))
   }
 }

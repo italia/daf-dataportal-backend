@@ -32,11 +32,11 @@ class SettingsRepositoryProd extends SettingsRepository {
     val coll = db("settings")
     val json = settingsToJson(settings)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-    obj.put("organization", name)
-    val query = MongoDBObject("organization" -> name)
+    obj.put("domain", name)
+    val query = MongoDBObject("domain" -> name)
     val res = coll.update(query, obj)
     if (res.getN > 0)
-      Right(Success(Some(s"Settings of organization $name update"), Some(name)))
+      Right(Success(Some(s"Settings of domain $name update"), Some(name)))
     else
       Left(Error(Some(0), Some("Error update settings"), Some("")))
   }
@@ -45,12 +45,12 @@ class SettingsRepositoryProd extends SettingsRepository {
     val coll = db("settings")
     val json = settingsToJson(settings)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-    obj.put("organization", name)
+    obj.put("domain", name)
     try {
       coll.save(obj)
       val resultInsert = getSettingsByName(name, db).isDefined
       resultInsert match {
-        case true => Right(Success(Some(s"Settings of organization $name saved"), Some(name)))
+        case true => Right(Success(Some(s"Settings of domain $name saved"), Some(name)))
         case false => Left(setInsertErrorMessage(name))
       }
     }
@@ -81,7 +81,7 @@ class SettingsRepositoryProd extends SettingsRepository {
 
   private def getSettingsByName(name: String, db: MongoDB) = {
     val coll = db("settings")
-    val query = MongoDBObject("organization" -> name)
+    val query = MongoDBObject("domain" -> name)
     try {
       coll.findOne(query)
     } catch {
@@ -105,7 +105,7 @@ class SettingsRepositoryProd extends SettingsRepository {
           case _: JsError => Left(Error(Some(0), Some("Error in get settings"), Some("")))
         }
       }
-      case None => Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None))
+      case None => Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None))
     }
   }
 
@@ -126,7 +126,8 @@ class SettingsRepositoryProd extends SettingsRepository {
          |  "footerLogoDevITA":"${settings.footerLogoDevITA.getOrElse("")}",
          |  "footerNomeEnte":"${settings.footerNomeEnte.getOrElse("")}",
          |  "footerPrivacy":"${settings.footerPrivacy.getOrElse("")}",
-         |  "footerLegal":"${settings.footerLegal.getOrElse("")}"
+         |  "footerLegal":"${settings.footerLegal.getOrElse("")}",
+         |  "organization":"${settings.organization.getOrElse("")}"
          |}
       """.stripMargin
     )
@@ -147,7 +148,8 @@ class SettingsRepositoryProd extends SettingsRepository {
       ("footerLogoDevITA", settings.footerLogoDevITA.getOrElse("")),
       ("footerNomeEnte", settings.footerLogoDevITA.getOrElse("")),
       ("footerPrivacy", settings.footerPrivacy.getOrElse("")),
-      ("footerLegal", settings.footerLegal.getOrElse("")))
+      ("footerLegal", settings.footerLegal.getOrElse("")),
+      ("organization", settings.organization.getOrElse("")))
 
     settingsFields.filter(p => p._2.equals("")).keys.toList
   }
