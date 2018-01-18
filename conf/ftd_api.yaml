@@ -809,6 +809,24 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/domain":
+    get:
+      tags:
+        - Domains
+      summary: Get all domain in the collection settings
+      description: Get all domain in the collection settings
+      operationId: getDomains
+      responses:
+        200:
+          description: Arrray of domains
+          schema:
+            type: array
+            items:
+              type: string
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/settings":
     get:
           tags:

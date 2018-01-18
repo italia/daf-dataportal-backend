@@ -4,6 +4,8 @@ import play.api.{Configuration, Environment}
 import ftd_api.yaml.{Error, Settings, Success}
 import repositories.settings.{SettingsRepository, SettingsRepositoryComponent}
 
+import scala.collection.immutable.List
+
 trait SettingsServiceComponent {
   this: SettingsRepositoryComponent =>
   val settingsService: SettingsService
@@ -15,6 +17,10 @@ trait SettingsServiceComponent {
 
     def settingsByName(name: String): Either[Error, Settings]= {
       settingsRepository.settingsByName(name)
+    }
+
+    def getDomain = {
+      settingsRepository.getDomain
     }
   }
 }

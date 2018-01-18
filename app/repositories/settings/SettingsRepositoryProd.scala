@@ -1,7 +1,8 @@
 package repositories.settings
 
 import akka.actor.ActorSystem
-import com.mongodb.DBObject
+import com.mongodb
+import com.mongodb.{DBCursor, DBObject, casbah}
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah._
 import ftd_api.yaml.{Error, Settings, Success}
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import utils.ConfigReader
 
+import scala.collection.immutable
 import scala.collection.immutable.List
 
 class SettingsRepositoryProd extends SettingsRepository {
@@ -152,5 +154,14 @@ class SettingsRepositoryProd extends SettingsRepository {
       ("organization", settings.organization.getOrElse("")))
 
     settingsFields.filter(p => p._2.equals("")).keys.toList
+  }
+
+  override def getDomain: Seq[String] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db: MongoDB = mongoClient(source)
+    val coll = db("settings")
+    val domains: Seq[String] = coll.map(n => n.get("domain").toString).toSeq
+    mongoClient.close()
+    domains
   }
 }

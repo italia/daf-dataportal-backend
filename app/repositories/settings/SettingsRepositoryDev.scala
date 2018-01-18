@@ -12,4 +12,6 @@ class SettingsRepositoryDev extends SettingsRepository {
   override def settingsByName(name: String) = {
        Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None))
   }
+
+  override def getDomain: Seq[String] = Seq("")
 }
