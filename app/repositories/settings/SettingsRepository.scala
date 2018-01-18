@@ -5,6 +5,7 @@ import ftd_api.yaml.{Error, Settings, Success}
 trait SettingsRepository {
   def saveSettings(name: String, settings: Settings): Either[Error, Success]
   def settingsByName(name: String): Either[Error, Settings]
+  def getDomain: Seq[String]
 }
 
 object SettingsRepository {
