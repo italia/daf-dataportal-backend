@@ -9,7 +9,7 @@ import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
-
+import play.api.Logger
 import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
@@ -43,7 +43,7 @@ class MetabaseController @Inject() (ws: WSClient,
     val responseWs: Future[WSResponse] = ws.url(URL + "/api/session").post(data)
       responseWs.map { response =>
         val resp = (response.json \ "id").as[String]
-        println("Ale " + resp)
+        Logger.info(resp)
         cache.set("metabase." + metauser, resp, 14 days)
         Ok(resp)
       }

@@ -187,11 +187,13 @@ package ftd_api.yaml {
         val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
+          // DEPRECATED NOT USED ANYMORE WE ARE USING KYLO
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.username, status))
       //Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
+
         val inferschema = inferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
