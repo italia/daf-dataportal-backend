@@ -2,44 +2,46 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET         /spec/:name     controllers.Swagger.swaggerSpec(name: String)
+GET        /spec/:name                            controllers.Swagger.swaggerSpec(name: String)
 
-GET         /list_specs     controllers.Swagger.listSpecs
+GET        /list_specs                            controllers.Swagger.listSpecs
 
-GET         /dati-gov/swagger               controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
+GET        /dati-gov/swagger                      controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
 
-GET         /index.html     controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
+GET        /index.html                            controllers.Assets.versioned(path="/public/swagger", file: Asset = "index.html")
 
-GET         /o2c.html       controllers.Assets.versioned(path="/public/swagger", file: Asset = "o2c.html")
+GET        /o2c.html                              controllers.Assets.versioned(path="/public/swagger", file: Asset = "o2c.html")
 
-GET         /favicon.ico    controllers.Assets.versioned(path="/public/swagger/images", file: Asset = "favicon.ico")
+GET        /favicon.ico                           controllers.Assets.versioned(path="/public/swagger/images", file: Asset = "favicon.ico")
 
 #GET        /api/*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
 
-->          /dati-gov/v1                  ftd_api.yaml.Routes
+->         /dati-gov/v1                           ftd_api.yaml.Routes
 
 
-GET   /catalogs     controllers.monitor.MonitorQueryController.catalogs
+GET        /catalogs                              controllers.monitor.MonitorQueryController.catalogs
 
 
 
 
 # Dashboard
 
-GET /superset/iframes controllers.dashboard.SupersetController.getIframes()
-GET /superset/session   controllers.dashboard.SupersetController.session()
-GET /superset/public_slice/:user  controllers.dashboard.SupersetController.publicSlice(user :String)
+GET        /superset/iframes                      controllers.dashboard.SupersetController.getIframes()
+GET        /superset/session                      controllers.dashboard.SupersetController.session()
+GET        /superset/public_slice/:user           controllers.dashboard.SupersetController.publicSlice(user :String)
 
-GET /metabase/session controllers.dashboard.MetabaseController.session()
-GET /metabase/public_card/:metaUser controllers.dashboard.MetabaseController.publicCard(metaUser :String)
+GET        /metabase/session                      controllers.dashboard.MetabaseController.session()
+GET        /metabase/public_card/:metaUser        controllers.dashboard.MetabaseController.publicCard(metaUser :String)
 
-GET /grafana/snapshots/:grafanauser controllers.dashboard.GrafanaController.snapshots(grafanauser :String)
+GET        /grafana/snapshots/:grafanauser        controllers.dashboard.GrafanaController.snapshots(grafanauser :String)
 
-GET /tdmetabase/session controllers.dashboard.TeamDashboardController.tdMetaSession()
-GET /tdmetabase/public_card controllers.dashboard.TeamDashboardController.tdMetaPublicCard()
+GET        /tdmetabase/session                    controllers.dashboard.TeamDashboardController.tdMetaSession()
+GET        /tdmetabase/public_card                controllers.dashboard.TeamDashboardController.tdMetaPublicCard()
 
-GET         /dati-gov/img/*file      controllers.Assets.versioned(path="/public/img", file: Asset)
-GET         /dati-gov/*file      controllers.Assets.versioned(path="/public/swagger", file: Asset)
+GET        /dati-gov/img/*file                    controllers.Assets.versioned(path="/public/img", file: Asset)
+GET        /dati-gov/*file                        controllers.Assets.versioned(path="/public/swagger", file: Asset)
+
+GET        /medium/*url                           controllers.dashboard.MediumController.medium(url)
 
 
-GET   /test controllers.HomeController.index
+GET        /test                                  controllers.HomeController.index

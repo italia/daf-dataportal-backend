@@ -1014,6 +1014,10 @@ definitions:
         format: date-time
       subtitle:
         type: string
+      pvt:
+        type: string
+      org:
+        type: string
   Settings:
     type: object
     properties:
@@ -1056,6 +1060,10 @@ definitions:
         type: string
       title:
         type: string
+      pvt:
+        type: string
+      org:
+        type: string
       published:
         type: integer
         format: int32
@@ -1073,8 +1081,6 @@ definitions:
       timestamp:
         type: string
         format: date-time
-      subtitle:
-        type: string
   Oid:
     type: object
     properties:
