@@ -49,6 +49,7 @@ import org.asynchttpclient.AsyncHttpClient
 import org.asynchttpclient.request.body.multipart.StringPart
 import play.api.http.Writeable
 import utils.ConfigReader
+import it.gov.daf.common.utils.UserInfo
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -57,7 +58,7 @@ import utils.ConfigReader
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -71,6 +72,21 @@ package ftd_api.yaml {
     ) extends Ftd_apiYamlBase {
         // ----- Start of unmanaged code area for constructor Ftd_apiYaml
 
+    object Role {
+
+      sealed abstract class EnumVal(name : String){
+        override def toString = name
+      }
+
+      case object Admin extends EnumVal("daf_admins")
+      case object Editor extends EnumVal("daf_editors")
+      case object Viewer extends EnumVal("daf_viewers")
+
+      val roles = Seq(Admin, Editor, Viewer)
+
+    }
+
+
     Authentication(configuration, playSessionStore)
     val GENERIC_ERROR = Error(None, Some("An Error occurred"), None)
 
@@ -83,7 +99,7 @@ package ftd_api.yaml {
       //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
-        val settingsByName = settingsByNameAction { (domain: String) =>
+        val settingsByName = settingsByNameAction { (domain: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
             val response = SettingsRegistry.settingsService.settingsByName(domain)
       if (response.isRight)
@@ -92,7 +108,7 @@ package ftd_api.yaml {
         SettingsByName400(response.left.get)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.settingsByName
         }
-        val savestories = savestoriesAction { (story: UserStory) =>
+        val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       Savestories200(DashboardRegistry.dashboardService.saveStory(story, credentials.username))
@@ -106,23 +122,28 @@ package ftd_api.yaml {
       CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
-        val stories = storiesAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
+        val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             // Temporary without authorization
       //val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      Stories200(DashboardRegistry.dashboardService.stories("unknown", status, page, limit))
+//      Stories200(DashboardRegistry.dashboardService.stories("unknown", status, page, limit))
       //Stories200(DashboardRegistry.dashboardService.stories("ale"))
+      val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+      //      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.username, status))
+      Stories200(DashboardRegistry.dashboardService.stories(
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
+      )
       // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
         }
-        val dashboardTables = dashboardTablesAction { (apikey: String) =>
+        val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
             val tables = DashboardRegistry.dashboardService.tables()
       DashboardTables200(tables)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardTables
         }
-        val dashboardIframes = dashboardIframesAction {  _ =>
+        val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       //val iframes = DashboardRegistry.dashboardService.iframes("alessandro@teamdigitale.governo.it")
@@ -131,7 +152,7 @@ package ftd_api.yaml {
       DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
         }
-        val allDistributionLiceses = allDistributionLicesesAction { (apikey: String) =>
+        val allDistributionLiceses = allDistributionLicesesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionLiceses()
       AllDistributionLiceses200(distributions)
@@ -145,24 +166,27 @@ package ftd_api.yaml {
       CatalogDistrubutionFormat200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
         }
-        val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>
+        val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
             // NotImplementedYet
       val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
       AllDistributionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
         }
-        val allDatasets = allDatasetsAction { (apikey: String) =>
+        val allDatasets = allDatasetsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDatasets
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetsCount()
       AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
         }
-        val storiesbyid = storiesbyidAction { (story_id: String) =>
+        val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
-            //val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       // Temporary removed
-      Storiesbyid200(DashboardRegistry.dashboardService.storyById("", story_id))
+//      Storiesbyid200(DashboardRegistry.dashboardService.storyById("", story_id))
+      Storiesbyid200(DashboardRegistry.dashboardService.storyById(
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
+      )
       //Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
@@ -184,11 +208,12 @@ package ftd_api.yaml {
       Snapshotbyid200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
         }
-        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, DashboardsGetLimit) =>
+        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.username, status))
+//      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.username, status))
+      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
       //Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
@@ -285,17 +310,27 @@ package ftd_api.yaml {
       // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.inferschema
         }
-        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>
+        val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
-            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById("ale", dashboard_id))
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById(
+              credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
+            )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
         }
-        val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>
+        val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
             //NotImplementedYet
       val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
       AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
+        }
+        val publicStories = publicStoriesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+            val (status, page, limit) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
+            //      NotImplementedYet
+      PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(status))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStories
         }
         val catalogDatasetCount = catalogDatasetCountAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -304,13 +339,20 @@ package ftd_api.yaml {
       CatalogDatasetCount200(distribution)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
-        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>
+        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       val user = credentials.username
       val save = DashboardRegistry.dashboardService.saveDashboard(dashboard, user)
       Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
+        }
+        val publicDashboards = publicDashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+            val (status, page, limit) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
+            //            NotImplementedYet
+          PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(status))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboards
         }
         val catalogBrokenLinks = catalogBrokenLinksAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -319,11 +361,23 @@ package ftd_api.yaml {
       CatalogBrokenLinks200(brokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
         }
-        val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>
+        val publicDashboardsById = publicDashboardsByIdAction { (dashboard_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
+            //            NotImplementedYet
+          PublicDashboardsById200(DashboardRegistry.dashboardService.publicDashboardById(dashboard_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
+        }
+        val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
       AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
+        }
+        val publicStoriesbyid = publicStoriesbyidAction { (story_id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
+            //            NotImplementedYet
+          PublicStoriesbyid200(DashboardRegistry.dashboardService.publicStoryById(story_id))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
         }
         val updateTable = updateTableAction { input: (File, String, String, String) =>
             val (upfile, tableName, fileType, apikey) = input
@@ -332,7 +386,7 @@ package ftd_api.yaml {
       UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
         }
-        val deletestory = deletestoryAction { (story_id: String) =>
+        val deletestory = deletestoryAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletestory
             Deletestory200(DashboardRegistry.dashboardService.deleteStory(story_id))
       // Delete
@@ -351,7 +405,7 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDataForNifi
         }
-        val deletedashboard = deletedashboardAction { (dashboard_id: String) =>
+        val deletedashboard = deletedashboardAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletedashboard
             Deletedashboard200(DashboardRegistry.dashboardService.deleteDashboard(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletedashboard
@@ -372,7 +426,7 @@ package ftd_api.yaml {
       })
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
         }
-        val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>
+        val monitorcatalogs = monitorcatalogsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
@@ -401,50 +455,50 @@ package ftd_api.yaml {
       CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }
-        val getDomains = getDomainsAction {  _ =>
+        val getDomains = getDomainsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
             //            NotImplementedYet
-          val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain
-          GetDomains200(response)
+      val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain
+      GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
         }
-
+    
      // Dead code for absent methodFtd_apiYaml.kyloInfersch
      /*
-     // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
-     val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
-         .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
-       .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
-           Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
-           """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+  // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
+  val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+      .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+    .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
+        Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+        """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
 
 
-     response.map(r => {
-         logger.debug(r.body)
-     })
+  response.map(r => {
+      logger.debug(r.body)
+  })
 
 
-     NotImplementedYet
-     // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+  NotImplementedYet
+  // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
      */
 
-
+    
      // Dead code for absent methodFtd_apiYaml.getsport
      /*
-      // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
-      NotImplementedYet
-      // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
+   // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
+   NotImplementedYet
+   // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
      */
 
-
+    
      // Dead code for absent methodFtd_apiYaml.sport
      /*
-      // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
+   // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
 
-      NotImplementedYet
-      // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
+   NotImplementedYet
+   // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
      */
 
-
+    
     }
 }

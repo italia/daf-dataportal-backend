@@ -49,13 +49,14 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
-  val server  = new ServerAddress(mongoHost, 27017)
+  val server = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
   val serverMongoMeta = new ServerAddress("metabase.default.svc.cluster.local", 27017)
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
-
+  val pvtPublicValue: String = "0"
+  val pvtPrivateValue: String = "1"
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -253,7 +254,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     results
   }
 
-  def dashboards(user: String, status: Option[Int]): Seq[Dashboard] = {
+  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -272,13 +273,20 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _: JsError => Seq()
     }
     dashboards
+      .filter(dash => dash.pvt.getOrElse("").equals(pvtPublicValue) ||
+        groups.contains(dash.org.getOrElse(""))
+      )
   }
 
-  def dashboardsPublic(user: String): Seq[Dashboard] = {
+  def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
+    val query = status match {
+      case Some(x) => MongoDBObject("published" -> x)
+      case None => MongoDBObject()
+    }
     val coll = db("dashboards")
-    val results = coll.find().toList
+    val results = coll.find(query).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
@@ -288,11 +296,11 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards
+    dashboards.filter(dash => dash.pvt.getOrElse("").equals(pvtPublicValue))
   }
 
 
-  def dashboardById(user: String, id: String): Dashboard = {
+  def dashboardById(group: List[String], id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -308,7 +316,33 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.get
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    dashboard
+
+    val pvt = dashboard.pvt.getOrElse("")
+
+    if(pvt.equals(pvtPublicValue)) dashboard
+    else if(pvt.equals(pvtPrivateValue) && group.contains(dashboard.org.getOrElse(""))) dashboard
+    else Dashboard(None, None, None, None, None, None, None, None, None, None)
+  }
+
+  def publicDashboardById(id: String): Dashboard = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("dashboards")
+    //  val objectId = new org.bson.types.ObjectId(id)
+    val query = MongoDBObject("id" -> id)
+    // val query = MongoDBObject("title" -> id)
+    val result = coll.findOne(query)
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(result)
+    val json = Json.parse(jsonString)
+    val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
+    val dashboard: Dashboard = dashboardJsResult match {
+      case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
+      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+    }
+
+    if(dashboard.pvt.getOrElse("").equals(pvtPublicValue)) dashboard
+    else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveDashboard(dashboard: Dashboard, user: String): Success = {
@@ -358,7 +392,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
-  def stories(user: String, status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
+  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val query = status match {
@@ -379,14 +413,22 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories
+   stories.filter(
+        story => story.pvt.get.equals(pvtPublicValue) ||
+          groups.contains(story.org.getOrElse(""))
+    )
+
   }
 
-  def storiesPublic(user: String): Seq[UserStory] = {
+  def storiesPublic(status: Option[Int]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
+    val query = status match {
+      case Some(x) => MongoDBObject("published" -> x)
+      case None => MongoDBObject()
+    }
     val coll = db("stories")
-    val results = coll.find().sort(MongoDBObject("timestamp" -> -1)).toList
+    val results = coll.find(query).sort(MongoDBObject("timestamp" -> -1)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
@@ -396,10 +438,10 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories
+    stories.filter(story => story.pvt.getOrElse("").equals(pvtPublicValue))
   }
 
-  def storyById(user: String, id: String): UserStory = {
+  def storyById(group: List[String], id: String): UserStory = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -415,7 +457,32 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
     }
-    story
+
+    val pvt = story.pvt.getOrElse("")
+
+    if(pvt.equals(pvtPublicValue)) story
+    else if(pvt.equals(pvtPrivateValue) && group.contains(story.org.getOrElse(""))) story
+    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+  }
+
+  def publicStoryById(id: String): UserStory = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+    val coll = db("stories")
+    //  val objectId = new org.bson.types.ObjectId(id)
+    val query = MongoDBObject("id" -> id)
+    // val query = MongoDBObject("title" -> id)
+    val result = coll.findOne(query)
+    mongoClient.close
+    val jsonString = com.mongodb.util.JSON.serialize(result)
+    val json = Json.parse(jsonString)
+    val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
+    val story: UserStory = storyJsResult match {
+      case s: JsSuccess[UserStory] => s.get
+      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    }
+    if(story.pvt.getOrElse("").equals(pvtPublicValue)) story
+    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveStory(story: UserStory, user: String): Success = {
