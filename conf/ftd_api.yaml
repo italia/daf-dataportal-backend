@@ -511,6 +511,48 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/public/dashboards":
+    get:
+      tags:
+        - Dashboard
+      summary: Get Open Data Dashboards
+      operationId: publicDashboards
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: status
+          in: query
+          description: possible status (0,1,2) 2 = public
+          required: false
+          type: integer
+          format: int32
+        - name: page
+          in: query
+          description: number of the page
+          required: false
+          type: integer
+          format: int32
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: false
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 500
+      responses:
+        200:
+          description: Success Message
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Dashboard'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/save/dashboards":
     post:
       tags:
@@ -562,6 +604,31 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/public/dashboards/{dashboard_id}":
+      get:
+        tags:
+        - Dashboard
+        summary: get dashboard by id, only open data
+        operationId: publicDashboardsById
+        consumes:
+           - application/json
+        produces:
+           - application/json
+        parameters:
+        - name: dashboard_id
+          in: path
+          description: id of dashboard
+          required: true
+          type: string
+        responses:
+          '200':
+            description: successful operation
+            schema:
+              "$ref": "#/definitions/Dashboard"
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/delete/dashboards/{dashboard_id}":
     delete:
       tags:
@@ -629,6 +696,48 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/public/user-stories":
+      get:
+        tags:
+        - UserStory
+        summary: Get Open Data UserStories
+        operationId: publicStories
+        produces:
+          - application/json
+        consumes:
+           - application/json
+        parameters:
+          - name: status
+            in: query
+            description: possible status (0,1,2) 2 = public
+            required: false
+            type: integer
+            format: int32
+          - name: page
+            in: query
+            description: number of the page
+            required: false
+            type: integer
+            format: int32
+          - name: limit
+            in: query
+            description: maximum number of results to return
+            required: false
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+        responses:
+          200:
+            description: Success Message
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/UserStory'
+          default:
+              description: Unexpected error
+              schema:
+                $ref: '#/definitions/Error'
   "/save/user-stories":
     post:
       tags:
@@ -659,7 +768,7 @@ paths:
     get:
       tags:
       - UserStory
-      summary: get dashboard by id
+      summary: get UserStory by id
       operationId: storiesbyid
       consumes:
          - application/json
@@ -680,6 +789,31 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/public/user-stories/{story_id}":
+      get:
+        tags:
+        - UserStory
+        summary: get UserStory by id, only open data
+        operationId: publicStoriesbyid
+        consumes:
+           - application/json
+        produces:
+           - application/json
+        parameters:
+        - name: story_id
+          in: path
+          description: id of UserStory
+          required: true
+          type: string
+        responses:
+          '200':
+            description: successful operation
+            schema:
+              "$ref": "#/definitions/UserStory"
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/delete/user-stories/{story_id}":
     delete:
       tags:
@@ -709,7 +843,7 @@ paths:
     get:
       tags:
       - Snapshots
-      summary: get snapshota
+      summary: get snapshots
       operationId: snapshotbyid
       parameters:
       - name: iframe_id
