@@ -36,6 +36,10 @@ trait DashboardServiceComponent {
       dashboardRepository.iframes(metaUser)
     }
 
+    def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
+      dashboardRepository.iframesByOrg(user,org)
+    }
+
     def dashboards(user :String, status: Option[Int]): Seq[Dashboard] = {
        dashboardRepository.dashboards(user, status)
     }

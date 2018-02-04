@@ -43,6 +43,8 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   private val localUrl = ConfigReader.getLocalUrl
 
+  private val securityManagerUrl = ConfigReader.securityManHost
+
   private val supersetUser = ConfigReader.getSupersetUser
 
   private val userName = ConfigReader.userName
@@ -142,6 +144,38 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
 
+
+
+  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
+
+    val result = for {
+      tables <- getSupersetTablesByOrg(org)
+      a <- iFramesByTables(user,tables)
+    } yield a
+
+    result
+
+  }
+
+  private def getSupersetTablesByOrg(org: String): Future[Seq[String]] = {
+
+    val wsClient = AhcWSClient()
+    //security-manager/v1/internal/superset/find_orgtables/default_org
+
+    val internalUrl = securityManagerUrl + "/security-manager/v1/internal/superset/find_orgtables/"+org
+    println("internalUrl: "+internalUrl)
+
+    wsClient.url(internalUrl).get().map{ resp =>
+      println("getSupersetTablesByOrg response: "+resp)
+      (resp.json \ "tables").as[Seq[String]]
+    }
+
+  }
+
+  private def iFramesByTables(user: String, tables:Seq[String]): Future[Seq[DashboardIframes]]= {
+    iframes(user).map{ _.filter(dash => dash.table.nonEmpty && tables.contains(dash.table.get) ) }
+  }
+
   def iframes(user: String): Future[Seq[DashboardIframes]] = {
     val wsClient = AhcWSClient()
 
@@ -174,21 +208,23 @@ class DashboardRepositoryProd extends DashboardRepository {
         val uri = new URL(decodeSuperst)
         val queryString = uri.getQuery.split("&", 2)(0)
         val valore = queryString.split("=", 2)(1)
+
         if (valore.contains("{\"code")) {
-          DashboardIframes(None, None, None, None)
+          DashboardIframes(None, None, None, None, None)
         } else {
           try {
             val identifierJson = Json.parse(s"""$valore""")
             val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
-            DashboardIframes(Some(url), Some("superset"), Some(title), Some("superset_" + slice_id.toString))
+            val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
+            DashboardIframes(Some(url), Some("superset"), Some(title), Some("superset_" + slice_id.toString), Some(table) )
           } catch {
-            case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None)
+            case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None, None)
           }
         }
       })
 
       iframes.filter {
-        case DashboardIframes(Some(_), _, _, _) => true
+        case DashboardIframes(Some(_), _, _, _, Some(_)) => true
         case _ => false
       }
     }
@@ -199,7 +235,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title), Some("metabase_" + uuid))
+        DashboardIframes(Some(url), Some("metabase"), Some(title), Some("metabase_" + uuid), None)
       })
     }
 
@@ -223,7 +259,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val id = (x \ "id").get.as[Int]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
-        DashboardIframes(Some(url), Some("grafana"), Some(title), Some("grafana_" + id.toString))
+        DashboardIframes(Some(url), Some("grafana"), Some(title), Some("grafana_" + id.toString), None)
       })
     }
 
@@ -252,6 +288,8 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     results
   }
+
+
 
   def dashboards(user: String, status: Option[Int]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))

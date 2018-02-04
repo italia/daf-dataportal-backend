@@ -469,6 +469,31 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/dashboard/iframesbyorg/{orgName}":
+      get:
+        tags:
+        - Dashboard
+        summary: List all iframes of an organization for dashboard visualization
+        operationId: dashboardIframesbyorg
+        produces:
+         - application/json
+        parameters:
+        - name: orgName
+          in: path
+          description: organization name
+          required: true
+          type: string
+        responses:
+          200:
+            description: An array of iFrames
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/DashboardIframes'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/dashboards":
     get:
       tags:
@@ -975,6 +1000,8 @@ definitions:
       title:
         type: string
       identifier:
+        type: string
+      table:
         type: string
   Error:
     type: object
