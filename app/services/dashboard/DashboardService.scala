@@ -36,12 +36,16 @@ trait DashboardServiceComponent {
       dashboardRepository.iframes(metaUser)
     }
 
-    def dashboards(user :String, status: Option[Int]): Seq[Dashboard] = {
-       dashboardRepository.dashboards(user, status)
+    def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
+      dashboardRepository.iframesByOrg(user,org)
     }
 
-    def dashboardById(user: String, id: String) :Dashboard = {
-      dashboardRepository.dashboardById(user, id)
+    def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
+       dashboardRepository.dashboards(groups, status)
+    }
+
+    def dashboardById(group: List[String], id: String) :Dashboard = {
+      dashboardRepository.dashboardById(group, id)
     }
 
     def saveDashboard(dashboard: Dashboard, user :String): Success = {
@@ -52,12 +56,16 @@ trait DashboardServiceComponent {
       dashboardRepository.deleteDashboard(dashboardId)
     }
 
-    def stories(user :String, status: Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
-      dashboardRepository.stories(user, status, page, limit)
+    def stories(groups: List[String], status: Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
+      dashboardRepository.stories(groups, status, page, limit)
     }
 
-    def storyById(user: String, id: String) :UserStory = {
-      dashboardRepository.storyById(user,id)
+    def storyById(group: List[String], id: String) :UserStory = {
+      dashboardRepository.storyById(group,id)
+    }
+
+    def publicStoryById(id: String) :UserStory = {
+      dashboardRepository.publicStoryById(id)
     }
 
     def saveStory(story: UserStory, user :String): Success = {
@@ -66,6 +74,18 @@ trait DashboardServiceComponent {
 
     def deleteStory(storyId :String): Success = {
       dashboardRepository.deleteStory(storyId)
+    }
+
+    def storiesPublic(status: Option[Int]): Seq[UserStory] = {
+      dashboardRepository.storiesPublic(status)
+    }
+
+    def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
+      dashboardRepository.dashboardsPublic(status)
+    }
+
+    def publicDashboardById(id: String): Dashboard = {
+      dashboardRepository.publicDashboardById(id)
     }
   }
 }

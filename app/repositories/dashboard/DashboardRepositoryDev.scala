@@ -17,19 +17,19 @@ import scala.io.Source
 /**
   * Created by ale on 14/04/17.
   */
-class DashboardRepositoryDev extends DashboardRepository{
+class DashboardRepositoryDev extends DashboardRepository {
 
   import scala.concurrent.ExecutionContext.Implicits._
 
-  def save(upFile :File,tableName :String, fileType :String) :Success = {
+  def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
-    val currentPath =  new java.io.File(".").getCanonicalPath
+    val currentPath = new java.io.File(".").getCanonicalPath
     val copyFile = new File(System.getProperty("user.home") + "/metabasefile/" + tableName)
     copyFile.mkdirs()
     val copyFilePath = copyFile.toPath
     Files.copy(upFile.toPath, copyFilePath, StandardCopyOption.REPLACE_EXISTING)
-    if(fileType.toLowerCase.equals("json")){
+    if (fileType.toLowerCase.equals("json")) {
       val fileString = Source.fromFile(upFile).getLines().mkString
       val jsonArray: Option[JsArray] = DashboardUtil.toJson(fileString)
       val readyToBeSaved = DashboardUtil.convertToJsonString(jsonArray)
@@ -48,7 +48,7 @@ class DashboardRepositoryDev extends DashboardRepository{
     Success(Some(message), Some("Good!!"))
   }
 
-  def update(upFile :File,tableName :String, fileType :String) :Success = {
+  def update(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
     val copyFile = new File(System.getProperty("user.home") + "/metabasefile/" + tableName)
@@ -58,44 +58,63 @@ class DashboardRepositoryDev extends DashboardRepository{
     Success(Some(message), Some("Good!!"))
   }
 
-  def tables() :Seq[Catalog] = {
-     Seq(Catalog(None), Catalog(None))
+  def tables(): Seq[Catalog] = {
+    Seq(Catalog(None), Catalog(None))
+  }
+
+  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
+    Future(Seq(DashboardIframes(None,None,None,None,None)))
   }
 
   def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
-    Future(Seq(DashboardIframes(None,None,None,None)))
+    Future(Seq(DashboardIframes(None,None,None,None,None)))
   }
 
-  def dashboards(user :String, status: Option[Int]): Seq[Dashboard] = {
-    Seq(Dashboard(None,None,None,None,None,None, None, None, None, None))
+  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
+    Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def dashboardById(user: String, id: String) :Dashboard = {
-    Dashboard(None,None,None,None,None,None, None, None, None, None)
+  def dashboardById(group: List[String], id: String): Dashboard = {
+    Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
-  def saveDashboard(dashboard: Dashboard, user :String): Success = {
-     Success(None,None)
+  def saveDashboard(dashboard: Dashboard, user: String): Success = {
+    Success(None, None)
   }
 
   def deleteDashboard(dashboardId: String): Success = {
-    Success(None,None)
+    Success(None, None)
   }
 
-  def stories(user :String, status :Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
-    Seq(UserStory(None,None,None,None,None,None,None,None,None, None, None, None))
+  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
+    Seq(UserStory(None, None, None, None, None, None, None, None, None, None, None, None))
   }
 
-  def storyById(user: String, id: String) :UserStory = {
-    UserStory(None,None,None,None,None,None,None,None,None,None, None, None)
+  def storyById(group: List[String], id: String): UserStory = {
+    UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 
-  def saveStory(story: UserStory, user :String): Success = {
-    Success(None,None)
+  def publicStoryById(id: String): UserStory = {
+    UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 
-  def deleteStory(storyId :String): Success = {
-    Success(None,None)
+  def saveStory(story: UserStory, user: String): Success = {
+    Success(None, None)
   }
 
+  def deleteStory(storyId: String): Success = {
+    Success(None, None)
+  }
+
+  def storiesPublic(status: Option[Int]): Seq[UserStory] = {
+    Seq(UserStory(None, None, None, None, None, None, None, None, None, None, None, None))
+  }
+
+  def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
+    Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
+  }
+
+  def publicDashboardById(id: String): Dashboard = {
+    Dashboard(None, None, None, None, None, None, None, None, None, None)
+  }
 }
