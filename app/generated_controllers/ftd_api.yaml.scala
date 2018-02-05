@@ -19,6 +19,26 @@ import javax.inject._
 
 import java.io.File
 
+import play.api.mvc.{Action,Controller}
+import play.api.data.validation.Constraint
+import play.api.i18n.MessagesApi
+import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
+import de.zalando.play.controllers._
+import PlayBodyParsing._
+import PlayValidations._
+import scala.util._
+import javax.inject._
+import java.io.File
+import play.api.mvc.{Action,Controller}
+import play.api.data.validation.Constraint
+import play.api.i18n.MessagesApi
+import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
+import de.zalando.play.controllers._
+import PlayBodyParsing._
+import PlayValidations._
+import scala.util._
+import javax.inject._
+import java.io.File
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
@@ -50,6 +70,7 @@ import org.asynchttpclient.request.body.multipart.StringPart
 import play.api.http.Writeable
 import utils.ConfigReader
 import it.gov.daf.common.utils.UserInfo
+import it.gov.daf.common.authentication.Role
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -58,7 +79,7 @@ import it.gov.daf.common.utils.UserInfo
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -71,20 +92,6 @@ package ftd_api.yaml {
         config: ConfigurationProvider
     ) extends Ftd_apiYamlBase {
         // ----- Start of unmanaged code area for constructor Ftd_apiYaml
-
-    object Role {
-
-      sealed abstract class EnumVal(name : String){
-        override def toString = name
-      }
-
-      case object Admin extends EnumVal("daf_admins")
-      case object Editor extends EnumVal("daf_editors")
-      case object Viewer extends EnumVal("daf_viewers")
-
-      val roles = Seq(Admin, Editor, Viewer)
-
-    }
 
 
     Authentication(configuration, playSessionStore)
