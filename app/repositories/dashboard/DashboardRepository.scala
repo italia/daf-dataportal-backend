@@ -10,19 +10,23 @@ import scala.concurrent.Future
   * Created by ale on 14/04/17.
   */
 trait DashboardRepository {
-   def save(upFile :File,tableName :String, fileType :String) :Success
-   def update(upFile :File,tableName :String, fileType :String) :Success
-   def tables(): Seq[Catalog]
-   def iframes(metaUser :String): Future[Seq[DashboardIframes]]
-   def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]]
-   def dashboards(user :String, status:Option[Int]): Seq[Dashboard]
-   def dashboardById(user: String, id: String) :Dashboard
-   def saveDashboard(dashboard: Dashboard, user :String): Success
-   def deleteDashboard(dashboardId :String): Success
-   def stories(user :String, status :Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory]
-   def storyById(user: String, id: String) :UserStory
-   def saveStory(story: UserStory, user :String): Success
-   def deleteStory(storyId :String): Success
+  def save(upFile: File, tableName: String, fileType: String): Success
+  def update(upFile: File, tableName: String, fileType: String): Success
+  def tables(): Seq[Catalog]
+  def iframes(metaUser: String): Future[Seq[DashboardIframes]]
+  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]]
+  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard]
+  def dashboardById(group: List[String], id: String): Dashboard
+  def saveDashboard(dashboard: Dashboard, user: String): Success
+  def deleteDashboard(dashboardId: String): Success
+  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory]
+  def storyById(group: List[String], id: String): UserStory
+  def publicStoryById(id: String): UserStory
+  def saveStory(story: UserStory, user: String): Success
+  def deleteStory(storyId: String): Success
+  def storiesPublic(status: Option[Int]): Seq[UserStory]
+  def dashboardsPublic(status: Option[Int]): Seq[Dashboard]
+  def publicDashboardById(id: String): Dashboard
 }
 
 object DashboardRepository {
