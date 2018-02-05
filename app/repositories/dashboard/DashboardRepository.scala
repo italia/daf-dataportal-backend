@@ -14,6 +14,7 @@ trait DashboardRepository {
   def update(upFile: File, tableName: String, fileType: String): Success
   def tables(): Seq[Catalog]
   def iframes(metaUser: String): Future[Seq[DashboardIframes]]
+  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]]
   def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard]
   def dashboardById(group: List[String], id: String): Dashboard
   def saveDashboard(dashboard: Dashboard, user: String): Success
@@ -36,7 +37,7 @@ object DashboardRepository {
 }
 
 trait DashboardRepositoryComponent {
-  val dashboardRepository: DashboardRepository
+  val dashboardRepository :DashboardRepository
 }
 
 

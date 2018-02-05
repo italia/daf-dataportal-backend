@@ -58,7 +58,7 @@ import it.gov.daf.common.utils.UserInfo
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                        
+    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -324,6 +324,13 @@ package ftd_api.yaml {
       val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
       AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
+        }
+        val dashboardIframesbyorg = dashboardIframesbyorgAction { (orgName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val iframes = DashboardRegistry.dashboardService.iframesByOrg(credentials.username,orgName)
+            DashboardIframesbyorg200(iframes)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
         val publicStories = publicStoriesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
