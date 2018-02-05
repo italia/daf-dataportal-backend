@@ -57,8 +57,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   val serverMongoMeta = new ServerAddress("metabase.default.svc.cluster.local", 27017)
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
-  val pvtPublicValue: String = "0"
-  val pvtPrivateValue: String = "1"
+  private val pvtPublicValue: String = "0"
+  private val pvtPrivateValue: String = "1"
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
