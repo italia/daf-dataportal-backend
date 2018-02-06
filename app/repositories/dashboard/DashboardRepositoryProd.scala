@@ -57,8 +57,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   val serverMongoMeta = new ServerAddress("metabase.default.svc.cluster.local", 27017)
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
-  val pvtPublicValue: String = "0"
-  val pvtPrivateValue: String = "1"
+  private val pvtPublicValue: String = "0"
+  private val pvtPrivateValue: String = "1"
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -217,7 +217,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             val identifierJson = Json.parse(s"""$valore""")
             val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
             val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
-            DashboardIframes(Some(url), Some("superset"), Some(title), Some("superset_" + slice_id.toString), Some(table) )
+            DashboardIframes( Some("superset_" + slice_id.toString), Some(url), Some("superset"), Some(title), Some(table) )
           } catch {
             case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None, None)
           }
@@ -225,7 +225,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       })
 
       iframes.filter {
-        case DashboardIframes(Some(_), _, _, _, Some(_)) => true
+        case DashboardIframes(_, _, _, _, _) => true
         case _ => false
       }
     }
@@ -236,7 +236,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes(Some(url), Some("metabase"), Some(title), Some("metabase_" + uuid), None)
+        DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None)
       })
     }
 
@@ -260,7 +260,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val id = (x \ "id").get.as[Int]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
-        DashboardIframes(Some(url), Some("grafana"), Some(title), Some("grafana_" + id.toString), None)
+        DashboardIframes( Some("grafana_" + id.toString), Some(url), Some("grafana"), Some(title), None)
       })
     }
 
