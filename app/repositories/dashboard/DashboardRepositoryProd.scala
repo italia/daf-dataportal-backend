@@ -58,6 +58,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
   private val defaultOrg = "default_org"
+  private val sharedStatus = 2
+  private val draftStatus = 0
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -329,7 +331,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards.filter(dash => dash.org.get.equals(defaultOrg))
+    dashboards.filter(dash => dash.org.get.equals(defaultOrg) && dash.status.get == sharedStatus)
   }
 
 
@@ -370,7 +372,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    if(dashboard.org.get.equals(defaultOrg)) dashboard
+    if(dashboard.org.get.equals(defaultOrg) && dashboard.status.get == sharedStatus) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -466,7 +468,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(story => story.org.get.equals(defaultOrg))
+    stories.filter(story => story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus)
   }
 
   def storyById(groups: List[String], id: String): UserStory = {
@@ -506,7 +508,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
     }
-    if(story.org.get.equals(defaultOrg)) story
+    if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
     else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 
