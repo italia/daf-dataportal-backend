@@ -50,7 +50,9 @@ import org.asynchttpclient.request.body.multipart.StringPart
 import play.api.http.Writeable
 import utils.ConfigReader
 import it.gov.daf.common.utils.UserInfo
+import javax.security.auth.login.AppConfigurationEntry
 import it.gov.daf.common.authentication.Role
+
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -59,7 +61,7 @@ import it.gov.daf.common.authentication.Role
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                        
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -196,6 +198,7 @@ package ftd_api.yaml {
         val inferschema = inferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
+            // DEPRECATED NOT USED ANYMORE WE ARE USING KYLO
             if (fileType.equals("csv")) {
 
         val (content, rows) = Source
@@ -393,11 +396,16 @@ package ftd_api.yaml {
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
             // TODO refactor and parametrize when dealing with other format
-      val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+          val inferUrl = ConfigReader.kyloInferUrl
+          val serde = fileType match {
+            case "csv" => ConfigReader.kyloCsvSerde
+            case "json" => ConfigReader.kyloJsonSerde
+          }
+      val response = ws.url(inferUrl)
         .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
-        .post(akka.stream.scaladsl.Source(FilePart("file", "Agency_infer.csv",
+        .post(akka.stream.scaladsl.Source(FilePart("file", upfile.getName,
           Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
-          """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+          serde) :: List()))
 
       response.flatMap(r => {
         logger.debug(Json.stringify(r.json))
