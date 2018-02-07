@@ -13,5 +13,5 @@ class SettingsRepositoryDev extends SettingsRepository {
        Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None))
   }
 
-  override def getDomain: Seq[String] = Seq("")
+  override def getDomain(groups: List[String]): Seq[String] = Seq("")
 }
