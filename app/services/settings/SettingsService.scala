@@ -19,8 +19,8 @@ trait SettingsServiceComponent {
       settingsRepository.settingsByName(name)
     }
 
-    def getDomain = {
-      settingsRepository.getDomain
+    def getDomain(groups: List[String]) = {
+      settingsRepository.getDomain(groups: List[String])
     }
   }
 }

@@ -74,7 +74,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def dashboardById(group: List[String], id: String): Dashboard = {
+  def dashboardById(groups: List[String], id: String): Dashboard = {
     Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -90,7 +90,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(UserStory(None, None, None, None, None, None, None, None, None, None, None, None))
   }
 
-  def storyById(group: List[String], id: String): UserStory = {
+  def storyById(groups: List[String], id: String): UserStory = {
     UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 

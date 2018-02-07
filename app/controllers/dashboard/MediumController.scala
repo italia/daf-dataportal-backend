@@ -16,7 +16,7 @@ class MediumController @Inject()(ws: WSClient,
 
 
   def medium(url: String) = Action.async { implicit request =>
-    val scheme = url.matches("^http[s]?://[a-zA-Z0-9.@/]*") match {
+    val scheme = url.matches("^http[s]?://.*") match {
       case true => ""
       case false => "https://"
     }
