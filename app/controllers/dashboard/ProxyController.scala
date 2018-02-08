@@ -9,9 +9,9 @@ import play.api.mvc.{Action, Controller}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MediumController @Inject()(ws: WSClient,
-                                 cache: CacheApi,
-                                 config: ConfigurationProvider
+class ProxyController @Inject()(ws: WSClient,
+                                cache: CacheApi,
+                                config: ConfigurationProvider
                                 )(implicit context: ExecutionContext) extends Controller {
 
 
@@ -23,6 +23,18 @@ class MediumController @Inject()(ws: WSClient,
     val responseWs: Future[WSResponse] = ws.url(scheme + url).get
     responseWs.map { response =>
       Ok(response.body).as("text/xml")
+    }
+  }
+
+  def ckanProxy(action: String) = Action.async { implicit request =>
+    val baseUrl = "http://dcatapit.geo-solutions.it/api/3/action/"
+    val url = baseUrl + action
+    val queryString: Map[String, String] = request.queryString.map { case (k,v) => k -> v.mkString}
+    val responseWs = ws.url(url)
+      .withQueryString(queryString.toList: _*)
+      .get
+    responseWs.map { response =>
+      Ok(response.body).as("application/json")
     }
   }
 }
