@@ -35,7 +35,8 @@ GET        /grafana/snapshots/:grafanauser        controllers.dashboard.GrafanaC
 GET        /tdmetabase/session                    controllers.dashboard.TeamDashboardController.tdMetaSession()
 GET        /tdmetabase/public_card                controllers.dashboard.TeamDashboardController.tdMetaPublicCard()
 
-GET        /dati-gov/medium/*url               controllers.dashboard.MediumController.medium(url)
+GET        /dati-gov/medium/*url               controllers.dashboard.ProxyController.medium(url)
+GET        /dati-gov/ckan_proxy/:action           controllers.dashboard.ProxyController.ckanProxy(action: String)
 
 GET        /dati-gov/img/*file                    controllers.Assets.versioned(path="/public/img", file: Asset)
 GET        /dati-gov/*file                        controllers.Assets.versioned(path="/public/swagger", file: Asset)
