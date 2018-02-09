@@ -19,6 +19,17 @@ import javax.inject._
 
 import java.io.File
 
+import play.api.mvc.{Action,Controller}
+import play.api.data.validation.Constraint
+import play.api.i18n.MessagesApi
+import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
+import de.zalando.play.controllers._
+import PlayBodyParsing._
+import PlayValidations._
+import scala.util._
+import javax.inject._
+import java.io.File
+
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
@@ -60,7 +71,7 @@ import it.gov.daf.common.authentication.Role
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -113,16 +124,10 @@ package ftd_api.yaml {
         val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
-            // Temporary without authorization
-      //val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-//      Stories200(DashboardRegistry.dashboardService.stories("unknown", status, page, limit))
-      //Stories200(DashboardRegistry.dashboardService.stories("ale"))
-      val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      //      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.username, status))
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       Stories200(DashboardRegistry.dashboardService.stories(
         credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
       )
-      // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
@@ -170,12 +175,9 @@ package ftd_api.yaml {
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      // Temporary removed
-//      Storiesbyid200(DashboardRegistry.dashboardService.storyById("", story_id))
       Storiesbyid200(DashboardRegistry.dashboardService.storyById(
         credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
       )
-      //Storiesbyid200(DashboardRegistry.dashboardService.storyById("ale", story_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
         val snapshotbyid = snapshotbyidAction { input: (String, String) =>
@@ -200,9 +202,7 @@ package ftd_api.yaml {
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-//      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.username, status))
       Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
-      //Dashboards200(DashboardRegistry.dashboardService.dashboards("ale"))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
         val inferschema = inferschemaAction { input: (File, String) =>
@@ -324,8 +324,7 @@ package ftd_api.yaml {
         val publicStories = publicStoriesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
-            //      NotImplementedYet
-      PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(status))
+            PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(status))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStories
         }
         val catalogDatasetCount = catalogDatasetCountAction { input: (String, String) =>
@@ -346,8 +345,7 @@ package ftd_api.yaml {
         val publicDashboards = publicDashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
-            //            NotImplementedYet
-          PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(status))
+            PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(status))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboards
         }
         val catalogBrokenLinks = catalogBrokenLinksAction { input: (String, String) =>
@@ -359,8 +357,7 @@ package ftd_api.yaml {
         }
         val publicDashboardsById = publicDashboardsByIdAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
-            //            NotImplementedYet
-          PublicDashboardsById200(DashboardRegistry.dashboardService.publicDashboardById(dashboard_id))
+            PublicDashboardsById200(DashboardRegistry.dashboardService.publicDashboardById(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
         }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
@@ -371,8 +368,7 @@ package ftd_api.yaml {
         }
         val publicStoriesbyid = publicStoriesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
-            //            NotImplementedYet
-          PublicStoriesbyid200(DashboardRegistry.dashboardService.publicStoryById(story_id))
+            PublicStoriesbyid200(DashboardRegistry.dashboardService.publicStoryById(story_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
         }
         val updateTable = updateTableAction { input: (File, String, String, String) =>
@@ -435,8 +431,7 @@ package ftd_api.yaml {
         val saveSettings = saveSettingsAction { input: (String, Settings) =>
             val (domain, settings) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveSettings
-            //            SaveSettings200(SettingsRegistry.settingsService.saveSettings(organization, settings))
-      val response: Either[Error, Success] = SettingsRegistry.settingsService.saveSettings(domain, settings)
+            val response: Either[Error, Success] = SettingsRegistry.settingsService.saveSettings(domain, settings)
       if (response.isRight)
         SaveSettings200(response.right.get)
       else
@@ -458,8 +453,10 @@ package ftd_api.yaml {
         }
         val getDomains = getDomainsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
-            //            NotImplementedYet
-      val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+      val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain(
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g))
+      )
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
         }

@@ -57,8 +57,9 @@ class DashboardRepositoryProd extends DashboardRepository {
   val serverMongoMeta = new ServerAddress("metabase.default.svc.cluster.local", 27017)
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
-  private val pvtPublicValue: String = "0"
-  private val pvtPrivateValue: String = "1"
+  private val defaultOrg = "default_org"
+  private val sharedStatus = 2
+  private val draftStatus = 0
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -309,9 +310,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _: JsError => Seq()
     }
     dashboards
-      .filter(dash => dash.pvt.getOrElse("").equals(pvtPublicValue) ||
-        groups.contains(dash.org.getOrElse(""))
-      )
+      .filter(dash => dash.org.get.equals(defaultOrg) || groups.contains(dash.org.get))
   }
 
   def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
@@ -332,11 +331,11 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards.filter(dash => dash.pvt.getOrElse("").equals(pvtPublicValue))
+    dashboards.filter(dash => dash.org.get.equals(defaultOrg) && dash.status.get == sharedStatus)
   }
 
 
-  def dashboardById(group: List[String], id: String): Dashboard = {
+  def dashboardById(groups: List[String], id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -352,11 +351,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.get
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-
-    val pvt = dashboard.pvt.getOrElse("")
-
-    if(pvt.equals(pvtPublicValue)) dashboard
-    else if(pvt.equals(pvtPrivateValue) && group.contains(dashboard.org.getOrElse(""))) dashboard
+    val organization = dashboard.org.get
+    if(organization.equals(defaultOrg) || groups.contains(organization)) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -376,8 +372,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-
-    if(dashboard.pvt.getOrElse("").equals(pvtPublicValue)) dashboard
+    if(dashboard.org.get.equals(defaultOrg) && dashboard.status.get == sharedStatus) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -449,9 +444,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-   stories.filter(
-        story => story.pvt.get.equals(pvtPublicValue) ||
-          groups.contains(story.org.getOrElse(""))
+    stories.filter(
+      story => story.org.get.equals(defaultOrg) || groups.contains(story.org.get)
     )
 
   }
@@ -474,10 +468,10 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(story => story.pvt.getOrElse("").equals(pvtPublicValue))
+    stories.filter(story => story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus)
   }
 
-  def storyById(group: List[String], id: String): UserStory = {
+  def storyById(groups: List[String], id: String): UserStory = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -493,11 +487,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
     }
-
-    val pvt = story.pvt.getOrElse("")
-
-    if(pvt.equals(pvtPublicValue)) story
-    else if(pvt.equals(pvtPrivateValue) && group.contains(story.org.getOrElse(""))) story
+    val organization = story.org.get
+    if(organization.equals(defaultOrg) || groups.contains(organization)) story
     else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -517,7 +508,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
     }
-    if(story.pvt.getOrElse("").equals(pvtPublicValue)) story
+    if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
     else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
   }
 
