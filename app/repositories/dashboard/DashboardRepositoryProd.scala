@@ -5,19 +5,16 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
-import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
-import com.mongodb.{DBObject, casbah}
+import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.{MongoClient, TypeImports}
-import controllers.dashboard.SupersetController
+import com.mongodb.casbah.MongoClient
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
-import play.api.mvc.{Action, AnyContent}
 import utils.ConfigReader
 
 import scala.collection.immutable.List

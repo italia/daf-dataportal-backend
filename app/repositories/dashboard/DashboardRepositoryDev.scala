@@ -7,7 +7,6 @@ import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
-import com.mongodb.DBObject
 import play.api.libs.json.{JsArray, JsObject, Json}
 
 import scala.concurrent.Future

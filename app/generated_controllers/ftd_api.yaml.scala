@@ -19,48 +19,25 @@ import javax.inject._
 
 import java.io.File
 
-import play.api.mvc.{Action,Controller}
-import play.api.data.validation.Constraint
-import play.api.i18n.MessagesApi
-import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
-import de.zalando.play.controllers._
-import PlayBodyParsing._
-import PlayValidations._
-import scala.util._
-import javax.inject._
-import java.io.File
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
-import play.api.Configuration
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
 import it.gov.daf.common.utils.WebServiceUtil
-import akka.util.ByteString
 import play.api.libs.ws.WSClient
 import scala.concurrent.ExecutionContext.Implicits.global
-import java.io.{ByteArrayInputStream,InputStreamReader}
 import java.util.Base64
-import com.google.common.base.Charsets
-import com.google.common.io.{ByteStreams,CharStreams}
-import scala.concurrent.Future
 import play.api.Environment
 import scala.io.Source
 import play.api.libs.json._
 import services.settings.SettingsRegistry
-import com.sksamuel.avro4s.json.JsonToAvroConverter
-import org.apache.avro.Schema
 import utils.InferSchema._
 import akka.stream.scaladsl.FileIO
 import play.api.mvc.MultipartFormData.{DataPart,FilePart}
 import play.api.libs.ws.WSAuthScheme
-import org.asynchttpclient.AsyncHttpClient
-import org.asynchttpclient.request.body.multipart.StringPart
-import play.api.http.Writeable
 import utils.ConfigReader
-import it.gov.daf.common.utils.UserInfo
-import javax.security.auth.login.AppConfigurationEntry
 import it.gov.daf.common.authentication.Role
 
 /**
@@ -70,7 +47,7 @@ import it.gov.daf.common.authentication.Role
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -94,7 +71,6 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogLicenses(catalogName)
       CatalogDistributionLicense200(distributions)
-      //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
         }
         val settingsByName = settingsByNameAction { (domain: String) =>  
@@ -115,8 +91,7 @@ package ftd_api.yaml {
         val createSnapshot = createSnapshotAction { input: (File, String, String) =>
             val (upfile, snapshot_id, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createSnapshot
-            //println(Environment.simple().rootPath().toString)
-      upfile.renameTo(new File("public/img", snapshot_id + ".png"));
+            upfile.renameTo(new File("public/img", snapshot_id + ".png"));
       CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
@@ -138,8 +113,6 @@ package ftd_api.yaml {
         val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      //val iframes = DashboardRegistry.dashboardService.iframes("alessandro@teamdigitale.governo.it")
-
       val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
       DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
@@ -148,7 +121,6 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionLiceses()
       AllDistributionLiceses200(distributions)
-      // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
         val catalogDistrubutionFormat = catalogDistrubutionFormatAction { input: (String, String) =>
@@ -160,8 +132,7 @@ package ftd_api.yaml {
         }
         val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
-            // NotImplementedYet
-      val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
       AllDistributionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
         }
@@ -182,9 +153,7 @@ package ftd_api.yaml {
         val snapshotbyid = snapshotbyidAction { input: (String, String) =>
             val (iframe_id, sizexsize) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
-            //Snapshotbyid200()
-      //import scala.concurrent.ExecutionContext.Implicits.global
-      val conf = Configuration.load(Environment.simple())
+            val conf = Configuration.load(Environment.simple())
       val URL: String = conf.getString("daf-cacher.url").get
 
       val url = URL + iframe_id + "/" + sizexsize
@@ -207,7 +176,6 @@ package ftd_api.yaml {
         val inferschema = inferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.inferschema
-            // DEPRECATED NOT USED ANYMORE WE ARE USING KYLO
             if (fileType.equals("csv")) {
 
         val (content, rows) = Source
@@ -238,7 +206,6 @@ package ftd_api.yaml {
         val headers: Array[String] = header.split(separator)
 
         val result = content.map(x => {
-          // val contents: Array[Seq[Option[IDB]]] = x.split(separator).map(_.castTo)
           val row = x.split(separator)
           val contents: Array[Seq[String]] = x.split(separator).map(_.castToString.flatten)
           headers.zip(contents).toMap
@@ -249,7 +216,6 @@ package ftd_api.yaml {
           .flatten
           .distinct
           .groupBy(_._1)
-          //.mapValues(_.map(_._2).flatten)
           .mapValues((x => x.flatMap(_._2))
         )
 
@@ -289,13 +255,9 @@ package ftd_api.yaml {
           case x: JsArray => JsFlattener(x.value.head)
           case y: JsObject => JsFlattener(y)
         }
-        //val flatJson = JsFlattener(jsonObj)
-
         println(correct.toString())
         Inferschema200(Inferred(None, None, None))
-        //  Inferschema200(Seq(InferredType(None,None,None,None,None)))
       }
-      // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.inferschema
         }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
@@ -308,8 +270,7 @@ package ftd_api.yaml {
         }
         val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
-            //NotImplementedYet
-      val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
       AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
@@ -380,7 +341,6 @@ package ftd_api.yaml {
         val deletestory = deletestoryAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletestory
             Deletestory200(DashboardRegistry.dashboardService.deleteStory(story_id))
-      // Delete
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletestory
         }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
