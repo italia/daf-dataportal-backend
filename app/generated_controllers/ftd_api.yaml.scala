@@ -50,7 +50,7 @@ import play.api.libs.ws.WSResponse
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -128,7 +128,7 @@ package ftd_api.yaml {
        //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.wsKyloInferschema
         }
-        val settingsByName = settingsByNameAction { (domain: String) =>  
+        val settingsByName = settingsByNameAction { (domain: String) =>
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
             val response = SettingsRegistry.settingsService.settingsByName(domain)
       if (response.isRight)
@@ -337,7 +337,7 @@ package ftd_api.yaml {
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
-        val kyloSystemName = kyloSystemNameAction { (name: String) =>  
+        val kyloSystemName = kyloSystemNameAction { (name: String) =>
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
             val systemUrl = ConfigReader.kyloSystemUrl
           val url = systemUrl + name
@@ -489,6 +489,43 @@ package ftd_api.yaml {
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
         }
+    
+     // Dead code for absent methodFtd_apiYaml.kyloInfersch
+     /*
+  // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
+  val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
+      .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+    .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
+        Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+        """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
+
+
+  response.map(r => {
+      logger.debug(r.body)
+  })
+
+
+  NotImplementedYet
+  // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getsport
+     /*
+   // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
+   NotImplementedYet
+   // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.sport
+     /*
+   // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
+
+   NotImplementedYet
+   // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
+     */
+
     
     }
 }
