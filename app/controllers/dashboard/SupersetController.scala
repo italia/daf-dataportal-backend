@@ -2,14 +2,13 @@ package controllers.dashboard
 
 import javax.inject._
 
-import it.gov.daf.common.sso.client.LoginClientRemote
 import it.gov.daf.common.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 
@@ -25,8 +24,6 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   val pass = conf.getString("superset.pass").get
 
   val local = conf.getString("app.local.url").get
-
-  //val sim = SecuredInvocationManager.init(LoginClientRemote.init(conf.getString("security.manager.host").get))
 
   def getIframes() = Action.async { implicit request =>
     val iframeJson = ws.url("http://localhost:8088/slicemodelview/api/read")
