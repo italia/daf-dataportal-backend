@@ -63,7 +63,7 @@ import play.api.libs.ws.WSResponse
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                
+                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -120,7 +120,7 @@ package ftd_api.yaml {
             //  ws.url("http://localhost:9000/dati-gov/v1/infer/kylo/json")
             //      .withAuth("test", "test", WSAuthScheme.BASIC)
               ws.url(inferUrl)
-                .withAuth("dladmin", "Th1nkB1g", WSAuthScheme.BASIC)
+                .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
                 .post(akka.stream.scaladsl.Source(FilePart("file", ff.getName, Option("text/csv"),
                   FileIO.fromFile(ff)) :: DataPart("parser", serde) :: List()))
                 .map { resp =>
@@ -370,7 +370,7 @@ package ftd_api.yaml {
             val systemUrl = ConfigReader.kyloSystemUrl
           val url = systemUrl + name
           val sysName = ws.url(url)
-            .withAuth("dladmin", "Th1nkB1g", WSAuthScheme.BASIC)
+            .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
             .get().map{ resp =>
               resp.body
           }
@@ -470,7 +470,7 @@ package ftd_api.yaml {
           }
 
       val response = ws.url(inferUrl)
-        .withAuth("dladmin", "Th1nkB1g", WSAuthScheme.BASIC)
+        .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
         .post(akka.stream.scaladsl.Source(FilePart("file", upfile.getName,
           Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
           serde) :: List()))
