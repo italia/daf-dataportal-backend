@@ -5,19 +5,16 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
-import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
-import com.mongodb.{DBObject, casbah}
+import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.{MongoClient, TypeImports}
-import controllers.dashboard.SupersetController
+import com.mongodb.casbah.MongoClient
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
-import play.api.mvc.{Action, AnyContent}
 import utils.ConfigReader
 
 import scala.collection.immutable.List
@@ -485,11 +482,11 @@ class DashboardRepositoryProd extends DashboardRepository {
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
     val organization = story.org.get
     if(organization.equals(defaultOrg) || groups.contains(organization)) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def publicStoryById(id: String): UserStory = {
@@ -506,10 +503,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+      case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
     if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveStory(story: UserStory, user: String): Success = {

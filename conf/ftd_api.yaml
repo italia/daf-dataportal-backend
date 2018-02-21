@@ -1278,15 +1278,19 @@ definitions:
         format: int32
       subtitle:
         type: string
-      graph1:
-        $ref: '#/definitions/Graph'
-      text:
+#      graph1:
+#        $ref: '#/definitions/Graph'
+#      text:
+#        type: string
+#      graph2:
+#        $ref: '#/definitions/Graph'
+#      footer:
+#        type:
+#          string
+      layout:
         type: string
-      graph2:
-        $ref: '#/definitions/Graph'
-      footer:
-        type:
-          string
+      widgets:
+        type: string
       timestamp:
         type: string
         format: date-time

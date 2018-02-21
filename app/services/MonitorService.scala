@@ -2,7 +2,6 @@ package services
 
 import scala.collection.immutable.List
 import ftd_api.yaml.{BrokenLink, Catalog, Distribution}
-import play.api.libs.json.JsValue
 import play.api.{Configuration, Environment}
 import repositories.MonitorRepositoryComponent
 import repositories.monitor.MonitorRepository

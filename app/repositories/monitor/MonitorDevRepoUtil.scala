@@ -2,17 +2,9 @@ package repositories.monitor
 
 import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 
-import scala.concurrent.Future
-
-
-
 /**
   * Created by ale on 07/04/17.
   */
-
-import javax.inject._
-import play.api.libs.ws._
-
 
 object MonitorDevRepoUtil {
 
