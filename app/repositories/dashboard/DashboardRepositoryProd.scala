@@ -482,11 +482,11 @@ class DashboardRepositoryProd extends DashboardRepository {
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
     val organization = story.org.get
     if(organization.equals(defaultOrg) || groups.contains(organization)) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def publicStoryById(id: String): UserStory = {
@@ -503,10 +503,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+      case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
     if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveStory(story: UserStory, user: String): Success = {

@@ -50,7 +50,7 @@ import play.api.libs.ws.WSResponse
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -128,7 +128,7 @@ package ftd_api.yaml {
        //   NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.wsKyloInferschema
         }
-        val settingsByName = settingsByNameAction { (domain: String) =>
+        val settingsByName = settingsByNameAction { (domain: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
             val response = SettingsRegistry.settingsService.settingsByName(domain)
       if (response.isRight)
@@ -337,7 +337,7 @@ package ftd_api.yaml {
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
-        val kyloSystemName = kyloSystemNameAction { (name: String) =>
+        val kyloSystemName = kyloSystemNameAction { (name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
             val systemUrl = ConfigReader.kyloSystemUrl
           val url = systemUrl + name
