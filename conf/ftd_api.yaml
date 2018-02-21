@@ -1230,18 +1230,13 @@ definitions:
         format: int32
       subtitle:
         type: string
-      graph1:
-        $ref: '#/definitions/Graph'
-      text:
-        type: string
-      graph2:
-        $ref: '#/definitions/Graph'
-      footer:
-        type:
-          string
       timestamp:
         type: string
         format: date-time
+      layout:
+        type: string
+      widgets:
+        type: string
   Oid:
     type: object
     properties:
