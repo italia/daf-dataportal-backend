@@ -19,17 +19,6 @@ import javax.inject._
 
 import java.io.File
 
-import play.api.mvc.{Action,Controller}
-import play.api.data.validation.Constraint
-import play.api.i18n.MessagesApi
-import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
-import de.zalando.play.controllers._
-import PlayBodyParsing._
-import PlayValidations._
-import scala.util._
-import javax.inject._
-import java.io.File
-
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
@@ -63,6 +52,9 @@ import utils.ConfigReader
 import it.gov.daf.common.utils.UserInfo
 import javax.security.auth.login.AppConfigurationEntry
 import it.gov.daf.common.authentication.Role
+import java.io.PrintWriter
+import play.api.libs.Files.TemporaryFile
+import play.api.libs.ws.WSResponse
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -71,7 +63,7 @@ import it.gov.daf.common.authentication.Role
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -97,6 +89,58 @@ package ftd_api.yaml {
       CatalogDistributionLicense200(distributions)
       //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
+        }
+        val wsKyloInferschema = wsKyloInferschemaAction { input: (String, String, Credentials) =>
+            val (url, file_type, credentials) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.wsKyloInferschema
+            val inferUrl = ConfigReader.kyloInferUrl
+
+          val serde = file_type match {
+            case "csv" => ConfigReader.kyloCsvSerde
+            case "json" => ConfigReader.kyloJsonSerde
+          }
+            val tempFile: Future[File] = ws.url(url).get().map { resp =>
+              val singleObj :JsObject = resp.json match {
+                case arr: JsArray => arr.as[List[JsObject]].head
+                case obj: JsObject => obj
+              }
+
+              val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
+
+              val tempFile = TemporaryFile(prefix = "uploaded").file
+              val pw = new PrintWriter(tempFile)
+              pw.write(stringified)
+              pw.close
+              tempFile
+            }
+
+            def inferKylo(ff: File): Future[JsValue] = {
+              logger.info(ff.getName)
+              logger.info(inferUrl)
+            //  ws.url("http://localhost:9000/dati-gov/v1/infer/kylo/json")
+            //      .withAuth("test", "test", WSAuthScheme.BASIC)
+              ws.url(inferUrl)
+                .withAuth("dladmin", "Th1nkB1g", WSAuthScheme.BASIC)
+                .post(akka.stream.scaladsl.Source(FilePart("file", ff.getName, Option("text/csv"),
+                  FileIO.fromFile(ff)) :: DataPart("parser", serde) :: List()))
+                .map { resp =>
+                  ff.delete()
+                  resp.json
+                }
+            }
+
+            val response   =  for {
+                ff <- tempFile
+                resp <- inferKylo(ff)
+            } yield resp
+
+            response.flatMap(r => {
+              logger.debug(Json.stringify(r))
+              WsKyloInferschema200(Json.stringify(r))
+            })
+
+       //   NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.wsKyloInferschema
         }
         val settingsByName = settingsByNameAction { (domain: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
@@ -321,6 +365,19 @@ package ftd_api.yaml {
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
+        val kyloSystemName = kyloSystemNameAction { (name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
+            val systemUrl = ConfigReader.kyloSystemUrl
+          val url = systemUrl + name
+          val sysName = ws.url(url)
+            .withAuth("dladmin", "Th1nkB1g", WSAuthScheme.BASIC)
+            .get().map{ resp =>
+              resp.body
+          }
+          KyloSystemName200(sysName)
+            //NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
+        }
         val publicStories = publicStoriesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
@@ -411,8 +468,9 @@ package ftd_api.yaml {
             case "csv" => ConfigReader.kyloCsvSerde
             case "json" => ConfigReader.kyloJsonSerde
           }
+
       val response = ws.url(inferUrl)
-        .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
+        .withAuth("dladmin", "Th1nkB1g", WSAuthScheme.BASIC)
         .post(akka.stream.scaladsl.Source(FilePart("file", upfile.getName,
           Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
           serde) :: List()))
@@ -460,43 +518,6 @@ package ftd_api.yaml {
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
         }
-    
-     // Dead code for absent methodFtd_apiYaml.kyloInfersch
-     /*
-  // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInfersch
-  val response = ws.url("http://tba-kylo-services.default.svc.cluster.local:8420/api/v1/schema-discovery/hive/sample-file")
-      .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
-    .post(akka.stream.scaladsl.Source(FilePart("agency_infer", "agency_infer.csv",
-        Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
-        """{   "name": "CSV",   "objectClassType": "com.thinkbiganalytics.discovery.parsers.csv.CSVFileSchemaParser",   "objectShortClassType": "CSVFileSchemaParser",   "supportsBinary": false,   "generatesHiveSerde": true,   "clientHelper": null }""") :: List()))
-
-
-  response.map(r => {
-      logger.debug(r.body)
-  })
-
-
-  NotImplementedYet
-  // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.getsport
-     /*
-   // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
-   NotImplementedYet
-   // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.sport
-     /*
-   // ----- Start of unmanaged code area for action  Ftd_apiYaml.sport
-
-   NotImplementedYet
-   // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
-     */
-
     
     }
 }

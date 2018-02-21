@@ -35,6 +35,7 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val cookieExpiration :Option[Long] = playConfig.getLong("cookie.expiration")
 
   val kyloInferUrl : Option[String] = playConfig.getString("kylo.inferUrl")
+  val kyloSystemUrl : Option[String] = playConfig.getString("kylo.systemUrl")
   val kyloCsvSerde : Option[String] = playConfig.getString("kylo.csvSerde")
   val kyloJsonSerde : Option[String] = playConfig.getString("kylo.jsonSerde")
 
@@ -68,6 +69,7 @@ object ConfigReader {
   def cookieExpiration:Long = config.cookieExpiration.getOrElse(30L)// 30 min by default
   // TODO think about a defaul ingestion mechanism without kylo
   def kyloInferUrl = config.kyloInferUrl.getOrElse("No default")
+  def kyloSystemUrl = config.kyloSystemUrl.getOrElse("No default")
   def kyloCsvSerde = config.kyloCsvSerde.getOrElse("No default")
   def kyloJsonSerde = config.kyloJsonSerde.getOrElse("No default")
 

@@ -891,7 +891,23 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/infer/system_name/kylo":
+    get:
+      tags:
+      - Ingestion Form
+      summary: get system name
+      operationId: kyloSystemName
+      parameters:
+      - name: name
+        in: query
+        description: name to convert in system name
+        required: true
+        type: string
+      responses:
+        '200':
+          description: string representing a system name in kylo
+          schema:
+            type: string
   "/infer/schema/{fileType}":
     post:
       tags:
@@ -940,6 +956,38 @@ paths:
           description: string representing a non static schema in json format
           schema:
             type: string
+  "/infer/ws/kylo/{url}/{file_type}":
+      post:
+        tags:
+        - Ingestion Form
+        summary: Infer schema from kylo
+        operationId: wsKyloInferschema
+        produces:
+          - application/json
+        consumes:
+           - application/json
+        parameters:
+        - name: url
+          in: path
+          description: url of webservice to save infer and give to kylo
+          required: true
+          type: string
+        - name: file_type
+          in: path
+          description: file type at the moment works for csv and json
+          required: true
+          type: string
+        - name: credentials
+          in: body
+          description: user credentials
+          required: true
+          schema:
+            "$ref": "#/definitions/Credentials"
+        responses:
+          '200':
+            description: string representing a non static schema in json format
+            schema:
+              type: string
   "/save/data/{path_to_save}":
     post:
       tags:
