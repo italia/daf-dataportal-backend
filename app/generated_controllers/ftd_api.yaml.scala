@@ -42,6 +42,7 @@ import it.gov.daf.common.authentication.Role
 import java.io.PrintWriter
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.ws.WSResponse
+import scala.concurrent.Future
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -50,7 +51,7 @@ import play.api.libs.ws.WSResponse
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -341,12 +342,15 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
             val systemUrl = ConfigReader.kyloSystemUrl
           val url = systemUrl + name
-          val sysName = ws.url(url)
+          //val sysName =
+
+          val test: Future[InferSystem_nameKyloGetResponses200] = ws.url(url)
             .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
             .get().map{ resp =>
               resp.body
+             InferSystem_nameKyloGetResponses200(Some(resp.body))
           }
-          KyloSystemName200(sysName)
+          KyloSystemName200(test)
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }

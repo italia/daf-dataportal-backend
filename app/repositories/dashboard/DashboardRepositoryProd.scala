@@ -181,7 +181,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
     val grafanaPublic = localUrl + "/grafana/snapshots/" + user
-    // val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
+     val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
     // .andThen { case _ => wsClient.close() }
@@ -193,7 +193,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val requestSnapshots = wsClient.url(grafanaPublic).get()
 
-    // val requestTdMetabase = wsClient.url(tdmetabasePublic).get
+    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
@@ -238,15 +238,16 @@ class DashboardRepositoryProd extends DashboardRepository {
       })
     }
 
-    /* val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
+     val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
        json.map( x => {
          val uuid = (x \ "public_uuid").get.as[String]
          val title = (x \ "name").get.as[String]
          val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
-         DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
+         DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None)
+         //DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
        })
-     } */
+     }
 
 
     val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
@@ -263,7 +264,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
 
-    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase, superset, grafana)
+    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase, superset, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
