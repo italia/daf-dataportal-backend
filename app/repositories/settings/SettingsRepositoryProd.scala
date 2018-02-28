@@ -5,7 +5,6 @@ import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah._
 import ftd_api.yaml.{Error, Settings, Success}
-import it.gov.daf.common.utils.WebServiceUtil
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import utils.ConfigReader
