@@ -36,6 +36,8 @@ class AppConfig @Inject()(playConfig: Configuration) {
 
   val kyloInferUrl : Option[String] = playConfig.getString("kylo.inferUrl")
   val kyloSystemUrl : Option[String] = playConfig.getString("kylo.systemUrl")
+  val kyloUser : Option[String] = playConfig.getString("kylo.user")
+  val kyloPassword : Option[String] = playConfig.getString("kylo.pwd")
   val kyloCsvSerde : Option[String] = playConfig.getString("kylo.csvSerde")
   val kyloJsonSerde : Option[String] = playConfig.getString("kylo.jsonSerde")
 
@@ -72,5 +74,7 @@ object ConfigReader {
   def kyloSystemUrl = config.kyloSystemUrl.getOrElse("No default")
   def kyloCsvSerde = config.kyloCsvSerde.getOrElse("No default")
   def kyloJsonSerde = config.kyloJsonSerde.getOrElse("No default")
+  def kyloUser = config.kyloUser.getOrElse("dladmin")
+  def kyloPwd = config.kyloPassword.getOrElse("XXXXXXXXX")
 
 }

@@ -907,7 +907,10 @@ paths:
         '200':
           description: string representing a system name in kylo
           schema:
-            type: string
+            type: object
+            properties:
+              system_name:
+                type: string
   "/infer/schema/{fileType}":
     post:
       tags:
