@@ -43,6 +43,27 @@ import java.io.PrintWriter
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.ws.WSResponse
 import scala.concurrent.Future
+import utils.InferSchema
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -51,7 +72,7 @@ import scala.concurrent.Future
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                    
+                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -172,6 +193,14 @@ package ftd_api.yaml {
       val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
       DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
+        }
+        val iframesByTableName = iframesByTableNameAction { (tableName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+          val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
+          val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
+          IframesByTableName200(iframesByName)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
         }
         val allDistributionLiceses = allDistributionLicesesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
@@ -444,10 +473,40 @@ package ftd_api.yaml {
             case "json" => ConfigReader.kyloJsonSerde
           }
 
+          var file = upfile
+          if (fileType.equals("csv")){
+            import java.nio.charset.CodingErrorAction
+            import scala.io.Codec
+            implicit val codec = Codec("UTF-8")
+            codec.onMalformedInput(CodingErrorAction.REPLACE)
+            codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
+
+            val lines: Iterator[String] = Source.fromFile(upfile).getLines
+            val header = lines.next()
+            val separator = InferSchema.inferSeparator(header, InferSchema.SEPARATORS)
+            val columns = header.split(separator)
+            val newColumns = columns.map(col => {
+              val newCol = if(col.trim.contains(" "))
+                col.replaceAll(" ", "_")
+              else col
+              newCol
+            })
+            val newHeader = newColumns.mkString(separator)
+
+            val tempFile = TemporaryFile(prefix = file.getName).file
+            val writer = new PrintWriter(tempFile)
+            writer.println(newHeader)
+            for (line <- lines){
+              writer.println(line)
+            }
+            writer.close()
+            file = tempFile
+          }
+
       val response = ws.url(inferUrl)
         .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
-        .post(akka.stream.scaladsl.Source(FilePart("file", upfile.getName,
-          Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+        .post(akka.stream.scaladsl.Source(FilePart("file", file.getName,
+          Option("text/csv"), FileIO.fromFile(file)) :: DataPart("parser",
           serde) :: List()))
 
       response.flatMap(r => {

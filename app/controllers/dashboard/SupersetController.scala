@@ -73,6 +73,19 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   }
 
 
+  def dbFromOrgName(user: String, org :String) = Action.async { implicit request =>
+
+    val dbName = org + "-db"
+
+    def callDb(cookie:String, wsClient:WSClient)=
+      wsClient.url(URL + s"/databaseview/api/read?_flt_3_database_name=$dbName").withHeaders("Content-Type" -> "application/json",
+        "Accept" -> "application/json",
+        "Cookie" -> cookie
+      ).get
+
+    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb ).map{json => Ok(json)}
+
+  }
 
   /*
   def publicSlice(user :String) = Action.async { implicit request =>

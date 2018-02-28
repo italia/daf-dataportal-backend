@@ -26,6 +26,7 @@ GET        /catalogs                              controllers.monitor.MonitorQue
 GET        /superset/iframes                      controllers.dashboard.SupersetController.getIframes()
 GET        /superset/session                      controllers.dashboard.SupersetController.session()
 GET        /superset/public_slice/:user           controllers.dashboard.SupersetController.publicSlice(user :String)
+GET        /superset/db/:user/:org                      controllers.dashboard.SupersetController.dbFromOrgName(user: String, org :String)
 
 GET        /metabase/session                      controllers.dashboard.MetabaseController.session()
 GET        /metabase/public_card/:metaUser        controllers.dashboard.MetabaseController.publicCard(metaUser :String)
