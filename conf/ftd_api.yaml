@@ -936,6 +936,23 @@ paths:
             properties:
               system_name:
                 type: string
+  "/kylo/feeds/{feed_name}":
+    get:
+      tags:
+      - Kylo
+      summary: get feed info
+      operationId: kyloFeedByName
+      parameters:
+      - name: feed_name
+        in: path
+        description: Feed name made by ORG.FEEDNAME
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Feed Info
+          schema:
+              $ref: '#/definitions/KyloFeed'
   "/infer/schema/{fileType}":
     post:
       tags:
@@ -1374,3 +1391,21 @@ definitions:
         type: array
         items:
           type: string
+  KyloFeed:
+    type: object
+    required:
+     - feed_name
+     - state
+     - active
+     - updatedate
+    properties:
+      feed_name:
+        type: string
+      state:
+        type: string
+      active:
+        type: boolean
+      updatedate:
+        type: integer
+        format: int64
+

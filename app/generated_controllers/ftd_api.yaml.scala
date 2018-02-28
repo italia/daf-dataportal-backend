@@ -19,16 +19,6 @@ import javax.inject._
 
 import java.io.File
 
-import play.api.mvc.{Action,Controller}
-import play.api.data.validation.Constraint
-import play.api.i18n.MessagesApi
-import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
-import de.zalando.play.controllers._
-import PlayBodyParsing._
-import PlayValidations._
-import scala.util._
-import javax.inject._
-import java.io.File
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
@@ -57,8 +47,6 @@ import utils.InferSchema
 import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 
-
-
 /**
  * This controller is re-generated after each change in the specification.
  * Please only place your hand-written code between appropriate comments in the body of the controller.
@@ -66,7 +54,7 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -228,6 +216,24 @@ package ftd_api.yaml {
         credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
       )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
+        }
+        val kyloFeedByName = kyloFeedByNameAction { (feed_name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
+            val kyloUrl = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
+          val feed = ws.url(kyloUrl)
+            .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+            .get().map{ resp =>
+               println(resp.body)
+               val name = (resp.json \ "feedName").as[String]
+               val active = (resp.json \ "active").as[Boolean]
+               val state = (resp.json \ "state").as[String]
+               val updatedate =  (resp.json \ "updateDate").as[Long]
+               KyloFeed(name,state,active,updatedate)
+
+          }
+          KyloFeedByName200(feed)
+         // NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
         val snapshotbyid = snapshotbyidAction { input: (String, String) =>
             val (iframe_id, sizexsize) = input
