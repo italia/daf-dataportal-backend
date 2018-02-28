@@ -42,6 +42,7 @@ import it.gov.daf.common.authentication.Role
 import java.io.PrintWriter
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.ws.WSResponse
+import scala.concurrent.Future
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -50,7 +51,7 @@ import play.api.libs.ws.WSResponse
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -484,7 +485,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g))
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), WebServiceUtil.isDafAdmin(currentRequest)
       )
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains

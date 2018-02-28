@@ -5,6 +5,7 @@ import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah._
 import ftd_api.yaml.{Error, Settings, Success}
+import it.gov.daf.common.utils.WebServiceUtil
 import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import utils.ConfigReader
@@ -154,12 +155,17 @@ class SettingsRepositoryProd extends SettingsRepository {
     settingsFields.filter(p => p._2.equals("")).keys.toList
   }
 
-  override def getDomain(groups: List[String]): Seq[String] = {
+  override def getDomain(groups: List[String], isAdmin: Boolean): Seq[String] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db: MongoDB = mongoClient(source)
     val coll = db("settings")
-    val domains: Seq[String] = coll.map(n => n.get("domain").toString).toSeq
+    val mapDomain: Map[String, String] = coll.map(
+      settings =>
+        settings.get("organization").toString -> settings.get("domain").toString
+    ).toMap
     mongoClient.close()
-    domains.filter(dm => groups.contains(dm))
+    println(s"isAdmin: $isAdmin")
+    if(isAdmin) mapDomain.values.toSeq
+    else mapDomain.filter(elem => groups.contains(elem._2)).values.toSeq
   }
 }
