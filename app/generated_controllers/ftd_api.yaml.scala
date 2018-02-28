@@ -19,6 +19,16 @@ import javax.inject._
 
 import java.io.File
 
+import play.api.mvc.{Action,Controller}
+import play.api.data.validation.Constraint
+import play.api.i18n.MessagesApi
+import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
+import de.zalando.play.controllers._
+import PlayBodyParsing._
+import PlayValidations._
+import scala.util._
+import javax.inject._
+import java.io.File
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
@@ -46,24 +56,8 @@ import scala.concurrent.Future
 import utils.InferSchema
 import java.nio.charset.CodingErrorAction
 import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
-import java.nio.charset.CodingErrorAction
-import scala.io.Codec
+
+
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -72,7 +66,7 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                        
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -475,8 +469,6 @@ package ftd_api.yaml {
 
           var file = upfile
           if (fileType.equals("csv")){
-            import java.nio.charset.CodingErrorAction
-            import scala.io.Codec
             implicit val codec = Codec("UTF-8")
             codec.onMalformedInput(CodingErrorAction.REPLACE)
             codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
@@ -547,7 +539,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g))
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), WebServiceUtil.isDafAdmin(currentRequest)
       )
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
