@@ -90,18 +90,30 @@ package ftd_api.yaml {
             case "json" => ConfigReader.kyloJsonSerde
           }
             val tempFile: Future[File] = ws.url(url).get().map { resp =>
-              val singleObj :JsObject = resp.json match {
-                case arr: JsArray => arr.as[List[JsObject]].head
-                case obj: JsObject => obj
+
+              if (file_type.equals("json")) {
+                val singleObj: JsObject = resp.json match {
+                  case arr: JsArray => arr.as[List[JsObject]].head
+                  case obj: JsObject => obj
+                }
+
+                val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
+
+                val tempFile = TemporaryFile(prefix = "uploaded").file
+                val pw = new PrintWriter(tempFile)
+                pw.write(stringified)
+                pw.close
+                tempFile
+              } else if (file_type.equals("csv")){
+                val first10lines = resp.body.split("\n").slice(0,10)
+                val tempFile = TemporaryFile(prefix = "uploaded").file
+                val pw = new PrintWriter(tempFile)
+                for (line <- first10lines) {
+                  pw.write(line + "\n")
+                  pw.close
+                }
+                tempFile
               }
-
-              val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
-
-              val tempFile = TemporaryFile(prefix = "uploaded").file
-              val pw = new PrintWriter(tempFile)
-              pw.write(stringified)
-              pw.close
-              tempFile
             }
 
             def inferKylo(ff: File): Future[JsValue] = {
