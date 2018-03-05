@@ -54,7 +54,7 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                
+                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -362,6 +362,11 @@ package ftd_api.yaml {
         Inferschema200(Inferred(None, None, None))
       }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.inferschema
+        }
+        val supersetTableFromDataset = supersetTableFromDatasetAction { (dataset_name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
         }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid

@@ -1169,7 +1169,31 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/superset/table/{dataset_name}":
+    post:
+      tags:
+      - Superset
+      summary: Get url of superset table from datasetname
+      operationId: supersetTableFromDataset
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - name: dataset_name
+        in: path
+        description: dataset name
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
