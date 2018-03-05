@@ -54,7 +54,7 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                        
+                                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -91,29 +91,34 @@ package ftd_api.yaml {
           }
             val tempFile: Future[File] = ws.url(url).get().map { resp =>
 
-              if (file_type.equals("json")) {
-                val singleObj: JsObject = resp.json match {
-                  case arr: JsArray => arr.as[List[JsObject]].head
-                  case obj: JsObject => obj
-                }
+              val temp = file_type match {
+                case "json" => {
 
-                val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
+                  val singleObj: JsObject = resp.json match {
+                    case arr: JsArray => arr.as[List[JsObject]].head
+                    case obj: JsObject => obj
+                  }
 
-                val tempFile = TemporaryFile(prefix = "uploaded").file
-                val pw = new PrintWriter(tempFile)
-                pw.write(stringified)
-                pw.close
-                tempFile
-              } else if (file_type.equals("csv")){
-                val first10lines = resp.body.split("\n").slice(0,10)
-                val tempFile = TemporaryFile(prefix = "uploaded").file
-                val pw = new PrintWriter(tempFile)
-                for (line <- first10lines) {
-                  pw.write(line + "\n")
+                  val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
+
+                  val tempFile = TemporaryFile(prefix = "uploaded").file
+                  val pw = new PrintWriter(tempFile)
+                  pw.write(stringified)
                   pw.close
+                  tempFile
                 }
-                tempFile
+                case "csv" =>   {
+                  val first10lines = resp.body.split("\n").slice(0,10)
+                  val tempFile = TemporaryFile(prefix = "uploaded").file
+                  val pw = new PrintWriter(tempFile)
+                  for (line <- first10lines) {
+                    pw.write(line + "\n")
+                    pw.close
+                  }
+                  tempFile
+                }
               }
+              temp
             }
 
             def inferKylo(ff: File): Future[JsValue] = {
