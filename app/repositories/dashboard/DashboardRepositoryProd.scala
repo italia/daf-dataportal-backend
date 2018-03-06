@@ -5,19 +5,16 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
-import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
-import com.mongodb.{DBObject, casbah}
+import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.{MongoClient, TypeImports}
-import controllers.dashboard.SupersetController
+import com.mongodb.casbah.MongoClient
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
-import play.api.mvc.{Action, AnyContent}
 import utils.ConfigReader
 
 import scala.collection.immutable.List
@@ -184,7 +181,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
     val grafanaPublic = localUrl + "/grafana/snapshots/" + user
-    // val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
+    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
     // .andThen { case _ => wsClient.close() }
@@ -196,7 +193,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val requestSnapshots = wsClient.url(grafanaPublic).get()
 
-    // val requestTdMetabase = wsClient.url(tdmetabasePublic).get
+    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
@@ -241,15 +238,16 @@ class DashboardRepositoryProd extends DashboardRepository {
       })
     }
 
-    /* val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
+     val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
        json.map( x => {
          val uuid = (x \ "public_uuid").get.as[String]
          val title = (x \ "name").get.as[String]
          val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
-         DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
+         DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None)
+         //DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
        })
-     } */
+     }
 
 
     val grafana: Future[Seq[DashboardIframes]] = requestSnapshots.map { response =>
@@ -266,7 +264,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
 
-    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase, superset, grafana)
+    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase, superset, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
@@ -485,11 +483,11 @@ class DashboardRepositoryProd extends DashboardRepository {
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
     val organization = story.org.get
     if(organization.equals(defaultOrg) || groups.contains(organization)) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def publicStoryById(id: String): UserStory = {
@@ -506,10 +504,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     val story: UserStory = storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+      case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
     if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None, None, None)
+    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveStory(story: UserStory, user: String): Success = {

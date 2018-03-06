@@ -19,50 +19,33 @@ import javax.inject._
 
 import java.io.File
 
-import play.api.mvc.{Action,Controller}
-import play.api.data.validation.Constraint
-import play.api.i18n.MessagesApi
-import play.api.inject.{ApplicationLifecycle,ConfigurationProvider}
-import de.zalando.play.controllers._
-import PlayBodyParsing._
-import PlayValidations._
-import scala.util._
-import javax.inject._
-import java.io.File
-
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
-import play.api.Configuration
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
 import it.gov.daf.common.utils.WebServiceUtil
-import akka.util.ByteString
 import play.api.libs.ws.WSClient
 import scala.concurrent.ExecutionContext.Implicits.global
-import java.io.{ByteArrayInputStream,InputStreamReader}
 import java.util.Base64
-import com.google.common.base.Charsets
-import com.google.common.io.{ByteStreams,CharStreams}
-import scala.concurrent.Future
 import play.api.Environment
 import scala.io.Source
 import play.api.libs.json._
 import services.settings.SettingsRegistry
-import com.sksamuel.avro4s.json.JsonToAvroConverter
-import org.apache.avro.Schema
 import utils.InferSchema._
 import akka.stream.scaladsl.FileIO
 import play.api.mvc.MultipartFormData.{DataPart,FilePart}
 import play.api.libs.ws.WSAuthScheme
-import org.asynchttpclient.AsyncHttpClient
-import org.asynchttpclient.request.body.multipart.StringPart
-import play.api.http.Writeable
 import utils.ConfigReader
-import it.gov.daf.common.utils.UserInfo
-import javax.security.auth.login.AppConfigurationEntry
 import it.gov.daf.common.authentication.Role
+import java.io.PrintWriter
+import play.api.libs.Files.TemporaryFile
+import play.api.libs.ws.WSResponse
+import scala.concurrent.Future
+import utils.InferSchema
+import java.nio.charset.CodingErrorAction
+import scala.io.Codec
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -71,7 +54,7 @@ import it.gov.daf.common.authentication.Role
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                                                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -95,8 +78,76 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogLicenses(catalogName)
       CatalogDistributionLicense200(distributions)
-      //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
+        }
+        val wsKyloInferschema = wsKyloInferschemaAction { input: (String, String, Credentials) =>
+            val (url, file_type, credentials) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.wsKyloInferschema
+            val inferUrl = ConfigReader.kyloInferUrl
+
+          val serde = file_type match {
+            case "csv" => ConfigReader.kyloCsvSerde
+            case "json" => ConfigReader.kyloJsonSerde
+          }
+            val tempFile: Future[File] = ws.url(url).get().map { resp =>
+
+              val temp = file_type match {
+                case "json" => {
+
+                  val singleObj: JsObject = resp.json match {
+                    case arr: JsArray => arr.as[List[JsObject]].head
+                    case obj: JsObject => obj
+                  }
+
+                  val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
+
+                  val tempFile = TemporaryFile(prefix = "uploaded").file
+                  val pw = new PrintWriter(tempFile)
+                  pw.write(stringified)
+                  pw.close
+                  tempFile
+                }
+                case "csv" =>   {
+                  val first10lines = resp.body.split("\n").slice(0,10)
+                  val tempFile = TemporaryFile(prefix = "uploaded").file
+                  val pw = new PrintWriter(tempFile)
+                  for (line <- first10lines) {
+                    pw.write(line + "\n")
+                    pw.close
+                  }
+                  tempFile
+                }
+              }
+              temp
+            }
+
+            def inferKylo(ff: File): Future[JsValue] = {
+              logger.info(ff.getName)
+              logger.info(inferUrl)
+            //  ws.url("http://localhost:9000/dati-gov/v1/infer/kylo/json")
+            //      .withAuth("test", "test", WSAuthScheme.BASIC)
+              ws.url(inferUrl)
+                .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+                .post(akka.stream.scaladsl.Source(FilePart("file", ff.getName, Option("text/csv"),
+                  FileIO.fromFile(ff)) :: DataPart("parser", serde) :: List()))
+                .map { resp =>
+                  ff.delete()
+                  resp.json
+                }
+            }
+
+            val response   =  for {
+                ff <- tempFile
+                resp <- inferKylo(ff)
+            } yield resp
+
+            response.flatMap(r => {
+              logger.debug(Json.stringify(r))
+              WsKyloInferschema200(Json.stringify(r))
+            })
+
+       //   NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.wsKyloInferschema
         }
         val settingsByName = settingsByNameAction { (domain: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.settingsByName
@@ -116,8 +167,7 @@ package ftd_api.yaml {
         val createSnapshot = createSnapshotAction { input: (File, String, String) =>
             val (upfile, snapshot_id, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createSnapshot
-            //println(Environment.simple().rootPath().toString)
-      upfile.renameTo(new File("public/img", snapshot_id + ".png"));
+            upfile.renameTo(new File("public/img", snapshot_id + ".png"));
       CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
@@ -139,17 +189,22 @@ package ftd_api.yaml {
         val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
-      //val iframes = DashboardRegistry.dashboardService.iframes("alessandro@teamdigitale.governo.it")
-
       val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
       DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
+        }
+        val iframesByTableName = iframesByTableNameAction { (tableName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
+            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+          val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
+          val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
+          IframesByTableName200(iframesByName)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
         }
         val allDistributionLiceses = allDistributionLicesesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionLiceses()
       AllDistributionLiceses200(distributions)
-      // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
         val catalogDistrubutionFormat = catalogDistrubutionFormatAction { input: (String, String) =>
@@ -161,8 +216,7 @@ package ftd_api.yaml {
         }
         val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
-            // NotImplementedYet
-      val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionGroup()
       AllDistributionGroups200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
         }
@@ -180,12 +234,28 @@ package ftd_api.yaml {
       )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
+        val kyloFeedByName = kyloFeedByNameAction { (feed_name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
+            val kyloUrl = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
+          val feed = ws.url(kyloUrl)
+            .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+            .get().map{ resp =>
+               println(resp.body)
+               val name = (resp.json \ "feedName").as[String]
+               val active = (resp.json \ "active").as[Boolean]
+               val state = (resp.json \ "state").as[String]
+               val updatedate =  (resp.json \ "updateDate").as[Long]
+               KyloFeed(name,state,active,updatedate)
+
+          }
+          KyloFeedByName200(feed)
+         // NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
+        }
         val snapshotbyid = snapshotbyidAction { input: (String, String) =>
             val (iframe_id, sizexsize) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
-            //Snapshotbyid200()
-      //import scala.concurrent.ExecutionContext.Implicits.global
-      val conf = Configuration.load(Environment.simple())
+            val conf = Configuration.load(Environment.simple())
       val URL: String = conf.getString("daf-cacher.url").get
 
       val url = URL + iframe_id + "/" + sizexsize
@@ -239,7 +309,6 @@ package ftd_api.yaml {
         val headers: Array[String] = header.split(separator)
 
         val result = content.map(x => {
-          // val contents: Array[Seq[Option[IDB]]] = x.split(separator).map(_.castTo)
           val row = x.split(separator)
           val contents: Array[Seq[String]] = x.split(separator).map(_.castToString.flatten)
           headers.zip(contents).toMap
@@ -250,7 +319,6 @@ package ftd_api.yaml {
           .flatten
           .distinct
           .groupBy(_._1)
-          //.mapValues(_.map(_._2).flatten)
           .mapValues((x => x.flatMap(_._2))
         )
 
@@ -290,14 +358,37 @@ package ftd_api.yaml {
           case x: JsArray => JsFlattener(x.value.head)
           case y: JsObject => JsFlattener(y)
         }
-        //val flatJson = JsFlattener(jsonObj)
-
         println(correct.toString())
         Inferschema200(Inferred(None, None, None))
-        //  Inferschema200(Seq(InferredType(None,None,None,None,None)))
       }
-      // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.inferschema
+        }
+        val supersetTableFromDataset = supersetTableFromDatasetAction { (dataset_name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
+            val conf = Configuration.load(Environment.simple())
+          val URL = conf.getString("app.local.url").get
+          val supersetUrl = conf.getString("superset.url").get
+          val username = WebServiceUtil.readCredentialFromRequest(currentRequest).username
+
+          val tables = ws.url(URL + s"/superset/table/$username/$dataset_name")
+            .withHeaders("Content-Type" -> "application/json",
+              "Accept" -> "application/json"
+            ).get().map { resp =>
+              println(resp.body)
+              val tables = resp.json.as[Seq[JsValue]]
+              val supersetTables: Seq[SupersetUrl] = tables.map(x => {
+                val id = (x \ "id").as[Int]
+                val stringId = id.toString
+                val tableName = (x \ "text").as[String]
+                val url = s"$supersetUrl/superset/explore/table/$stringId/"
+                SupersetUrl(id,tableName,url)
+              })
+             supersetTables
+          }
+
+          SupersetTableFromDataset200(tables)
+        //  NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
         }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
@@ -309,8 +400,7 @@ package ftd_api.yaml {
         }
         val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
-            //NotImplementedYet
-      val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
+            val distributions: Seq[Distribution] = ComponentRegistry.monitorService.allDistributionFormat()
       AllDistributionFormats200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
@@ -320,6 +410,22 @@ package ftd_api.yaml {
             val iframes = DashboardRegistry.dashboardService.iframesByOrg(credentials.username,orgName)
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
+        }
+        val kyloSystemName = kyloSystemNameAction { (name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
+            val systemUrl = ConfigReader.kyloSystemUrl
+          val url = systemUrl + name
+          //val sysName =
+
+          val test: Future[InferSystem_nameKyloGetResponses200] = ws.url(url)
+            .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+            .get().map{ resp =>
+              resp.body
+             InferSystem_nameKyloGetResponses200(Some(resp.body))
+          }
+          KyloSystemName200(test)
+            //NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }
         val publicStories = publicStoriesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
@@ -381,7 +487,6 @@ package ftd_api.yaml {
         val deletestory = deletestoryAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletestory
             Deletestory200(DashboardRegistry.dashboardService.deleteStory(story_id))
-      // Delete
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletestory
         }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
@@ -411,10 +516,39 @@ package ftd_api.yaml {
             case "csv" => ConfigReader.kyloCsvSerde
             case "json" => ConfigReader.kyloJsonSerde
           }
+
+          var file = upfile
+          if (fileType.equals("csv")){
+            implicit val codec = Codec("UTF-8")
+            codec.onMalformedInput(CodingErrorAction.REPLACE)
+            codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
+
+            val lines: Iterator[String] = Source.fromFile(upfile).getLines
+            val header = lines.next()
+            val separator = InferSchema.inferSeparator(header, InferSchema.SEPARATORS)
+            val columns = header.split(separator)
+            val newColumns = columns.map(col => {
+              val newCol = if(col.trim.contains(" "))
+                col.replaceAll(" ", "_")
+              else col
+              newCol
+            })
+            val newHeader = newColumns.mkString(separator)
+
+            val tempFile = TemporaryFile(prefix = file.getName).file
+            val writer = new PrintWriter(tempFile)
+            writer.println(newHeader)
+            for (line <- lines){
+              writer.println(line)
+            }
+            writer.close()
+            file = tempFile
+          }
+
       val response = ws.url(inferUrl)
-        .withAuth("dladmin", "thinkbig", WSAuthScheme.BASIC)
-        .post(akka.stream.scaladsl.Source(FilePart("file", upfile.getName,
-          Option("text/csv"), FileIO.fromFile(upfile)) :: DataPart("parser",
+        .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+        .post(akka.stream.scaladsl.Source(FilePart("file", file.getName,
+          Option("text/csv"), FileIO.fromFile(file)) :: DataPart("parser",
           serde) :: List()))
 
       response.flatMap(r => {
@@ -455,7 +589,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
             val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
       val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g))
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), WebServiceUtil.isDafAdmin(currentRequest)
       )
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains

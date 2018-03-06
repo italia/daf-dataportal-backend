@@ -1,15 +1,12 @@
 package utils
 
-import java.nio.charset.StandardCharsets._
 import java.security._
 import javax.crypto._
 import javax.crypto.spec._
 
 
-import base64.Encode.{ apply => toBase64 }
 import base64.Encode.{ urlSafe => toBase64UrlSafe }
 
-import base64.Decode.{ apply => fromBase64 }
 import base64.Decode.{ urlSafe => fromBase64UrlSafe }
 
 object SecurePasswordHashing {

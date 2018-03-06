@@ -469,6 +469,31 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/dashboard/iframesByName/{tableName}":
+        get:
+          tags:
+          - Dashboard
+          summary: List of iframes for dashboard visualization
+          operationId: iframesByTableName
+          produces:
+           - application/json
+          parameters:
+          - name: tableName
+            in: path
+            description: Table name
+            required: true
+            type: string
+          responses:
+            200:
+              description: An array of iFrames
+              schema:
+                type: array
+                items:
+                  $ref: '#/definitions/DashboardIframes'
+            default:
+              description: Unexpected error
+              schema:
+                $ref: '#/definitions/Error'
   "/dashboard/iframesbyorg/{orgName}":
       get:
         tags:
@@ -891,7 +916,43 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/infer/system_name/kylo":
+    get:
+      tags:
+      - Ingestion Form
+      summary: get system name
+      operationId: kyloSystemName
+      parameters:
+      - name: name
+        in: query
+        description: name to convert in system name
+        required: true
+        type: string
+      responses:
+        '200':
+          description: string representing a system name in kylo
+          schema:
+            type: object
+            properties:
+              system_name:
+                type: string
+  "/kylo/feeds/{feed_name}":
+    get:
+      tags:
+      - Kylo
+      summary: get feed info
+      operationId: kyloFeedByName
+      parameters:
+      - name: feed_name
+        in: path
+        description: Feed name made by ORG.FEEDNAME
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Feed Info
+          schema:
+              $ref: '#/definitions/KyloFeed'
   "/infer/schema/{fileType}":
     post:
       tags:
@@ -940,6 +1001,38 @@ paths:
           description: string representing a non static schema in json format
           schema:
             type: string
+  "/infer/ws/kylo/{url}/{file_type}":
+      post:
+        tags:
+        - Ingestion Form
+        summary: Infer schema from kylo
+        operationId: wsKyloInferschema
+        produces:
+          - application/json
+        consumes:
+           - application/json
+        parameters:
+        - name: url
+          in: path
+          description: url of webservice to save infer and give to kylo
+          required: true
+          type: string
+        - name: file_type
+          in: path
+          description: file type at the moment works for csv and json
+          required: true
+          type: string
+        - name: credentials
+          in: body
+          description: user credentials
+          required: true
+          schema:
+            "$ref": "#/definitions/Credentials"
+        responses:
+          '200':
+            description: string representing a non static schema in json format
+            schema:
+              type: string
   "/save/data/{path_to_save}":
     post:
       tags:
@@ -1076,7 +1169,33 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/superset/table/{dataset_name}":
+    get:
+      tags:
+      - Superset
+      summary: Get url of superset table from datasetname
+      operationId: supersetTableFromDataset
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - name: dataset_name
+        in: path
+        description: dataset name
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SupersetUrl'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -1230,15 +1349,19 @@ definitions:
         format: int32
       subtitle:
         type: string
-      graph1:
-        $ref: '#/definitions/Graph'
-      text:
+#      graph1:
+#        $ref: '#/definitions/Graph'
+#      text:
+#        type: string
+#      graph2:
+#        $ref: '#/definitions/Graph'
+#      footer:
+#        type:
+#          string
+      layout:
         type: string
-      graph2:
-        $ref: '#/definitions/Graph'
-      footer:
-        type:
-          string
+      widgets:
+        type: string
       timestamp:
         type: string
         format: date-time
@@ -1294,3 +1417,36 @@ definitions:
         type: array
         items:
           type: string
+  KyloFeed:
+    type: object
+    required:
+     - feed_name
+     - state
+     - active
+     - updatedate
+    properties:
+      feed_name:
+        type: string
+      state:
+        type: string
+      active:
+        type: boolean
+      updatedate:
+        type: integer
+        format: int64
+  SupersetUrl:
+    type: object
+    required:
+     - id
+     - name
+     - url
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+      url:
+        type: string
+
+
