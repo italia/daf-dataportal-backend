@@ -54,7 +54,7 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                    
+                                                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -365,7 +365,29 @@ package ftd_api.yaml {
         }
         val supersetTableFromDataset = supersetTableFromDatasetAction { (dataset_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
-            NotImplementedYet
+            val conf = Configuration.load(Environment.simple())
+          val URL = conf.getString("app.local.url").get
+          val supersetUrl = conf.getString("superset.url").get
+          val username = WebServiceUtil.readCredentialFromRequest(currentRequest).username
+
+          val tables = ws.url(URL + s"/superset/table/$username/$dataset_name")
+            .withHeaders("Content-Type" -> "application/json",
+              "Accept" -> "application/json"
+            ).get().map { resp =>
+              println(resp.body)
+              val tables = resp.json.as[Seq[JsValue]]
+              val supersetTables: Seq[SupersetUrl] = tables.map(x => {
+                val id = (x \ "id").as[Int]
+                val stringId = id.toString
+                val tableName = (x \ "text").as[String]
+                val url = s"$supersetUrl/superset/explore/table/$stringId/"
+                SupersetUrl(id,tableName,url)
+              })
+             supersetTables
+          }
+
+          SupersetTableFromDataset200(tables)
+        //  NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
         }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  

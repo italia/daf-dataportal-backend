@@ -73,18 +73,17 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   }
 
 
-  def dbFromOrgName(user: String, org :String) = Action.async { implicit request =>
+  def tableByName(user: String, datasetName :String) = Action.async { implicit request =>
 
-    val dbName = org + "-db"
 
     def callDb(cookie:String, wsClient:WSClient)=
-      wsClient.url(URL + s"/databaseview/api/read?_flt_3_database_name=$dbName")
+      wsClient.url(URL + s"/tablemodelview/api/readvalues?_flt_3_table_name=$datasetName")
         .withHeaders("Content-Type" -> "application/json",
         "Accept" -> "application/json",
         "Cookie" -> cookie
       ).get
 
-    sim.manageServiceCall( new LoginInfo("Not working","Not Working","superset"),callDb ).map{json => Ok(json)}
+    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb ).map{json => Ok(json)}
 
   }
 

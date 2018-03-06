@@ -181,7 +181,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
     val grafanaPublic = localUrl + "/grafana/snapshots/" + user
-     val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
+    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
     val request = wsClient.url(metabasePublic).get()
     // .andThen { case _ => wsClient.close() }
