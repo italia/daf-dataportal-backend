@@ -54,7 +54,7 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                    
+                                                                                                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -256,16 +256,22 @@ package ftd_api.yaml {
             val (iframe_id, sizexsize) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
             val conf = Configuration.load(Environment.simple())
-      val URL: String = conf.getString("daf-cacher.url").get
+            val URL: String = conf.getString("daf-cacher.url").get
 
-      val url = URL + iframe_id + "/" + sizexsize
-      val response = ws.url(url).get().map(x => {
-        x.bodyAsBytes
-        val d = x.bodyAsBytes.toArray
-        println(d)
-        Base64.getEncoder.encodeToString(d)
-      })
-      Snapshotbyid200(response)
+            val url = URL + iframe_id + "/" + sizexsize
+
+            val response = ws.url(url).get().map(x => {
+              x.status match {
+                case 500 => "noimage"
+                case _ =>   Base64.getEncoder.encodeToString(x.bodyAsBytes.toArray)
+              }
+            })
+
+    //  val response = ws.url(url).get().map(x => {
+    //    val d = x.bodyAsBytes.toArray
+    //    Base64.getEncoder.encodeToString(d)
+    //  })
+          Snapshotbyid200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
         }
         val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
