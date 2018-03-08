@@ -68,7 +68,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
     def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
 
-    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json\ "result").get)}
+    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json.json \ "result").get)}
 
   }
 
@@ -83,7 +83,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
         "Cookie" -> cookie
       ).get
 
-    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb ).map{json => Ok(json)}
+    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb ).map{resp => Ok(resp.json)}
 
   }
 

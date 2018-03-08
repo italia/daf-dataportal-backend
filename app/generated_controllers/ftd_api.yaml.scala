@@ -46,6 +46,7 @@ import scala.concurrent.Future
 import utils.InferSchema
 import java.nio.charset.CodingErrorAction
 import scala.io.Codec
+import it.gov.daf.common.sso.common.CredentialManager
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -54,13 +55,14 @@ import scala.io.Codec
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                
+                                                                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
                                val configuration: Configuration,
                                val playSessionStore: PlaySessionStore,
                                val ws: WSClient,
+                               credentialManager: CredentialManager,
         // ----- End of unmanaged code area for injections Ftd_apiYaml
         val messagesApi: MessagesApi,
         lifecycle: ApplicationLifecycle,
@@ -160,7 +162,7 @@ package ftd_api.yaml {
         }
         val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       Savestories200(DashboardRegistry.dashboardService.saveStory(story, credentials.username))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
@@ -174,7 +176,7 @@ package ftd_api.yaml {
         val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       Stories200(DashboardRegistry.dashboardService.stories(
         credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
       )
@@ -188,14 +190,14 @@ package ftd_api.yaml {
         }
         val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
       DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
         }
         val iframesByTableName = iframesByTableNameAction { (tableName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
           val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
           val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
           IframesByTableName200(iframesByName)
@@ -228,7 +230,7 @@ package ftd_api.yaml {
         }
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       Storiesbyid200(DashboardRegistry.dashboardService.storyById(
         credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
       )
@@ -277,7 +279,7 @@ package ftd_api.yaml {
         val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
@@ -374,7 +376,7 @@ package ftd_api.yaml {
             val conf = Configuration.load(Environment.simple())
           val URL = conf.getString("app.local.url").get
           val supersetUrl = conf.getString("superset.url").get
-          val username = WebServiceUtil.readCredentialFromRequest(currentRequest).username
+          val username = credentialManager.readCredentialFromRequest(currentRequest).username
 
           val tables = ws.url(URL + s"/superset/table/$username/$dataset_name")
             .withHeaders("Content-Type" -> "application/json",
@@ -398,7 +400,7 @@ package ftd_api.yaml {
         }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
             Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById(
               credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
             )
@@ -412,7 +414,7 @@ package ftd_api.yaml {
         }
         val dashboardIframesbyorg = dashboardIframesbyorgAction { (orgName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
             val iframes = DashboardRegistry.dashboardService.iframesByOrg(credentials.username,orgName)
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
@@ -448,7 +450,7 @@ package ftd_api.yaml {
         }
         val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       val user = credentials.username
       val save = DashboardRegistry.dashboardService.saveDashboard(dashboard, user)
       Savedashboard200(save)
@@ -593,9 +595,9 @@ package ftd_api.yaml {
         }
         val getDomains = getDomainsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
-            val credentials = WebServiceUtil.readCredentialFromRequest(currentRequest)
+            val credentials = credentialManager.readCredentialFromRequest(currentRequest)
       val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), WebServiceUtil.isDafAdmin(currentRequest)
+        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), credentialManager.isDafAdmin(currentRequest)
       )
       GetDomains200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
