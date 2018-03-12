@@ -216,7 +216,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             val identifierJson = Json.parse(s"""$valore""")
             val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
             val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
-            DashboardIframes( Some("superset_" + slice_id.toString), Some(url), Some("superset"), Some(title), Some(table), Some(vizType) )
+            DashboardIframes( Some("superset_" + slice_id.toString), Some(url),Some(vizType), Some("superset"), Some(title), Some(table) )
           } catch {
             case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None, None, None)
           }
@@ -235,7 +235,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None, None)
+        DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), None)
       })
     }
 
@@ -245,7 +245,7 @@ class DashboardRepositoryProd extends DashboardRepository {
          val uuid = (x \ "public_uuid").get.as[String]
          val title = (x \ "name").get.as[String]
          val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
-         DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None, None)
+         DashboardIframes( Some("metabase_" + uuid), None, Some(url), Some("metabase"), Some(title), None)
          //DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
        })
      }
@@ -260,7 +260,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val id = (x \ "id").get.as[Int]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
-        DashboardIframes( Some("grafana_" + id.toString), Some(url), Some("grafana"), Some(title), None, None)
+        DashboardIframes( Some("grafana_" + id.toString), Some(url),None,Some("grafana"), Some(title), None)
       })
     }
 
