@@ -200,7 +200,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       val json = response.json.as[Seq[JsValue]]
       val iframes = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
-        val title = (x \ "viz_type").get.as[String]
+        val title = slice_link.slice(slice_link.indexOf(">") + 1, slice_link.lastIndexOf("</a>")).trim
         val src = slice_link.slice(slice_link.indexOf("\"") + 1, slice_link.lastIndexOf("\"")) + "&standalone=true"
         val url = ConfigReader.getSupersetUrl + src
         val decodeSuperst = java.net.URLDecoder.decode(url, "UTF-8");

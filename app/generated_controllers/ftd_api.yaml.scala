@@ -537,8 +537,8 @@ package ftd_api.yaml {
             val columns = header.split(separator)
             val newColumns = columns.map(col => {
               val newCol = if(col.trim.contains(" "))
-                col.replaceAll(" ", "_")
-              else col
+                col.replaceAll(" ", "_").trim()
+              else col.trim()
               newCol
             })
             val newHeader = newColumns.mkString(separator)
