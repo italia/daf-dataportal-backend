@@ -1256,6 +1256,8 @@ definitions:
         type: string
       table:
         type: string
+      viz_type:
+        type: string
   Error:
     type: object
     properties:

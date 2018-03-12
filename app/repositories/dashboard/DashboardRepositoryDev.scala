@@ -62,11 +62,11 @@ class DashboardRepositoryDev extends DashboardRepository {
   }
 
   def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
-    Future(Seq(DashboardIframes(None,None,None,None,None)))
+    Future(Seq(DashboardIframes(None,None,None,None,None, None)))
   }
 
   def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
-    Future(Seq(DashboardIframes(None,None,None,None,None)))
+    Future(Seq(DashboardIframes(None,None,None,None,None,None)))
   }
 
   def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {

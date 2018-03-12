@@ -200,6 +200,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       val json = response.json.as[Seq[JsValue]]
       val iframes = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
+        val vizType = (x \ "viz_type").get.as[String]
         val title = slice_link.slice(slice_link.indexOf(">") + 1, slice_link.lastIndexOf("</a>")).trim
         val src = slice_link.slice(slice_link.indexOf("\"") + 1, slice_link.lastIndexOf("\"")) + "&standalone=true"
         val url = ConfigReader.getSupersetUrl + src
@@ -209,21 +210,21 @@ class DashboardRepositoryProd extends DashboardRepository {
         val valore = queryString.split("=", 2)(1)
 
         if (valore.contains("{\"code")) {
-          DashboardIframes(None, None, None, None, None)
+          DashboardIframes(None, None, None, None, None, None)
         } else {
           try {
             val identifierJson = Json.parse(s"""$valore""")
             val slice_id = (identifierJson \ "slice_id").asOpt[Int].getOrElse(0)
             val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
-            DashboardIframes( Some("superset_" + slice_id.toString), Some(url), Some("superset"), Some(title), Some(table) )
+            DashboardIframes( Some("superset_" + slice_id.toString), Some(url), Some("superset"), Some(title), Some(table), Some(vizType) )
           } catch {
-            case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None, None)
+            case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None, None, None)
           }
         }
       })
 
       iframes.filter {
-        case DashboardIframes(_, _, _, _, _) => true
+        case DashboardIframes(Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => true
         case _ => false
       }
     }
@@ -234,7 +235,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None)
+        DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None, None)
       })
     }
 
@@ -244,7 +245,7 @@ class DashboardRepositoryProd extends DashboardRepository {
          val uuid = (x \ "public_uuid").get.as[String]
          val title = (x \ "name").get.as[String]
          val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
-         DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None)
+         DashboardIframes( Some("metabase_" + uuid), Some(url), Some("metabase"), Some(title), None, None)
          //DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
        })
      }
@@ -259,7 +260,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val id = (x \ "id").get.as[Int]
         val title = (x \ "name").get.as[String]
         val url = ConfigReader.getGrafanaUrl + "/dashboard/snapshot/" + uuid
-        DashboardIframes( Some("grafana_" + id.toString), Some(url), Some("grafana"), Some(title), None)
+        DashboardIframes( Some("grafana_" + id.toString), Some(url), Some("grafana"), Some(title), None, None)
       })
     }
 
