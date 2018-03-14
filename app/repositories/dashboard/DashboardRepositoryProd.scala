@@ -245,7 +245,7 @@ class DashboardRepositoryProd extends DashboardRepository {
          val uuid = (x \ "public_uuid").get.as[String]
          val title = (x \ "name").get.as[String]
          val url = ConfigReader.getTdMetabaseURL + "/public/question/" + uuid
-         DashboardIframes( Some("metabase_" + uuid), None, Some(url), Some("metabase"), Some(title), None)
+         DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), None)
          //DashboardIframes(Some(url), Some("tdmetabase"), Some(title), Some("tdmetabase_" + uuid))
        })
      }
