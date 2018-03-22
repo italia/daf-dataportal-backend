@@ -54,7 +54,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "3.1.1",
   "net.sf.opencsv" % "opencsv" % "2.3",
   "me.lessis" %% "base64" % "0.2.0",
-  "it.gov.daf" %% "common" % "1.0.5-SNAPSHOT",
+  "it.gov.daf" %% "common" % "1.0.6-SNAPSHOT",
   "com.github.cb372" %% "scalacache-guava" % "0.9.4",
   "com.chuusai" %% "shapeless" % "2.3.2",
   "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0",
@@ -70,7 +70,7 @@ resolvers ++= Seq(
   "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
   Resolver.url("sbt-plugins", url("http://dl.bintray.com/zalando/sbt-plugins"))(Resolver.ivyStylePatterns),
   Resolver.mavenLocal,
-  "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/",
+  "daf repo" at "http://nexus.teamdigitale.test:8081/repository/maven-public/",
   Resolver.bintrayRepo("jtescher", "sbt-plugin-releases")
 )
 
@@ -99,13 +99,16 @@ dockerCommands := dockerCommands.value.flatMap {
   case other => List(other)
 }
 
-dockerCommands += ExecCmd("ENTRYPOINT", s"bin/${name.value}", "-Dconfig.file=conf/production.conf")
+//dockerCommands += ExecCmd("ENTRYPOINT", s"bin/${name.value}", "-Dconfig.file=conf/production.conf")
+dockerCommands += ExecCmd("ENTRYPOINT", s"bin/${name.value}", "-Dconfig.file=conf/productionNew.conf")
 dockerExposedPorts := Seq(9000, 7000)
-dockerRepository := Option("10.98.74.120:5000")
+//dockerRepository := Option("10.98.74.120:5000")
+dockerRepository := Option("nexus.teamdigitale.test")
 
 
 publishTo in ThisBuild := {
-  val nexus = "http://nexus.default.svc.cluster.local:8081/repository/"
+  //val nexus = "http://nexus.default.svc.cluster.local:8081/repository/"
+  val nexus = "http://nexus.teamdigitale.test:8081/repository/"
   if (isSnapshot.value)
     Some("snapshots" at nexus + "maven-snapshots/")
   else
