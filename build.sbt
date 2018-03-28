@@ -70,7 +70,8 @@ resolvers ++= Seq(
   "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
   Resolver.url("sbt-plugins", url("http://dl.bintray.com/zalando/sbt-plugins"))(Resolver.ivyStylePatterns),
   Resolver.mavenLocal,
-  "daf repo" at "http://nexus.teamdigitale.test:8081/repository/maven-public/",
+  //"daf repo" at "http://nexus.teamdigitale.test:8081/repository/maven-public/",
+  "daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/",
   Resolver.bintrayRepo("jtescher", "sbt-plugin-releases")
 )
 
