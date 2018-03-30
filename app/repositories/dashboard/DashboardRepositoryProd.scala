@@ -12,7 +12,8 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.MongoClient
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DistributionLabel, Success, UserStory}
+import play.api.{Configuration, Environment}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -48,6 +49,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
+
+
   val server = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
@@ -57,6 +60,33 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val defaultOrg = "default_org"
   private val sharedStatus = 2
   private val draftStatus = 0
+
+
+  /*
+  private def  metabaseTableInfo(iframes :Seq[DashboardIframes]): Future[Seq[DashboardIframes]] = {
+  val conf = Configuration.load(Environment.simple())
+  val URLMETABASE = conf.getString("metabase.url").get
+  val metauser = conf.getString("metabase.user").get
+  val metapass = conf.getString("metabase.pass").get
+    val wsClient = AhcWSClient()
+    val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
+      val tableId = iframe.table
+      val internalUrl = URLMETABASE + s"/api/tables/$tableId"
+      val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
+       .map { resp =>
+         val tableName = (resp.json \ "name").as[String]
+         iframe.copy(table = Some(tableName))
+       }.map { x:DashboardIframes => scala.util.Success(x)}
+        .recover { case t: Throwable => Failure(t) }
+
+      futureTry
+    }
+
+    val seq: Future[Seq[Try[DashboardIframes]]] = Future.sequence(futureFrames)
+    val d  = seq.collect{ case Success(x) => x}
+    d
+
+  } */
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -231,13 +261,19 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
       val json = response.json.as[Seq[JsValue]]
-      json.map(x => {
+      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
+        .map(x => {
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
+        val id = (x \ "id").get.as[String]
+        val tableId =   (x \ "table_id").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), None)
+        DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId))
       })
     }
+
+
+
 
      val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
