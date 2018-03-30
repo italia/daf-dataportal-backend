@@ -52,7 +52,7 @@ class MetabaseController @Inject() (ws: WSClient,
     def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/api/card/public").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
-    sim.manageServiceCall( new LoginInfo(metauser,null,"metabase"),callPublicSlice ).map{resp => Ok(resp.json)}
+    sim.manageServiceCall( new LoginInfo(null,null,"metabase"),callPublicSlice ).map{resp => Ok(resp.json)}
 
   }
 }
