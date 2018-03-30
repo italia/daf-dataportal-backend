@@ -3,7 +3,7 @@ package repositories.dashboard
 import java.io.File
 import java.util.Date
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -115,5 +115,9 @@ class DashboardRepositoryDev extends DashboardRepository {
 
   def publicDashboardById(id: String): Dashboard = {
     Dashboard(None, None, None, None, None, None, None, None, None, None)
+  }
+
+  def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
+    Seq(SearchResult(None, None))
   }
 }

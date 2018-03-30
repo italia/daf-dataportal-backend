@@ -12,8 +12,7 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.MongoClient
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DistributionLabel, Success, UserStory}
-import play.api.{Configuration, Environment}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -22,6 +21,14 @@ import scala.collection.immutable.List
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
+import com.sksamuel.elastic4s.http.search.SearchResponse
+import com.sksamuel.elastic4s.ElasticsearchClientUri
+import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, _}
+import com.sksamuel.elastic4s.http.HttpClient
+import com.sksamuel.elastic4s.searches.SearchDefinition
+import com.sksamuel.elastic4s.searches.queries._
+
+import scala.reflect.runtime.universe
 
 
 /**
@@ -49,44 +56,18 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
-
-
   val server = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
   val serverMongoMeta = new ServerAddress("metabase.default.svc.cluster.local", 27017)
   val credentialsMongoMeta = MongoCredential.createCredential("metabase", "metabase", "metabase".toCharArray)
 
+  private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
+  private val elasticsearchPort = ConfigReader.getElasticsearchPort
+
   private val defaultOrg = "default_org"
   private val sharedStatus = 2
   private val draftStatus = 0
-
-
-  /*
-  private def  metabaseTableInfo(iframes :Seq[DashboardIframes]): Future[Seq[DashboardIframes]] = {
-  val conf = Configuration.load(Environment.simple())
-  val URLMETABASE = conf.getString("metabase.url").get
-  val metauser = conf.getString("metabase.user").get
-  val metapass = conf.getString("metabase.pass").get
-    val wsClient = AhcWSClient()
-    val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
-      val tableId = iframe.table
-      val internalUrl = URLMETABASE + s"/api/tables/$tableId"
-      val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
-       .map { resp =>
-         val tableName = (resp.json \ "name").as[String]
-         iframe.copy(table = Some(tableName))
-       }.map { x:DashboardIframes => scala.util.Success(x)}
-        .recover { case t: Throwable => Failure(t) }
-
-      futureTry
-    }
-
-    val seq: Future[Seq[Try[DashboardIframes]]] = Future.sequence(futureFrames)
-    val d  = seq.collect{ case Success(x) => x}
-    d
-
-  } */
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -261,19 +242,13 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
       val json = response.json.as[Seq[JsValue]]
-      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
-        .map(x => {
+      json.map(x => {
         val uuid = (x \ "public_uuid").get.as[String]
         val title = (x \ "name").get.as[String]
-        val id = (x \ "id").get.as[String]
-        val tableId =   (x \ "table_id").get.as[String]
         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId))
+        DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), None)
       })
     }
-
-
-
 
      val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
@@ -593,5 +568,155 @@ class DashboardRepositoryProd extends DashboardRepository {
     val removed = coll.remove(query)
     val response = Success(Some("Deleted"), Some("Deleted"))
     response
+  }
+
+  def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
+    val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
+    val index = "_all"
+
+    val fieldDatasetDcatName = "dcatapit.name"
+    val fieldDatasetDcatTitle = "dcatapit.title"
+    val fieldDatasetDcatNote = "dcatapit.note"
+    val fieldDatasetDcatTheme = "dcatapit.theme"
+    val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
+    val fieldUsDsTitle = "title"
+    val fieldUsDsSub = "subtitle"
+    val fieldUsDsWget = "widget"
+    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDataFieldName,
+      fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified")
+    val fieldDashboard = listFields("Dashboard")
+    val fieldStories = listFields("User-Story")
+    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
+    val fieldAggr = "type"
+
+    val searchString = filters.text match {
+      case Some("") => ".*"
+      case Some(x) => x
+      case None => ".*"
+    }
+    val searchType = filters.index match {
+      case Some(List()) => ""
+      case Some(x) => x.mkString(",")
+      case None => ""
+    }
+
+    def queryElasticsearch = {
+//      import org.elasticsearch.search.sort._
+        search(index).types(searchType).query(
+          boolQuery()
+            .should(
+              regexQuery(fieldDatasetDcatName, searchString), regexQuery(fieldDatasetDcatTitle, searchString),
+              regexQuery(fieldDatasetDcatNote, searchString), regexQuery(fieldDatasetDataFieldName, searchString),
+              regexQuery(fieldUsDsTitle, searchString), regexQuery(fieldUsDsSub, searchString),
+              regexQuery(fieldUsDsWget, searchString)
+            )
+              .must(
+                creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
+                            createFilterStatus(filters.status) ::: createFilterDate(filters.date)
+              )
+            .should(
+              must(matchQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
+              matchQuery("dcatapit.privatex", "0"),
+              must(matchQuery("status", "0"), matchQuery("user", username)),
+              must(matchQuery("published", "0"), matchQuery("user", username)),
+              must(matchQuery("status", "1"), termsQuery("org", groups)),
+              must(matchQuery("published", "1"), termsQuery("org", groups)),
+              matchQuery("status", "2"),
+              matchQuery("published", "2")
+            )
+        )
+          .limit(1000)
+//        .sortBy(fieldSort("timestamp.keyword").order(SortOrder.DESC), fieldSort("dcatapit.modified").order(SortOrder.DESC))
+    }
+
+    val query: SearchDefinition = queryElasticsearch
+    val res = client.execute{
+      query
+        .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"))
+        .sourceInclude(fieldToReturn)
+    }.await
+    client.close()
+
+    wrapResponse(res) ++ createAggreResp(res)
+  }
+
+  private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
+    val datasetField = "dcatapit.privatex"
+    val dashNstoriesField = "status"
+
+    status match {
+      case Some(List()) => List()
+      case Some(x) => {
+        val statusDataset = x.map {
+          case "2" => "0"
+          case _ => "1"
+        }
+        List(should(termsQuery(datasetField, statusDataset), termsQuery("status", status.get), termsQuery("published", status.get)))
+      }
+      case _ => List()
+    }
+  }
+
+  private def createFilterOrg(inputOrgFilter: Option[Seq[String]]) = {
+    val datasetOrg = "dcatapit.author"
+    val dashNstorOrg = "org"
+
+    inputOrgFilter match {
+      case Some(Seq()) => List()
+      case Some(org) => List(should(matchQuery(datasetOrg, inputOrgFilter), matchQuery(dashNstorOrg, org.mkString(" "))))
+      case _ => List()
+    }
+  }
+
+  private def creteThemeFilter(theme: Option[Seq[String]], fieldDatasetDcatTheme: String): List[BoolQueryDefinition] = {
+    theme match {
+      case Some(Seq()) => List()
+      case Some(t) => List(should(matchQuery(fieldDatasetDcatTheme, t.mkString(" "))))
+      case _ => List()
+    }
+  }
+
+  private def createFilterDate(timestamp: Option[String]): List[QueryDefinition] = {
+    val datasetDate = "dcatapit.modified"
+    val dashNstoriesDate = "timestamp"
+
+    timestamp match {
+      case Some("") => List()
+      case Some(dates) => List(should(rangeQuery(datasetDate).gte(dates.split(" ")(0)).lte(dates.split(" ")(1)),
+        rangeQuery(dashNstoriesDate).gte(dates.split(" ")(0)).lte(dates.split(" ")(1))
+      ))
+      case None => List()
+    }
+  }
+
+  private def wrapResponse(query: SearchResponse): Seq[SearchResult] = {
+    query.hits.hits.map(source =>
+      SearchResult(Some(source.`type`), Some(source.sourceAsString))
+    )
+  }
+
+  private def createAggreResp(query: SearchResponse): Seq[SearchResult] = {
+    val response = query.aggregations.map{elem =>
+      val name = elem._1
+      val valori: List[String] = elem._2.asInstanceOf[Map[String, Any]].get("buckets").get.asInstanceOf[List[Map[String, AnyVal]]]
+        .map(k => wrapAggrResp(k.values.toList))
+      SearchResult(Some(name), Some("{" + valori.mkString(",") + "}"))
+    }
+    response.toSeq
+  }
+  private def wrapAggrResp(listCount: List[AnyVal]): String = {
+    s""""${listCount(0)}": "${listCount(1)}""""
+  }
+
+  private def listFields(obj: String): List[String] = {
+    import scala.reflect.runtime.universe._
+    val objType: universe.Type = obj match {
+      case "Dashboard" => typeOf[Dashboard]
+      case "User-Story" => typeOf[UserStory]
+    }
+    val fields = objType.members.collect{
+      case m: MethodSymbol if m.isCaseAccessor => m.name.toString
+    }.toList
+    fields
   }
 }

@@ -146,7 +146,6 @@ class SettingsRepositoryProd extends SettingsRepository {
         settings.get("organization").toString -> settings.get("domain").toString
     ).toMap
     mongoClient.close()
-    println(s"isAdmin: $isAdmin")
     if(isAdmin) mapDomain.values.toSeq
     else mapDomain.filter(elem => groups.contains(elem._2)).values.toSeq
   }

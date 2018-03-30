@@ -58,8 +58,12 @@ libraryDependencies ++= Seq(
   "com.github.cb372" %% "scalacache-guava" % "0.9.4",
   "com.chuusai" %% "shapeless" % "2.3.2",
   "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0",
-  "com.sksamuel.avro4s" %% "avro4s-json" % "1.8.0" //,
+  "com.sksamuel.avro4s" %% "avro4s-json" % "1.8.0",
 //  "com.sksamuel.avro4s" %% "avro4s-generator" % "1.8.0"
+  "com.sksamuel.elastic4s" %% "elastic4s-core" % "5.6.4",
+  "com.sksamuel.exts" %% "exts" % "1.60.0",
+  "com.sksamuel.elastic4s" %% "elastic4s-http" % "5.6.4",
+  "org.elasticsearch.client" % "elasticsearch-rest-client" % "6.2.2"
 )
 
 
