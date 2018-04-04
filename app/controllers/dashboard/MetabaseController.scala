@@ -146,7 +146,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
   def publicCard(metauser :String) =  Action.async { implicit request =>
 
-    Logger.debug("wee-->"+URL + "/api/card")
+    Logger.debug("publicCard request:"+URL + "/api/card")
     def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/api/card").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
