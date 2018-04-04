@@ -55,7 +55,8 @@ import it.gov.daf.common.sso.common.CredentialManager
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                
+    
+
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -171,6 +172,17 @@ package ftd_api.yaml {
             upfile.renameTo(new File("public/img", snapshot_id + ".png"));
       CreateSnapshot200(Success(Some("File created"), Some("File created")))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
+        }
+        val searchFullText = searchFullTextAction { (filters: Filters) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullText
+            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
+            SearchFullText200(DashboardRegistry.dashboardService.searchText(filters, credentials.username,
+              credentials.groups.toList.filterNot(g => Role.roles.contains(g))))
+
+//          SearchFullText200(DashboardRegistry.dashboardService.searchText(filters, "lucapic",
+//            List("default_org", "test_ingestion")))
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
         val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input

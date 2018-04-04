@@ -316,6 +316,34 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/elasticsearch/search":
+    post:
+      tags:
+      - elasticsearch
+      summary: search datasets, dashboards and stories
+      operationId: searchFullText
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: filters
+        in: body
+        description: filter to use in search
+        required: true
+        schema:
+          $ref: '#/definitions/Filters'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SearchResult'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/dashboard/create/{tableName}/{fileType}":
     post:
       tags:
@@ -1258,6 +1286,29 @@ definitions:
         type: string
       viz_type:
         type: string
+  Filters:
+    type: object
+    properties:
+      text:
+        type: string
+      index:
+        type: array
+        items:
+          type: string
+      org:
+        type: array
+        items:
+          type: string
+      theme:
+        type: array
+        items:
+          type: string
+      date:
+        type: string
+      status:
+        type: array
+        items:
+          type: string
   Error:
     type: object
     properties:
@@ -1275,6 +1326,15 @@ definitions:
         type: string
       fields:
         type: string
+  SearchResult:
+    type: object
+    properties:
+      type:
+        type: string
+        description: type of the source
+      source:
+        type: string
+        description: the source
   Dashboard:
     type: object
     properties:

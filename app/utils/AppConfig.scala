@@ -42,6 +42,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val kyloCsvSerde : Option[String] = playConfig.getString("kylo.csvSerde")
   val kyloJsonSerde : Option[String] = playConfig.getString("kylo.jsonSerde")
 
+  val elasticsearchUrl = playConfig.getString("elasticsearch.url")
+  val elasticsearchPort = playConfig.getInt("elasticsearch.port")
+
 }
 
 object ConfigReader {
@@ -78,5 +81,8 @@ object ConfigReader {
   def kyloJsonSerde = config.kyloJsonSerde.getOrElse("No default")
   def kyloUser = config.kyloUser.getOrElse("dladmin")
   def kyloPwd = config.kyloPassword.getOrElse("XXXXXXXXX")
+
+  def getElasticsearchUrl = config.elasticsearchUrl.getOrElse("http://localhost")
+  def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
 
 }
