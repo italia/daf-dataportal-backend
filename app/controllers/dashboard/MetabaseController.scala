@@ -57,7 +57,7 @@ class MetabaseController @Inject() (ws: WSClient,
       }
   }
 
-
+/*
   def publicCard(metauser :String) =  Action.async { implicit request =>
     // NB metausername is GLOBAL it is temporary must be used the commented method below
     val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
@@ -84,7 +84,7 @@ class MetabaseController @Inject() (ws: WSClient,
       }
 
     }
-  }
+  }*/
 
   def tableInfo(tableId :String) = Action.async { implicit request =>
     val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
@@ -143,14 +143,14 @@ class MetabaseController @Inject() (ws: WSClient,
   }
 
 
-/*
+
   def publicCard(metauser :String) =  Action.async { implicit request =>
 
-    println("wee-->"+URL + "/api/card") // /public")
+    Logger.debug("wee-->"+URL + "/api/card")
     def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(URL + "/api/card").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
 
     sim.manageServiceCall( new LoginInfo(null,null,"metabase"),callPublicSlice ).map{resp => Ok(resp.json)}
 
-  } */
+  }
 }

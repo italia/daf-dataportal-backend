@@ -27,7 +27,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, _}
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
-import play.api.{Configuration, Environment}
+import play.api.{Configuration, Environment, Logger}
 
 import scala.reflect.runtime.universe
 
@@ -224,6 +224,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   def iframes(user: String): Future[Seq[DashboardIframes]] = {
+    println("-iframes-")
     val wsClient = AhcWSClient()
 
     val metabasePublic = localUrl + "/metabase/public_card/" + user
@@ -279,6 +280,8 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
       val json = response.json.as[Seq[JsValue]]
+
+      Logger.debug(s"Metabase iframe response: $json")
       json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
         .map(x => {
          val uuid = (x \ "public_uuid").get.as[String]
@@ -300,6 +303,8 @@ class DashboardRepositoryProd extends DashboardRepository {
 
      val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
+
+       Logger.debug(s"tMetabase iframe response: $json")
        json.map( x => {
          val uuid = (x \ "public_uuid").get.as[String]
          val title = (x \ "name").get.as[String]
