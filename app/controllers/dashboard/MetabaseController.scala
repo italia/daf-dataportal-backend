@@ -9,11 +9,13 @@ import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
 import play.api.Logger
-import scala.concurrent.{ExecutionContext, Future}
+
+import scala.concurrent.{Await, ExecutionContext, Future}
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 
 @Singleton
@@ -29,6 +31,17 @@ class MetabaseController @Inject() (ws: WSClient,
   val metapass = conf.getString("metabase.pass").get
 
   val local = conf.getString("app.local.url").get
+
+  private def cards(tableId :String) = {
+    val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
+    val url = URL + "/api/card?f=table&model_id=" + tableId
+    ws.url(url)
+      .withHeaders(("X-Metabase-Session", sessionId))
+      .get
+      .map{ resp =>
+        resp.json
+      }
+  }
 
   def session() = Action.async { implicit request =>
     val data = Json.obj(
@@ -46,6 +59,92 @@ class MetabaseController @Inject() (ws: WSClient,
 
 
   def publicCard(metauser :String) =  Action.async { implicit request =>
+    // NB metausername is GLOBAL it is temporary must be used the commented method below
+    val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
+    val url = URL + "/api/card"
+    println(url)
+    val responseWs: Future[WSResponse] = ws.url(url).withHeaders(("X-Metabase-Session", sessionId)).get
+    responseWs.map { response =>
+      if((response.status == 401)) {
+        //val sessionFuture = ws.url(local + "/metabase/session")
+
+        val result: Future[WSResponse] = for {
+          session  <- ws.url(local + "/metabase/session").get()
+          cards <- ws.url(URL + "/api/card").withHeaders(("X-Metabase-Session", session.body)).get
+        } yield cards
+
+        val responseTry: Try[WSResponse] = Await.ready(result, 3 seconds).value.get
+        val jsonResponse: JsValue = responseTry match {
+          case Success(v) => v.json
+          case Failure(_) => throw new RuntimeException("error")
+        }
+        Ok(jsonResponse)
+      } else {
+        Ok(response.json)
+      }
+
+    }
+  }
+
+  def tableInfo(tableId :String) = Action.async { implicit request =>
+    val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
+    val url = URL + "/api/table/" + tableId
+    println(url)
+    val responseWs: Future[WSResponse] = ws.url(url).withHeaders(("X-Metabase-Session", sessionId)).get
+    responseWs.map { response =>
+      Ok(response.json)
+    }
+  }
+
+  def isDatasetOnMetabase(tableName :String) = Action.async { implicit request =>
+    val sessionId = cache.get[String]("metabase." + metausername).getOrElse("test")
+    val url = URL + "/api/table"
+    println(url)
+    val responseWs: Future[WSResponse] = ws.url(url).withHeaders(("X-Metabase-Session", sessionId)).get
+    responseWs.map { response =>
+      val tables = response.json.as[Seq[JsValue]]
+      val res: Seq[JsValue] = tables.filter(x => (x \ "name").as[String].equals(tableName))
+      val result = if (res.isEmpty){
+        JsBoolean(false)
+      } else {
+        JsBoolean(true)
+      }
+      Ok(Json.toJson(result))
+    }
+
+  }
+
+
+  def cardsFromTable(tableName :String) = Action.async { implicit request =>
+    val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
+    val url = URL + "/api/table"
+    println(url)
+    val responseWs: Future[WSResponse] = ws.url(url).withHeaders(("X-Metabase-Session", sessionId)).get
+    val tablesId: Future[Option[Int]] = responseWs.map { response =>
+      val tables = response.json.as[Seq[JsValue]]
+      val res: Seq[JsValue] = tables.filter(x => (x \ "name").as[String].equals(tableName))
+      //Ok(Json.toJson(res))
+      val single = res.map(x => {
+        (x \ "id").as[Int]
+      })
+      if (!single.isEmpty) {
+        Some(single.head)
+      } else {
+        None
+      }
+    }
+
+    val result: Future[JsValue] = for {
+      optId <- tablesId
+      card <- cards(optId.get.toString())
+    } yield card
+
+    result.map {Ok(_)}
+  }
+
+
+/*
+  def publicCard(metauser :String) =  Action.async { implicit request =>
 
     println("wee-->"+URL + "/api/card") // /public")
     def callPublicSlice(cookie:String, wsClient:WSClient)=
@@ -53,5 +152,5 @@ class MetabaseController @Inject() (ws: WSClient,
 
     sim.manageServiceCall( new LoginInfo(null,null,"metabase"),callPublicSlice ).map{resp => Ok(resp.json)}
 
-  }
+  } */
 }

@@ -30,6 +30,10 @@ GET        /superset/table/:user/:datasetName     controllers.dashboard.Superset
 
 GET        /metabase/session                      controllers.dashboard.MetabaseController.session()
 GET        /metabase/public_card/:metaUser        controllers.dashboard.MetabaseController.publicCard(metaUser :String)
+GET        /metabase/table/:tableId               controllers.dashboard.MetabaseController.tableInfo(tableId :String)
+GET        /metabase/cards/:tableName             controllers.dashboard.MetabaseController.cardsFromTable(tableName :String)
+GET        /metabase/is_table/:tableName          controllers.dashboard.MetabaseController.isDatasetOnMetabase(tableName :String)
+
 
 GET        /grafana/snapshots/:grafanauser        controllers.dashboard.GrafanaController.snapshots(grafanauser :String)
 

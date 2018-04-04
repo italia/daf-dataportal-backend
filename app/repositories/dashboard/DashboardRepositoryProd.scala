@@ -49,8 +49,6 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
-
-
   val server = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
@@ -61,19 +59,23 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val sharedStatus = 2
   private val draftStatus = 0
 
-
-  /*
-  private def  metabaseTableInfo(iframes :Seq[DashboardIframes]): Future[Seq[DashboardIframes]] = {
   val conf = Configuration.load(Environment.simple())
   val URLMETABASE = conf.getString("metabase.url").get
   val metauser = conf.getString("metabase.user").get
   val metapass = conf.getString("metabase.pass").get
+
+
+
+  private def  metabaseTableInfo(iframes :Seq[DashboardIframes]): Future[Seq[DashboardIframes]] = {
+
     val wsClient = AhcWSClient()
     val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
       val tableId = iframe.table
-      val internalUrl = URLMETABASE + s"/api/tables/$tableId"
+      val internalUrl = localUrl + s"/metabase/table/$tableId"
+      // Missing metabase session not working
       val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
        .map { resp =>
+         println(resp.json)
          val tableName = (resp.json \ "name").as[String]
          iframe.copy(table = Some(tableName))
        }.map { x:DashboardIframes => scala.util.Success(x)}
@@ -83,10 +85,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
     val seq: Future[Seq[Try[DashboardIframes]]] = Future.sequence(futureFrames)
-    val d  = seq.collect{ case Success(x) => x}
-    d
+    val dashboardIframes: Future[Seq[DashboardIframes]] = seq.map(
+             _.filter(_.isSuccess)
+              .map(_.get))
+    dashboardIframes
+    //val d: Future[Any] = seq.collect{ case scala.util.Success(x) => x}
 
-  } */
+  }
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -239,7 +244,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val queryString = uri.getQuery.split("&", 2)(0)
         val valore = queryString.split("=", 2)(1)
 
-        if (valore.contains("{\"code")) {
+        if (valore.contains("{\"code") || vizType.equals("separtor") || vizType.equals("filter")) {
           DashboardIframes(None, None, None, None, None, None)
         } else {
           try {
@@ -263,15 +268,21 @@ class DashboardRepositoryProd extends DashboardRepository {
       val json = response.json.as[Seq[JsValue]]
       json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
         .map(x => {
-        val uuid = (x \ "public_uuid").get.as[String]
-        val title = (x \ "name").get.as[String]
-        val id = (x \ "id").get.as[String]
-        val tableId =   (x \ "table_id").get.as[String]
-        val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-        DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId))
+         val uuid = (x \ "public_uuid").get.as[String]
+         val title = (x \ "name").get.as[String]
+      //  val id = (x \ "id").get.as[String]
+         val tableId =   (x \ "table_id").get.as[Int]
+         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+         DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
       })
     }
 
+
+
+    //val test: Future[Seq[DashboardIframes]] = for {
+    //  iframes <- metabase
+    //  iframesWithTable <- metabaseTableInfo(iframes)
+    //} yield iframesWithTable
 
 
 
@@ -301,7 +312,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
 
-    val services: Seq[Future[Seq[DashboardIframes]]] = List(metabase, superset, grafana, tdMetabase)
+    val services  = List(metabase, superset, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
