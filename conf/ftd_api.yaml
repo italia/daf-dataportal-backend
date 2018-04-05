@@ -1224,6 +1224,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
 definitions:
   Catalog:
     properties:
