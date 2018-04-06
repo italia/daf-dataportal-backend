@@ -1497,6 +1497,13 @@ definitions:
       updatedate:
         type: integer
         format: int64
+      has_job:
+        type: boolean
+      job_status:
+        type: string
+      job_created:
+        type: integer
+        format: int64
   SupersetUrl:
     type: object
     required:

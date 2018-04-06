@@ -249,7 +249,7 @@ package ftd_api.yaml {
         }
         val kyloFeedByName = kyloFeedByNameAction { (feed_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
-            val kyloUrl = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
+          val kyloUrl = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
           val feed = ws.url(kyloUrl)
             .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
             .get().map{ resp =>
@@ -261,7 +261,32 @@ package ftd_api.yaml {
                KyloFeed(name,state,active,updatedate)
 
           }
-          KyloFeedByName200(feed)
+
+          def feedWithJobs(kyloFeed :KyloFeed) = {
+            val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job=%3D~%25$feedName&limit=5&sort=-startTime&start=0"
+            ws.url(kyloJobUrl)
+              .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+              .get().map{ resp =>
+              val data = (resp.json \ "data").as[Seq[JsValue]]
+              val feed = data match {
+                case Seq() => kyloFeed.copy(has_job=false)
+                case jobs => {
+                  val job = jobs.head
+                  val status = (job \ "status").as[String]
+                  val created = (job \ "startTime").as[Long]
+                  kyloFeed.copy(has_job=false, job_status=status, job_created=created)
+                }
+              }
+              feed
+            }
+          }
+
+          val feedWithJob = for {
+            kyloFeed <- feed
+            withJobStatus <- feedWithJobs(kyloFedd)
+          } yield withJobStatus
+
+          KyloFeedByName200(feedWithJob)
          // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }

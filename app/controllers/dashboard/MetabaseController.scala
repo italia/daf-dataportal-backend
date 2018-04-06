@@ -112,6 +112,13 @@ class MetabaseController @Inject() (ws: WSClient,
       Ok(Json.toJson(result))
     }
 
+  //  Logger.debug("publicCard request:"+URL + "/api/table")
+  //  def isDatasetOnMetabase(cookie:String,tableName :String, wsClient:WSClient)=
+  //    wsClient.url(URL + "/api/card").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
+
+  //  sim.manageServiceCall( new LoginInfo(null,null,"metabase"),callPublicSlice ).map{resp => Ok(resp.json)}
+
+
   }
 
 
