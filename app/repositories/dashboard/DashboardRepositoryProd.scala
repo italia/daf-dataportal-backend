@@ -5,7 +5,6 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
-import java.util
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -18,20 +17,18 @@ import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
-import scala.collection.immutable.{List, Nil}
+import scala.collection.immutable.List
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
-import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
+import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, _}
 import com.sksamuel.elastic4s.http.HttpClient
-import com.sksamuel.elastic4s.searches.{RescoreDefinition, SearchDefinition}
+import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
-import org.elasticsearch.search.sort.SortOrder
 import play.api.{Configuration, Environment}
 
-import scala.collection.immutable
 import scala.reflect.runtime.universe
 
 
@@ -73,7 +70,6 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val sharedStatus = 2
   private val draftStatus = 0
 
-
   val conf = Configuration.load(Environment.simple())
   val URLMETABASE = conf.getString("metabase.url").get
   val metauser = conf.getString("metabase.user").get
@@ -107,7 +103,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     //val d: Future[Any] = seq.collect{ case scala.util.Success(x) => x}
 
   }
-
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -299,6 +294,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     //  iframes <- metabase
     //  iframesWithTable <- metabaseTableInfo(iframes)
     //} yield iframesWithTable
+
 
 
      val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
@@ -624,7 +620,6 @@ class DashboardRepositoryProd extends DashboardRepository {
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "_all"
-
     val fieldDatasetDcatName = "dcatapit.name"
     val fieldDatasetDcatTitle = "dcatapit.title"
     val fieldDatasetDcatNote = "dcatapit.note"
@@ -634,10 +629,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widget"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDataFieldName,
-      fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified")
+      fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
-    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories ++ List("dcatapit.owner_org")
+    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
     val fieldAggr = "type"
 
     val searchString = filters.text match {
