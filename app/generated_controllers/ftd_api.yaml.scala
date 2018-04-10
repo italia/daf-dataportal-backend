@@ -55,7 +55,7 @@ import it.gov.daf.common.sso.common.CredentialManager
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                    
+                                                                            
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -509,6 +509,25 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
             PublicDashboardsById200(DashboardRegistry.dashboardService.publicDashboardById(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
+        }
+        val isDatasetOnMetabase = isDatasetOnMetabaseAction { (dataset_name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.isDatasetOnMetabase
+            val conf = Configuration.load(Environment.simple())
+          val URL = conf.getString("app.local.url").get
+          val finalUrl = URL + s"/metabase/is_table/$dataset_name"
+          println(finalUrl)
+          val isOnMetabase = ws.url(finalUrl)
+          //  .withHeaders("Content-Type" -> "application/json",
+          //    "Accept" -> "application/json"
+           // )
+             .get().map { resp =>
+              println(resp.body)
+              val isOnMetabase = resp.body.trim.toBoolean
+             MetabaseTableDataset_nameGetResponses200(Some(isOnMetabase))
+            }
+            IsDatasetOnMetabase200(isOnMetabase)
+          //NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.isDatasetOnMetabase
         }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
