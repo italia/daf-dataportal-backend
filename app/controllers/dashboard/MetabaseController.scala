@@ -115,11 +115,10 @@ class MetabaseController @Inject() (ws: WSClient,
     def isDatasetOnMetabase(tableName :String) = Action.async { implicit request =>
 
       val url = URL + "/api/table"
-      val responseWs: Future[WSResponse] = ws.url(url).get
-      Logger.debug("publicCard request:"+URL + "/api/card")
+      Logger.debug("publicCard request:"+ url)
 
       def callPublicSlice(cookie:String, wsClient:WSClient) = {
-        wsClient.url(URL + "/api/card")
+        wsClient.url(url)
           .withHeaders(("X-Metabase-Session", cookie),
             ("Cookie", cookie))
           .get()
