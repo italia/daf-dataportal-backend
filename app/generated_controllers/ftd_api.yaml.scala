@@ -257,10 +257,35 @@ package ftd_api.yaml {
                val active = (resp.json \ "active").as[Boolean]
                val state = (resp.json \ "state").as[String]
                val updatedate =  (resp.json \ "updateDate").as[Long]
-               KyloFeed(name,state,active,updatedate)
+               KyloFeed(name,state,updatedate,active, None,None,None)
 
           }
-          KyloFeedByName200(feed)
+
+          def feedWithJobs(kyloFeed :KyloFeed) = {
+            val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job=%3D~%25${kyloFeed.feed_name}&limit=5&sort=-startTime&start=0"
+            ws.url(kyloJobUrl)
+              .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+              .get().map{ resp =>
+              val data = (resp.json \ "data").as[Seq[JsValue]]
+              val feed = data match {
+                case Seq() => kyloFeed.copy(has_job=Some(false))
+                case jobs => {
+                  val job = jobs.head
+                  val status = (job \ "status").as[String]
+                  val created = (job \ "startTime").as[Long]
+                  kyloFeed.copy(has_job=Some(true), job_status=Some(status), job_created=Some(created))
+                }
+              }
+              feed
+            }
+          }
+
+          val feedWithJob = for {
+            k <- feed
+            withJobStatus <- feedWithJobs(k)
+          } yield withJobStatus
+
+          KyloFeedByName200(feedWithJob)
          // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
