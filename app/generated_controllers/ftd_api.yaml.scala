@@ -55,7 +55,7 @@ import it.gov.daf.common.sso.common.CredentialManager
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-
+                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -177,7 +177,6 @@ package ftd_api.yaml {
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
             SearchFullText200(DashboardRegistry.dashboardService.searchText(filters, credentials.username,
               credentials.groups.toList.filterNot(g => Role.roles.contains(g))))
-
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
         val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
