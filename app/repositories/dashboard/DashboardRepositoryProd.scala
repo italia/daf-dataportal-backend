@@ -23,9 +23,9 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, _}
+import com.sksamuel.elastic4s.http.ElasticDsl.{highlight, rangeQuery, _}
 import com.sksamuel.elastic4s.http.HttpClient
-import com.sksamuel.elastic4s.searches.SearchDefinition
+import com.sksamuel.elastic4s.searches.{RescoreDefinition, SearchDefinition}
 import com.sksamuel.elastic4s.searches.queries._
 import play.api.{Configuration, Environment, Logger}
 
@@ -627,22 +627,25 @@ class DashboardRepositoryProd extends DashboardRepository {
     val index = "_all"
     val fieldDatasetDcatName = "dcatapit.name"
     val fieldDatasetDcatTitle = "dcatapit.title"
-    val fieldDatasetDcatNote = "dcatapit.note"
+    val fieldDatasetDcatNote = "dcatapit.notes"
     val fieldDatasetDcatTheme = "dcatapit.theme"
     val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
     val fieldUsDsTitle = "title"
     val fieldUsDsSub = "subtitle"
-    val fieldUsDsWget = "widget"
-    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDataFieldName,
-      fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+    val fieldUsDsWget = "widgets"
+    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
     val fieldAggr = "type"
 
+    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
+      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
+
     val searchString = filters.text match {
       case Some("") => ".*"
-      case Some(x) => x
+      case Some(x) => ".*" + x + ".*"
       case None => ".*"
     }
 
@@ -664,10 +667,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         boolQuery()
           .must(
             should(
-              regexQuery(fieldDatasetDcatName, searchString), regexQuery(fieldDatasetDcatTitle, searchString),
-              regexQuery(fieldDatasetDcatNote, searchString), regexQuery(fieldDatasetDataFieldName, searchString),
-              regexQuery(fieldUsDsTitle, searchString), regexQuery(fieldUsDsSub, searchString),
-              regexQuery(fieldUsDsWget, searchString)
+              searchString.split(" ").flatMap(s => listFieldSearch.map(field => regexQuery(field, s)))
             ),
             must(
               creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
@@ -691,13 +691,16 @@ class DashboardRepositoryProd extends DashboardRepository {
     val query: SearchDefinition = queryElasticsearch
     val res = client.execute{
       query
-        .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"), termsAgg("org_1", "dcatapit.owner_org.keyword"),
-          termsAgg("org_2", "org.keyword"), termsAgg("stat_1", "status"), termsAgg("stat_2", "published"), termsAgg("stat_3", "dcatapit.privatex"))
+        .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"),
+          termsAgg("org_1", "dcatapit.owner_org.keyword"), termsAgg("org_2", "org.keyword"),
+          termsAgg("stat_1", "status"), termsAgg("stat_2", "published"), termsAgg("stat_3", "dcatapit.privatex"))
         .sourceInclude(fieldToReturn)
+        .highlighting(listFieldSearch.map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>").fragmentSize(70)))
     }.await
+
     client.close()
 
-    wrapResponse(res, order) ++ createAggResp(res).sortBy(x => x.`type`).reverse
+    wrapResponse(res, order, !searchString.equals(".*")) ++ createAggResp(res).sortBy(x => x.`type`).reverse
   }
 
   private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
@@ -746,12 +749,24 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  private def wrapResponse(query: SearchResponse, order: String): Seq[SearchResult] = {
+  private def wrapResponse(query: SearchResponse, order: String, search: Boolean): Seq[SearchResult] = {
     val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
-      SearchResult(Some(source.`type`), Some(source.sourceAsString))
+      SearchResult(Some(source.`type`), Some(source.sourceAsString),
+        if(search){
+          Some(
+            "{" +
+              source.highlight.map(x =>
+                x._1 match {
+                  case "widgets" => s""""${x._1}": "${x._2.mkString("...").replace("\"", "\\\"")}""""
+                  case _ => s""""${x._1}": "${x._2.mkString("...")}""""
+                }
+              ).mkString(",")
+              + "}")
+        } else Some("{}")
+      )
     ).toSeq
 
-    val tuplesDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
+    val tupleDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
       (
         x.source.get.split(",").map(
           f => if (f.contains("\"timestamp\"") || f.contains("\"modified\""))
@@ -761,9 +776,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     ).toList
 
     val result = order match {
-      case "score" => tuplesDateSearchResult
-      case "asc" => tuplesDateSearchResult.sortWith(_._1 < _._1)
-      case _ => tuplesDateSearchResult.sortWith(_._1 > _._1)
+      case "score" => tupleDateSearchResult
+      case "asc" => tupleDateSearchResult.sortWith(_._1 < _._1)
+      case _ => tupleDateSearchResult.sortWith(_._1 > _._1)
     }
 
     result.map(elem => elem._2)
@@ -774,9 +789,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     val mapStatus = mergeAgg(mapAgg, "status", "stat_1", "stat_2", "stat_3")
 
     (mapAgg.filterNot(s => s._1.equals("org_1") || s._1.equals("org_2") ||
-      s._1.equals("stat_1") || s._1.equals("stat_2") || s._1.equals("stat_3")) ++ mapOrg ++ mapStatus).map{
-      elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"))
-    }.toSeq
+      s._1.equals("stat_1") || s._1.equals("stat_2") || s._1.equals("stat_3")) ++ mapOrg ++ mapStatus).map(
+      elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None)
+      ).toSeq
   }
 
   private def createAggResp(query: SearchResponse): Seq[SearchResult] = {

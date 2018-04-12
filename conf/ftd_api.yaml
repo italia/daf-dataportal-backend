@@ -1366,6 +1366,9 @@ definitions:
       source:
         type: string
         description: the source
+      match:
+        type: string
+        description: the match result
   Dashboard:
     type: object
     properties:
