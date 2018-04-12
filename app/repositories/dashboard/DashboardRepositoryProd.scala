@@ -643,9 +643,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
       fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
 
-    val listHighlight = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget)
-
     val searchString = filters.text match {
       case Some("") => ".*"
       case Some(x) => ".*" + x + ".*"
@@ -690,11 +687,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       )
         .limit(10000)
     }
-
-
-
-    println(listFieldSearch)
-    println(listHighlight)
 
     val query: SearchDefinition = queryElasticsearch
     val res = client.execute{
