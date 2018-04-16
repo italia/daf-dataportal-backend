@@ -657,7 +657,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val searchString = filters.text match {
       case Some("") => ".*"
-      case Some(x) => ".*" + x + ".*"     
+      case Some(x) => x
       case None => ".*"
     }
 
