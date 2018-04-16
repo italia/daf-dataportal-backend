@@ -47,6 +47,7 @@ import utils.InferSchema
 import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 import it.gov.daf.common.sso.common.CredentialManager
+import java.net.URLEncoder
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -55,7 +56,7 @@ import it.gov.daf.common.sso.common.CredentialManager
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+                
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -259,11 +260,14 @@ package ftd_api.yaml {
           }
 
           def feedWithJobs(kyloFeed :KyloFeed) = {
-            val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job=%3D~%25${kyloFeed.feed_name}&limit=5&sort=-startTime&start=0"
+            val queryParam = URLEncoder.encode("=~%","UTF-8")
+            val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job${queryParam}${kyloFeed.feed_name}&limit=5&sort=-startTime&start=0"
+            logger.info(kyloJobUrl)
             ws.url(kyloJobUrl)
               .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
               .get().map{ resp =>
               val data = (resp.json \ "data").as[Seq[JsValue]]
+              logger.info(data.toString())
               val feed = data match {
                 case Seq() => kyloFeed.copy(has_job=Some(false))
                 case jobs => {
