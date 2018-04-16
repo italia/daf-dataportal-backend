@@ -47,6 +47,7 @@ import utils.InferSchema
 import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 import it.gov.daf.common.sso.common.CredentialManager
+import java.net.URLEncoder
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -55,7 +56,7 @@ import it.gov.daf.common.sso.common.CredentialManager
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -178,10 +179,6 @@ package ftd_api.yaml {
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
             SearchFullText200(DashboardRegistry.dashboardService.searchText(filters, credentials.username,
               credentials.groups.toList.filterNot(g => Role.roles.contains(g))))
-
-//          SearchFullText200(DashboardRegistry.dashboardService.searchText(filters, "lucapic",
-//            List("default_org", "test_ingestion")))
-//            NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
         val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
@@ -189,7 +186,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
       Stories200(DashboardRegistry.dashboardService.stories(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
+        credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
       )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
         }
@@ -243,7 +240,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
       Storiesbyid200(DashboardRegistry.dashboardService.storyById(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
+        credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
       )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
@@ -258,10 +255,38 @@ package ftd_api.yaml {
                val active = (resp.json \ "active").as[Boolean]
                val state = (resp.json \ "state").as[String]
                val updatedate =  (resp.json \ "updateDate").as[Long]
-               KyloFeed(name,state,active,updatedate)
+               KyloFeed(name,state,updatedate,active, None,None,None)
 
           }
-          KyloFeedByName200(feed)
+
+          def feedWithJobs(kyloFeed :KyloFeed) = {
+            val queryParam = URLEncoder.encode("=~%","UTF-8")
+            val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job${queryParam}${kyloFeed.feed_name}&limit=5&sort=-startTime&start=0"
+            logger.info(kyloJobUrl)
+            ws.url(kyloJobUrl)
+              .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+              .get().map{ resp =>
+              val data = (resp.json \ "data").as[Seq[JsValue]]
+              logger.info(data.toString())
+              val feed = data match {
+                case Seq() => kyloFeed.copy(has_job=Some(false))
+                case jobs => {
+                  val job = jobs.head
+                  val status = (job \ "status").as[String]
+                  val created = (job \ "startTime").as[Long]
+                  kyloFeed.copy(has_job=Some(true), job_status=Some(status), job_created=Some(created))
+                }
+              }
+              feed
+            }
+          }
+
+          val feedWithJob = for {
+            k <- feed
+            withJobStatus <- feedWithJobs(k)
+          } yield withJobStatus
+
+          KyloFeedByName200(feedWithJob)
          // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
@@ -291,7 +316,8 @@ package ftd_api.yaml {
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
+      Dashboards200(DashboardRegistry.dashboardService.dashboards(
+        credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
         val inferschema = inferschemaAction { input: (File, String) =>
@@ -413,7 +439,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
             Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById(
-              credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
+              credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
             )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
         }
@@ -484,6 +510,25 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
             PublicDashboardsById200(DashboardRegistry.dashboardService.publicDashboardById(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
+        }
+        val isDatasetOnMetabase = isDatasetOnMetabaseAction { (dataset_name: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.isDatasetOnMetabase
+            val conf = Configuration.load(Environment.simple())
+          val URL = conf.getString("app.local.url").get
+          val finalUrl = URL + s"/metabase/is_table/$dataset_name"
+          println(finalUrl)
+          val isOnMetabase = ws.url(finalUrl)
+          //  .withHeaders("Content-Type" -> "application/json",
+          //    "Accept" -> "application/json"
+           // )
+             .get().map { resp =>
+              println(resp.body)
+              val isOnMetabase = resp.body.trim.toBoolean
+             MetabaseTableDataset_nameGetResponses200(Some(isOnMetabase))
+            }
+            IsDatasetOnMetabase200(isOnMetabase)
+          //NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.isDatasetOnMetabase
         }
         val allBrokenLinks = allBrokenLinksAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks

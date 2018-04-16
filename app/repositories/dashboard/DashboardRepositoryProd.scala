@@ -23,9 +23,9 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.http.ElasticDsl.{rangeQuery, _}
+import com.sksamuel.elastic4s.http.ElasticDsl.{highlight, rangeQuery, _}
 import com.sksamuel.elastic4s.http.HttpClient
-import com.sksamuel.elastic4s.searches.SearchDefinition
+import com.sksamuel.elastic4s.searches.{RescoreDefinition, SearchDefinition}
 import com.sksamuel.elastic4s.searches.queries._
 import play.api.{Configuration, Environment, Logger}
 
@@ -66,11 +66,6 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
   private val elasticsearchPort = ConfigReader.getElasticsearchPort
 
-  private val defaultOrg = "default_org"
-  private val sharedStatus = 2
-  private val draftStatus = 0
-
-
   val conf = Configuration.load(Environment.simple())
   val URLMETABASE = conf.getString("metabase.url").get
   val metauser = conf.getString("metabase.user").get
@@ -104,7 +99,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     //val d: Future[Any] = seq.collect{ case scala.util.Success(x) => x}
 
   }
-
 
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
@@ -301,6 +295,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     //} yield iframesWithTable
 
 
+
      val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
 
@@ -354,7 +349,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     results
   }
 
-  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
+  def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -366,14 +361,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
     val dashboards = dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case _: JsError => Seq()
     }
-    dashboards
-      .filter(dash => dash.org.get.equals(defaultOrg) || groups.contains(dash.org.get))
+    dashboards.filter(dash => checkDashboardResponse(dash, username, groups))
   }
 
   def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
@@ -388,17 +382,17 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
     val dashboards = dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards.filter(dash => dash.org.get.equals(defaultOrg) && dash.status.get == sharedStatus)
+    dashboards.filter(dash => checkOpenDashboardResponse(dash))
   }
 
 
-  def dashboardById(groups: List[String], id: String): Dashboard = {
+  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -414,8 +408,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.get
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    val organization = dashboard.org.get
-    if(organization.equals(defaultOrg) || groups.contains(organization)) dashboard
+    if(checkDashboardResponse(dashboard, username, groups)) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -435,7 +428,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    if(dashboard.org.get.equals(defaultOrg) && dashboard.status.get == sharedStatus) dashboard
+    if(checkOpenDashboardResponse(dashboard)) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -486,7 +479,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
-  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
+  def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val query = status match {
@@ -501,16 +494,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val storiesJsResult = json.validate[Seq[UserStory]]
     val stories = storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(
-      story => story.org.get.equals(defaultOrg) || groups.contains(story.org.get)
-    )
-
+    stories.filter(story => checkStoryResponse(story, username, groups))
   }
 
   def storiesPublic(status: Option[Int]): Seq[UserStory] = {
@@ -525,16 +515,16 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val storiesJsResult = json.validate[Seq[UserStory]]
     val stories = storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(story => story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus)
+    stories.filter(story => checkOpenStoryResponse(story))
   }
 
-  def storyById(groups: List[String], id: String): UserStory = {
+  def storyById(username: String, groups: List[String], id: String): UserStory = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -550,8 +540,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
-    val organization = story.org.get
-    if(organization.equals(defaultOrg) || groups.contains(organization)) story
+    if(checkStoryResponse(story, username, groups)) story
     else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -571,7 +560,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
-    if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
+    if(checkOpenStoryResponse(story)) story
     else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -623,80 +612,109 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
+  private def checkStoryResponse(story: UserStory, username: String, groups: List[String]): Boolean = {
+    if((story.user.getOrElse("no_user").equals(username) && story.published.getOrElse(-1) == 0) ||
+      (groups.contains(story.org.getOrElse("no_org")) && story.published.getOrElse(-1) == 1) ||
+      checkOpenStoryResponse(story)) true
+    else false
+  }
+
+  private def checkOpenStoryResponse(story: UserStory): Boolean = {
+    story.published.getOrElse(-1) == 2
+  }
+
+  private def checkDashboardResponse(dash: Dashboard, username: String, groups: List[String]): Boolean = {
+    if((dash.user.getOrElse("no_user").equals(username) && dash.status.getOrElse(-1) == 0) ||
+      (groups.contains(dash.org.getOrElse("no_org")) && dash.status.getOrElse(-1) == 1) ||
+      checkOpenDashboardResponse(dash)) true
+    else false
+  }
+
+  private def checkOpenDashboardResponse(dash: Dashboard): Boolean = {
+    dash.status.getOrElse(-1) == 2
+  }
+
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "_all"
-
     val fieldDatasetDcatName = "dcatapit.name"
     val fieldDatasetDcatTitle = "dcatapit.title"
-    val fieldDatasetDcatNote = "dcatapit.note"
+    val fieldDatasetDcatNote = "dcatapit.notes"
     val fieldDatasetDcatTheme = "dcatapit.theme"
     val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
     val fieldUsDsTitle = "title"
     val fieldUsDsSub = "subtitle"
-    val fieldUsDsWget = "widget"
-    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDataFieldName,
-      fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified")
+    val fieldUsDsWget = "widgets"
+    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
     val fieldAggr = "type"
+
+    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
+      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
 
     val searchString = filters.text match {
       case Some("") => ".*"
       case Some(x) => x
       case None => ".*"
     }
+
     val searchType = filters.index match {
       case Some(List()) => ""
       case Some(x) => x.mkString(",")
       case None => ""
     }
 
+    val order = filters.order match {
+      case Some("score") => "score"
+      case Some("asc") => "asc"
+      case _ => "desc"
+    }
+
     def queryElasticsearch = {
-//      import org.elasticsearch.search.sort._
-        search(index).types(searchType).query(
-          boolQuery()
-            .should(
-              regexQuery(fieldDatasetDcatName, searchString), regexQuery(fieldDatasetDcatTitle, searchString),
-              regexQuery(fieldDatasetDcatNote, searchString), regexQuery(fieldDatasetDataFieldName, searchString),
-              regexQuery(fieldUsDsTitle, searchString), regexQuery(fieldUsDsSub, searchString),
-              regexQuery(fieldUsDsWget, searchString)
-            )
-              .must(
-                creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
-                            createFilterStatus(filters.status) ::: createFilterDate(filters.date)
-              )
-            .should(
+      search(index).types(searchType).query(
+        boolQuery()
+          .must(
+            should(
+              searchString.split(" ").flatMap(s => listFieldSearch.map(field => regexQuery(field, s)))
+            ),
+            must(
+              creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
+                createFilterStatus(filters.status) ::: createFilterDate(filters.date)
+            ),
+            should(
               must(matchQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
               matchQuery("dcatapit.privatex", "0"),
               must(matchQuery("status", "0"), matchQuery("user", username)),
               must(matchQuery("published", "0"), matchQuery("user", username)),
-              must(matchQuery("status", "1"), termsQuery("org", groups)),
-              must(matchQuery("published", "1"), termsQuery("org", groups)),
+              must(matchQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
+              must(matchQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
               matchQuery("status", "2"),
               matchQuery("published", "2")
             )
-        )
-          .limit(1000)
-//        .sortBy(fieldSort("timestamp.keyword").order(SortOrder.DESC), fieldSort("dcatapit.modified").order(SortOrder.DESC))
+          )
+      )
+        .limit(10000)
     }
 
     val query: SearchDefinition = queryElasticsearch
     val res = client.execute{
       query
-        .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"))
+        .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"),
+          termsAgg("org_1", "dcatapit.owner_org.keyword"), termsAgg("org_2", "org.keyword"),
+          termsAgg("stat_1", "status"), termsAgg("stat_2", "published"), termsAgg("stat_3", "dcatapit.privatex"))
         .sourceInclude(fieldToReturn)
+        .highlighting(listFieldSearch.map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>").fragmentSize(70)))
     }.await
+
     client.close()
 
-    wrapResponse(res) ++ createAggreResp(res)
+    wrapResponse(res, order, !searchString.equals(".*")) ++ createAggResp(res).sortBy(x => x.`type`).reverse
   }
 
   private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
-    val datasetField = "dcatapit.privatex"
-    val dashNstoriesField = "status"
-
     status match {
       case Some(List()) => List()
       case Some(x) => {
@@ -704,14 +722,14 @@ class DashboardRepositoryProd extends DashboardRepository {
           case "2" => "0"
           case _ => "1"
         }
-        List(should(termsQuery(datasetField, statusDataset), termsQuery("status", status.get), termsQuery("published", status.get)))
+        List(should(termsQuery("dcatapit.privatex", statusDataset), termsQuery("status", status.get), termsQuery("published", status.get)))
       }
       case _ => List()
     }
   }
 
   private def createFilterOrg(inputOrgFilter: Option[Seq[String]]) = {
-    val datasetOrg = "dcatapit.author"
+    val datasetOrg = "dcatapit.owner_org"
     val dashNstorOrg = "org"
 
     inputOrgFilter match {
@@ -738,27 +756,100 @@ class DashboardRepositoryProd extends DashboardRepository {
       case Some(dates) => List(should(rangeQuery(datasetDate).gte(dates.split(" ")(0)).lte(dates.split(" ")(1)),
         rangeQuery(dashNstoriesDate).gte(dates.split(" ")(0)).lte(dates.split(" ")(1))
       ))
-      case None => List()
+      case _ => List()
     }
   }
 
-  private def wrapResponse(query: SearchResponse): Seq[SearchResult] = {
-    query.hits.hits.map(source =>
-      SearchResult(Some(source.`type`), Some(source.sourceAsString))
-    )
+  private def wrapResponse(query: SearchResponse, order: String, search: Boolean): Seq[SearchResult] = {
+    val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
+      SearchResult(Some(source.`type`), Some(source.sourceAsString),
+        if(search){
+          Some(
+            "{" +
+              source.highlight.map(x =>
+                x._1 match {
+                  case "widgets" => s""""${x._1}": "${x._2.mkString("...").replace("\"", "\\\"")}""""
+                  case _ => s""""${x._1}": "${x._2.mkString("...")}""""
+                }
+              ).mkString(",")
+              + "}")
+        } else Some("{}")
+      )
+    ).toSeq
+
+    val tupleDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
+      (
+        x.source.get.split(",").map(
+          f => if (f.contains("\"timestamp\"") || f.contains("\"modified\""))
+            f.split(":")(1)
+          else "").toList
+          .filterNot(w => w.equals(""))(0), x)
+    ).toList
+
+    val result = order match {
+      case "score" => tupleDateSearchResult
+      case "asc" => tupleDateSearchResult.sortWith(_._1 < _._1)
+      case _ => tupleDateSearchResult.sortWith(_._1 > _._1)
+    }
+
+    result.map(elem => elem._2)
   }
 
-  private def createAggreResp(query: SearchResponse): Seq[SearchResult] = {
-    val response = query.aggregations.map{elem =>
+  private def aggToSearchResult(mapAgg: Map[String, Map[String, Int]]): Seq[SearchResult] = {
+    val mapOrg = mergeAgg(mapAgg, "organization", "org_1", "org_2", "")
+    val mapStatus = mergeAgg(mapAgg, "status", "stat_1", "stat_2", "stat_3")
+
+    (mapAgg.filterNot(s => s._1.equals("org_1") || s._1.equals("org_2") ||
+      s._1.equals("stat_1") || s._1.equals("stat_2") || s._1.equals("stat_3")) ++ mapOrg ++ mapStatus).map(
+      elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None)
+      ).toSeq
+  }
+
+  private def createAggResp(query: SearchResponse): Seq[SearchResult] = {
+    val mapAgg: Map[String, Map[String, Int]] = query.aggregations.map{ elem =>
       val name = elem._1
-      val valori: List[String] = elem._2.asInstanceOf[Map[String, Any]].get("buckets").get.asInstanceOf[List[Map[String, AnyVal]]]
-        .map(k => wrapAggrResp(k.values.toList))
-      SearchResult(Some(name), Some("{" + valori.mkString(",") + "}"))
+      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+          .map(elem =>
+            wrapAggrResp(elem.values.toList)
+          )
+        .map(v => v._1 -> v._2).toMap
+      name -> valueMap
     }
-    response.toSeq
+    aggToSearchResult(mapAgg)
   }
-  private def wrapAggrResp(listCount: List[AnyVal]): String = {
-    s""""${listCount(0)}": "${listCount(1)}""""
+
+  private def parseMapAgg(map: Map[String, Int]): Map[String, Int] = {
+    if(map.contains("true") || map.contains("false")) {
+      val countTrue: Int = map.getOrElse("true", 0)
+      val countFalse: Int = map.getOrElse("false", 0)
+      val listT: List[(String, Int)] = if(map.contains("true")) List(("0", countTrue), ("1", countTrue)) else List()
+      val listF: List[(String, Int)] = if(map.contains("false")) List(("2", countFalse)) else List()
+      (listT ++ listF).map(elem => elem._1 -> elem._2).toMap
+    } else
+      map
+  }
+
+  private def mergeAgg(mapOrg: Map[String, Map[String, Int]], key: String, nameMap1: String, nameMap2: String, nameMap3: String): Map[String, Map[String, Int]] = {
+    val map1: Map[String, Int] = parseMapAgg(mapOrg.get(nameMap1).getOrElse(Map()))
+    val map2: Map[String, Int] = parseMapAgg(mapOrg.get(nameMap2).getOrElse(Map()))
+    val map3: Map[String, Int] = parseMapAgg(mapOrg.get(nameMap3).getOrElse(Map()))
+
+    val listKyes = map1.keySet ++ map2.keySet ++ map3.keySet
+
+    val res = listKyes.map(k =>
+      k -> (map1.getOrElse(k, 0) + map2.getOrElse(k, 0) + map3.getOrElse(k, 0))
+    ).map(v => v._1 -> v._2).toMap
+
+    Map(key -> res)
+  }
+
+  private def wrapAggrResp(listCount: List[AnyVal]): (String, Int) = {
+    if(listCount.length == 2) (listCount(0).toString, listCount(1).asInstanceOf[Int])
+    else {
+      val key = listCount(1).toString
+      val count = listCount(2).asInstanceOf[Int]
+      (key, count)
+    }
   }
 
   private def listFields(obj: String): List[String] = {

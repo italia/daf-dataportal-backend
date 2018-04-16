@@ -1224,6 +1224,35 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/metabase/table/{dataset_name}":
+    get:
+      tags:
+      - Metabase
+      summary: Is dataset on metabase
+      operationId: isDatasetOnMetabase
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - name: dataset_name
+        in: path
+        description: dataset name
+        required: true
+        type: string
+      responses:
+        200:
+          description: the dataset it can be visualized on metabase
+          schema:
+            type: object
+            properties:
+              is_on_metabase:
+                type: boolean
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
 definitions:
   Catalog:
     properties:
@@ -1309,6 +1338,8 @@ definitions:
         type: array
         items:
           type: string
+      order:
+        type: string
   Error:
     type: object
     properties:
@@ -1335,6 +1366,9 @@ definitions:
       source:
         type: string
         description: the source
+      match:
+        type: string
+        description: the match result
   Dashboard:
     type: object
     properties:
@@ -1494,6 +1528,13 @@ definitions:
       active:
         type: boolean
       updatedate:
+        type: integer
+        format: int64
+      has_job:
+        type: boolean
+      job_status:
+        type: string
+      job_created:
         type: integer
         format: int64
   SupersetUrl:

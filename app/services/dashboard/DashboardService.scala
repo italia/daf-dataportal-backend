@@ -40,12 +40,12 @@ trait DashboardServiceComponent {
       dashboardRepository.iframesByOrg(user,org)
     }
 
-    def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
-       dashboardRepository.dashboards(groups, status)
+    def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
+       dashboardRepository.dashboards(username, groups, status)
     }
 
-    def dashboardById(group: List[String], id: String) :Dashboard = {
-      dashboardRepository.dashboardById(group, id)
+    def dashboardById(username: String, group: List[String], id: String) :Dashboard = {
+      dashboardRepository.dashboardById(username, group, id)
     }
 
     def saveDashboard(dashboard: Dashboard, user :String): Success = {
@@ -56,12 +56,12 @@ trait DashboardServiceComponent {
       dashboardRepository.deleteDashboard(dashboardId)
     }
 
-    def stories(groups: List[String], status: Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
-      dashboardRepository.stories(groups, status, page, limit)
+    def stories(username: String, groups: List[String], status: Option[Int], page :Option[Int], limit :Option[Int]): Seq[UserStory] = {
+      dashboardRepository.stories(username, groups, status, page, limit)
     }
 
-    def storyById(group: List[String], id: String) :UserStory = {
-      dashboardRepository.storyById(group,id)
+    def storyById(username: String, group: List[String], id: String) :UserStory = {
+      dashboardRepository.storyById(username, group,id)
     }
 
     def publicStoryById(id: String) :UserStory = {
