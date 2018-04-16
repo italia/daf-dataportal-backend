@@ -66,10 +66,6 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
   private val elasticsearchPort = ConfigReader.getElasticsearchPort
 
-  private val defaultOrg = "default_org"
-  private val sharedStatus = 2
-  private val draftStatus = 0
-
   val conf = Configuration.load(Environment.simple())
   val URLMETABASE = conf.getString("metabase.url").get
   val metauser = conf.getString("metabase.user").get
@@ -353,7 +349,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     results
   }
 
-  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
+  def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -365,14 +361,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
     val dashboards = dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case _: JsError => Seq()
     }
-    dashboards
-      .filter(dash => dash.org.get.equals(defaultOrg) || groups.contains(dash.org.get))
+    dashboards.filter(dash => checkDashboardResponse(dash, username, groups))
   }
 
   def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
@@ -387,17 +382,17 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
     val dashboards = dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards.filter(dash => dash.org.get.equals(defaultOrg) && dash.status.get == sharedStatus)
+    dashboards.filter(dash => checkOpenDashboardResponse(dash))
   }
 
 
-  def dashboardById(groups: List[String], id: String): Dashboard = {
+  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -413,8 +408,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.get
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    val organization = dashboard.org.get
-    if(organization.equals(defaultOrg) || groups.contains(organization)) dashboard
+    if(checkDashboardResponse(dashboard, username, groups)) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -434,7 +428,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    if(dashboard.org.get.equals(defaultOrg) && dashboard.status.get == sharedStatus) dashboard
+    if(checkOpenDashboardResponse(dashboard)) dashboard
     else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -485,7 +479,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
-  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
+  def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val query = status match {
@@ -500,16 +494,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val storiesJsResult = json.validate[Seq[UserStory]]
     val stories = storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(
-      story => story.org.get.equals(defaultOrg) || groups.contains(story.org.get)
-    )
-
+    stories.filter(story => checkStoryResponse(story, username, groups))
   }
 
   def storiesPublic(status: Option[Int]): Seq[UserStory] = {
@@ -524,16 +515,16 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    println(json)
+//    println(json)
     val storiesJsResult = json.validate[Seq[UserStory]]
     val stories = storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(story => story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus)
+    stories.filter(story => checkOpenStoryResponse(story))
   }
 
-  def storyById(groups: List[String], id: String): UserStory = {
+  def storyById(username: String, groups: List[String], id: String): UserStory = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -549,8 +540,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
-    val organization = story.org.get
-    if(organization.equals(defaultOrg) || groups.contains(organization)) story
+    if(checkStoryResponse(story, username, groups)) story
     else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -570,7 +560,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case s: JsSuccess[UserStory] => s.get
       case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
-    if(story.org.get.equals(defaultOrg) && story.published.getOrElse(draftStatus) == sharedStatus) story
+    if(checkOpenStoryResponse(story)) story
     else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -622,6 +612,28 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
+  private def checkStoryResponse(story: UserStory, username: String, groups: List[String]): Boolean = {
+    if((story.user.getOrElse("no_user").equals(username) && story.published.getOrElse(-1) == 0) ||
+      (groups.contains(story.org.getOrElse("no_org")) && story.published.getOrElse(-1) == 1) ||
+      checkOpenStoryResponse(story)) true
+    else false
+  }
+
+  private def checkOpenStoryResponse(story: UserStory): Boolean = {
+    story.published.getOrElse(-1) == 2
+  }
+
+  private def checkDashboardResponse(dash: Dashboard, username: String, groups: List[String]): Boolean = {
+    if((dash.user.getOrElse("no_user").equals(username) && dash.status.getOrElse(-1) == 0) ||
+      (groups.contains(dash.org.getOrElse("no_org")) && dash.status.getOrElse(-1) == 1) ||
+      checkOpenDashboardResponse(dash)) true
+    else false
+  }
+
+  private def checkOpenDashboardResponse(dash: Dashboard): Boolean = {
+    dash.status.getOrElse(-1) == 2
+  }
+
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "_all"
@@ -645,7 +657,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val searchString = filters.text match {
       case Some("") => ".*"
-      case Some(x) => ".*" + x + ".*"
+      case Some(x) => x
       case None => ".*"
     }
 
@@ -662,7 +674,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
     def queryElasticsearch = {
-
       search(index).types(searchType).query(
         boolQuery()
           .must(
