@@ -69,11 +69,11 @@ class DashboardRepositoryDev extends DashboardRepository {
     Future(Seq(DashboardIframes(None,None,None,None,None,None)))
   }
 
-  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard] = {
+  def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
     Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def dashboardById(groups: List[String], id: String): Dashboard = {
+  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
     Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
@@ -85,11 +85,11 @@ class DashboardRepositoryDev extends DashboardRepository {
     Success(None, None)
   }
 
-  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
+  def stories(stories: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
     Seq(UserStory(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def storyById(groups: List[String], id: String): UserStory = {
+  def storyById(username: String, groups: List[String], id: String): UserStory = {
     UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 

@@ -15,12 +15,12 @@ trait DashboardRepository {
   def tables(): Seq[Catalog]
   def iframes(metaUser: String): Future[Seq[DashboardIframes]]
   def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]]
-  def dashboards(groups: List[String], status: Option[Int]): Seq[Dashboard]
-  def dashboardById(groups: List[String], id: String): Dashboard
+  def dashboards(username:String, groups: List[String], status: Option[Int]): Seq[Dashboard]
+  def dashboardById(username: String, groups: List[String], id: String): Dashboard
   def saveDashboard(dashboard: Dashboard, user: String): Success
   def deleteDashboard(dashboardId: String): Success
-  def stories(groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory]
-  def storyById(groups: List[String], id: String): UserStory
+  def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory]
+  def storyById(username:String, groups: List[String], id: String): UserStory
   def publicStoryById(id: String): UserStory
   def saveStory(story: UserStory, user: String): Success
   def deleteStory(storyId: String): Success

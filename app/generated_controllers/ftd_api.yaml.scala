@@ -55,7 +55,7 @@ import it.gov.daf.common.sso.common.CredentialManager
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -184,7 +184,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
       Stories200(DashboardRegistry.dashboardService.stories(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
+        credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status, page, limit)
       )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
         }
@@ -238,7 +238,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
       Storiesbyid200(DashboardRegistry.dashboardService.storyById(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
+        credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), story_id)
       )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
         }
@@ -311,7 +311,8 @@ package ftd_api.yaml {
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-      Dashboards200(DashboardRegistry.dashboardService.dashboards(credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
+      Dashboards200(DashboardRegistry.dashboardService.dashboards(
+        credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
         val inferschema = inferschemaAction { input: (File, String) =>
@@ -433,7 +434,7 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
             Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById(
-              credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
+              credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
             )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
         }
