@@ -11,7 +11,7 @@ import akka.stream.ActorMaterializer
 import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.MongoClient
+import com.mongodb.casbah.{MongoClient, MongoCollection, MongoCursor}
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
@@ -370,25 +370,20 @@ class DashboardRepositoryProd extends DashboardRepository {
     dashboards.filter(dash => checkDashboardResponse(dash, username, groups))
   }
 
-  def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
+  def dashboardsPublic(org: Option[String]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
-    val query = status match {
-      case Some(x) => MongoDBObject("published" -> x)
-      case None => MongoDBObject()
-    }
     val coll = db("dashboards")
-    val results = coll.find(query).toList
+    val results = publicQueryToMongo(coll, org, "published")
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-//    println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
     val dashboards = dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards.filter(dash => checkOpenDashboardResponse(dash))
+    dashboards
   }
 
 
@@ -503,25 +498,33 @@ class DashboardRepositoryProd extends DashboardRepository {
     stories.filter(story => checkStoryResponse(story, username, groups))
   }
 
-  def storiesPublic(status: Option[Int]): Seq[UserStory] = {
+  def storiesPublic(org: Option[String]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
-    val query = status match {
-      case Some(x) => MongoDBObject("published" -> x)
-      case None => MongoDBObject()
-    }
     val coll = db("stories")
-    val results = coll.find(query).sort(MongoDBObject("timestamp" -> -1)).toList
+    val results = publicQueryToMongo(coll, org, "published")
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-//    println(json)
     val storiesJsResult = json.validate[Seq[UserStory]]
     val stories = storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(story => checkOpenStoryResponse(story))
+    stories
+  }
+
+  private def publicQueryToMongo(coll: MongoCollection, org: Option[String], nameStatus: String): List[DBObject] = {
+    import mongodb.casbah.query.Imports._
+
+    val orgQuery = org match {
+      case Some(x) => mongodb.casbah.Imports.MongoDBObject("org" -> x)
+      case None => mongodb.casbah.Imports.MongoDBObject()
+    }
+    val statusQuery = mongodb.casbah.Imports.MongoDBObject(nameStatus -> 2)
+    val sortQuery = mongodb.casbah.Imports.MongoDBObject("timestamp" -> -1)
+
+    coll.find($and(orgQuery, statusQuery)).sort(sortQuery).toList
   }
 
   def storyById(username: String, groups: List[String], id: String): UserStory = {

@@ -24,8 +24,8 @@ trait DashboardRepository {
   def publicStoryById(id: String): UserStory
   def saveStory(story: UserStory, user: String): Success
   def deleteStory(storyId: String): Success
-  def storiesPublic(status: Option[Int]): Seq[UserStory]
-  def dashboardsPublic(status: Option[Int]): Seq[Dashboard]
+  def storiesPublic(org: Option[String]): Seq[UserStory]
+  def dashboardsPublic(org: Option[String]): Seq[Dashboard]
   def publicDashboardById(id: String): Dashboard
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult]
 }
