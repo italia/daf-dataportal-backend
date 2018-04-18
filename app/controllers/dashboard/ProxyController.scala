@@ -37,4 +37,16 @@ class ProxyController @Inject()(ws: WSClient,
       Ok(response.body).as("application/json")
     }
   }
+
+  def ckanGeoProxy(action: String) = Action.async { implicit request =>
+    val baseUrl = "http://ckan-geo.default.svc.cluster.local:5000/dataset/"
+    val url = baseUrl + action
+    val queryString: Map[String, String] = request.queryString.map { case (k,v) => k -> v.mkString}
+    val responseWs = ws.url(url)
+      .withQueryString(queryString.toList: _*)
+      .get
+    responseWs.map { response =>
+      Ok(response.body).as("application/json")
+    }
+  }
 }
