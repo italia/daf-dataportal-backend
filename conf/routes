@@ -42,6 +42,7 @@ GET        /tdmetabase/public_card                controllers.dashboard.TeamDash
 
 GET        /dati-gov/medium/*url               controllers.dashboard.ProxyController.medium(url)
 GET        /dati-gov/ckan_proxy/:action           controllers.dashboard.ProxyController.ckanProxy(action: String)
+GET        /dati-gov/ckan_geo_proxy/:action       controllers.dashboard.ProxyController.ckanGeoProxy(action: String)
 
 GET        /dati-gov/img/*file                    controllers.Assets.versioned(path="/public/img", file: Asset)
 GET        /dati-gov/*file                        controllers.Assets.versioned(path="/public/swagger", file: Asset)

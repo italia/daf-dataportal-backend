@@ -673,33 +673,62 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
-    def queryElasticsearch = {
+    def emptyQueryElasticsearch = {
       search(index).types(searchType).query(
         boolQuery()
           .must(
-            should(
-              searchString.split(" ").flatMap(s => listFieldSearch.map(field => regexQuery(field, s)))
-            ),
             must(
               creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
                 createFilterStatus(filters.status) ::: createFilterDate(filters.date)
             ),
             should(
-              must(matchQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
-              matchQuery("dcatapit.privatex", "0"),
-              must(matchQuery("status", "0"), matchQuery("user", username)),
-              must(matchQuery("published", "0"), matchQuery("user", username)),
-              must(matchQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
-              must(matchQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
-              matchQuery("status", "2"),
-              matchQuery("published", "2")
+              must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
+              termQuery("dcatapit.privatex", "0"),
+              must(termQuery("status", "0"), termQuery("user", username)),
+              must(termQuery("published", "0"), termQuery("user", username)),
+              must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
+              must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
+              termQuery("status", "2"),
+              termQuery("published", "2")
             )
           )
       )
         .limit(10000)
     }
 
-    val query: SearchDefinition = queryElasticsearch
+    def queryElasticsearch = {
+      search(index).types(searchType).query(
+        boolQuery()
+          .must(
+            should(
+              searchString.split(" ").flatMap(s => listFieldSearch
+                .map(field => matchQuery(field, s)))
+
+            ),
+            must(
+              creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
+                createFilterStatus(filters.status) ::: createFilterDate(filters.date)
+            ),
+            should(
+              must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
+              termQuery("dcatapit.privatex", "0"),
+              must(termQuery("status", "0"), termQuery("user", username)),
+              must(termQuery("published", "0"), termQuery("user", username)),
+              must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
+              must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
+              termQuery("status", "2"),
+              termQuery("published", "2")
+            )
+          )
+      )
+        .limit(10000)
+    }
+
+    val query: SearchDefinition = searchString match {
+      case ".*" => emptyQueryElasticsearch
+      case _ => queryElasticsearch
+    }
+
     val res = client.execute{
       query
         .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"),
