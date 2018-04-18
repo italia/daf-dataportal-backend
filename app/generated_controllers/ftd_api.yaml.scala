@@ -57,7 +57,6 @@ import java.net.URLEncoder
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
 
-
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -472,10 +471,10 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }
-        val publicStories = publicStoriesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
-            val (status, page, limit) = input
+        val publicStories = publicStoriesAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+            val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
-            PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(status))
+            PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(org))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStories
         }
         val catalogDatasetCount = catalogDatasetCountAction { input: (String, String) =>
@@ -493,10 +492,10 @@ package ftd_api.yaml {
       Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val publicDashboards = publicDashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
-            val (status, page, limit) = input
+        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+            val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
-            PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(status))
+            PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(org))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboards
         }
         val catalogBrokenLinks = catalogBrokenLinksAction { input: (String, String) =>

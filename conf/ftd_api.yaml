@@ -600,12 +600,11 @@ paths:
       consumes:
         - application/json
       parameters:
-        - name: status
+        - name: org
           in: query
-          description: possible status (0,1,2) 2 = public
+          description: organization
           required: false
-          type: integer
-          format: int32
+          type: string
         - name: page
           in: query
           description: number of the page
@@ -785,12 +784,11 @@ paths:
         consumes:
            - application/json
         parameters:
-          - name: status
+          - name: org
             in: query
-            description: possible status (0,1,2) 2 = public
+            description: organization
             required: false
-            type: integer
-            format: int32
+            type: string
           - name: page
             in: query
             description: number of the page
