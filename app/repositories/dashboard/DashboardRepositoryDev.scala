@@ -105,11 +105,11 @@ class DashboardRepositoryDev extends DashboardRepository {
     Success(None, None)
   }
 
-  def storiesPublic(status: Option[Int]): Seq[UserStory] = {
+  def storiesPublic(org: Option[String]): Seq[UserStory] = {
     Seq(UserStory(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
+  def dashboardsPublic(org: Option[String]): Seq[Dashboard] = {
     Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
