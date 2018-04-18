@@ -76,12 +76,12 @@ trait DashboardServiceComponent {
       dashboardRepository.deleteStory(storyId)
     }
 
-    def storiesPublic(status: Option[Int]): Seq[UserStory] = {
-      dashboardRepository.storiesPublic(status)
+    def storiesPublic(org: Option[String]): Seq[UserStory] = {
+      dashboardRepository.storiesPublic(org)
     }
 
-    def dashboardsPublic(status: Option[Int]): Seq[Dashboard] = {
-      dashboardRepository.dashboardsPublic(status)
+    def dashboardsPublic(org: Option[String]): Seq[Dashboard] = {
+      dashboardRepository.dashboardsPublic(org)
     }
 
     def publicDashboardById(id: String): Dashboard = {
