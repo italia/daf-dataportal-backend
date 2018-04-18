@@ -735,7 +735,10 @@ class DashboardRepositoryProd extends DashboardRepository {
           termsAgg("org_1", "dcatapit.owner_org.keyword"), termsAgg("org_2", "org.keyword"),
           termsAgg("stat_1", "status"), termsAgg("stat_2", "published"), termsAgg("stat_3", "dcatapit.privatex"))
         .sourceInclude(fieldToReturn)
-        .highlighting(listFieldSearch.map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>").fragmentSize(70)))
+        .highlighting(listFieldSearch
+          .filterNot(s => s.equals("og") || s.equals("dcatapit.owner_org"))
+          .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
+            .fragmentSize(70)))
     }.await
 
     client.close()
