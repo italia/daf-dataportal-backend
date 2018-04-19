@@ -9,6 +9,7 @@ import play.api.Logger
 import play.api.libs.json._
 import utils.ConfigReader
 
+import scala.collection.immutable
 import scala.collection.immutable.List
 
 class SettingsRepositoryProd extends SettingsRepository {
@@ -141,12 +142,12 @@ class SettingsRepositoryProd extends SettingsRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val db: MongoDB = mongoClient(source)
     val coll = db("settings")
-    val mapDomain: Map[String, String] = coll.map(
+    val mapDomain: List[(String, String)] = coll.map(
       settings =>
-        settings.get("organization").toString -> settings.get("domain").toString
-    ).toMap
+        (settings.get("organization").toString , settings.get("domain").toString)
+    ).toList
     mongoClient.close()
-    if(isAdmin) mapDomain.values.toSeq
-    else mapDomain.filter(elem => groups.contains(elem._2)).values.toSeq
+    if(isAdmin) mapDomain.map(elem => elem._2)
+    else mapDomain.filter(elem => groups.contains(elem._1)).map(elem => elem._2)
   }
 }
