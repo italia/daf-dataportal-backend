@@ -9,8 +9,6 @@ import play.api.Logger
 import play.api.libs.json._
 import utils.ConfigReader
 
-import scala.collection.immutable
-import scala.collection.immutable.List
 
 class SettingsRepositoryProd extends SettingsRepository {
 
@@ -27,7 +25,6 @@ class SettingsRepositoryProd extends SettingsRepository {
 
   val server = new ServerAddress(mongoHost, mongoPort)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
-//  val logger = LoggerFactory.getLogger(this.getClass)
   val logger = Logger.logger
 
   private def updateSettings(db: MongoDB, name: String, settings: Settings): Either[Error, Success] = {
