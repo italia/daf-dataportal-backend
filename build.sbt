@@ -79,10 +79,8 @@ resolvers ++= Seq(
   Resolver.bintrayRepo("jtescher", "sbt-plugin-releases")
 )
 
-if(isStaging)
-  resolvers ++= Seq("daf repo" at "http://nexus.teamdigitale.test:8081/repository/maven-public/")
-else
-  resolvers ++= Seq("daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/")
+resolvers ++= { if(isStaging) Seq("daf repo" at "http://nexus.teamdigitale.test:8081/repository/maven-public/")
+                else Seq("daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/")}
 
 
 playScalaCustomTemplateLocation := Some(baseDirectory.value / "templates")
@@ -112,13 +110,11 @@ dockerCommands := dockerCommands.value.flatMap {
 
 dockerExposedPorts := Seq(9000, 7000)
 
-if(isStaging) {
-  dockerEntrypoint := Seq(s"bin/${name.value}", "-Dconfig.file=conf/productionNew.conf")
-  dockerRepository := Option("nexus.teamdigitale.test")
-}else {
-  dockerEntrypoint := Seq(s"bin/${name.value}", "-Dconfig.file=conf/production.conf")
-  dockerRepository := Option("10.98.74.120:5000")
-}
+dockerEntrypoint := { if(isStaging)Seq(s"bin/${name.value}", "-Dconfig.file=conf/productionNew.conf")
+                      else Seq(s"bin/${name.value}", "-Dconfig.file=conf/production.conf")}
+
+dockerRepository := { if(isStaging)Option("nexus.teamdigitale.test") else Option("10.98.74.120:5000") }
+
 
 publishTo in ThisBuild := {
   val nexus = if(isStaging) "http://nexus.teamdigitale.test:8081/repository/"
@@ -130,10 +126,8 @@ publishTo in ThisBuild := {
     Some("releases"  at nexus + "maven-releases/")
 }
 
-if(isStaging)
-  credentials += Credentials(Path.userHome / ".ivy2" / ".credentialsTest")
-else
-  credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+credentials += {if(isStaging) Credentials(Path.userHome / ".ivy2" / ".credentialsTest") else Credentials(Path.userHome / ".ivy2" / ".credentials")}
+
 
 javaOptions in Test += "-Dconfig.resource=" + System.getProperty("config.resource", "production.conf")
 playScalaAutogenerateTests := false
