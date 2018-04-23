@@ -28,6 +28,7 @@ trait DashboardRepository {
   def dashboardsPublic(org: Option[String]): Seq[Dashboard]
   def publicDashboardById(id: String): Dashboard
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult]
+  def searchLast(username: String, groups: List[String]): Seq[SearchResult]
 }
 
 object DashboardRepository {

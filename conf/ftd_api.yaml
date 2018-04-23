@@ -335,7 +335,26 @@ paths:
           $ref: '#/definitions/Filters'
       responses:
         200:
-          description: successful operation
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SearchResult'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/elasticsearch/home":
+    post:
+      tags:
+      - elasticsearch
+      summary: return last 3 dataset, dashboard, stories and the count of resource
+      operationId: searchLast
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Successful operation
           schema:
             type: array
             items:

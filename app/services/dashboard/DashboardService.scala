@@ -91,6 +91,10 @@ trait DashboardServiceComponent {
     def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
       dashboardRepository.searchText(filters, username, groups)
     }
+
+    def searchLast(username: String, groups: List[String]): Seq[SearchResult] = {
+      dashboardRepository.searchLast(username, groups)
+    }
   }
 }
 
