@@ -13,4 +13,4 @@ For this reason, when executing the following steps, replace \<environment\> wit
 2. `sbt docker:publish` to compile and push the docker image on Nexus
 3. cd `kubernetes` 
 4. `./config-map-<environment>.sh` to create config map
-5. `./kubectl create -f daf_datipubblici-conf.yaml` to deploy the containers in kubernetes
+5. `./kubectl create -f daf_datipubblici.yaml` to deploy the containers in kubernetes
