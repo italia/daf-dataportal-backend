@@ -345,7 +345,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/elasticsearch/home":
-    post:
+    get:
       tags:
       - elasticsearch
       summary: return last 3 dataset, dashboard, stories and the count of resource

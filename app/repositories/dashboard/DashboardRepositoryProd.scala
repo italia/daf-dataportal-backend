@@ -731,7 +731,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       query
         .sourceInclude(fieldToReturn)
         .highlighting(listFieldSearch
-          .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
+          .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))// || s.equals("widgets"))
           .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
             .fragmentSize(70)))
     }.await
@@ -788,7 +788,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             "{" +
               source.highlight.map(x =>
                 x._1 match {
-                  case "widgets" => s""""${x._1}": "${x._2.mkString("...").replaceAll("\"", "\\\"")}""""
+                  case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
                   case _ => s""""${x._1}": "${x._2.mkString("...")}"""
                 }
               ).mkString(",")
