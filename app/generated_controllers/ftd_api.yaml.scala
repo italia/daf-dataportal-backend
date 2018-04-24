@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -318,6 +318,12 @@ package ftd_api.yaml {
       Dashboards200(DashboardRegistry.dashboardService.dashboards(
         credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), status))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
+        }
+        val searchLast = searchLastAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLast
+            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
+          SearchLast200(DashboardRegistry.dashboardService.searchLast(credentials.username, credentials.groups.toList))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLast
         }
         val inferschema = inferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input

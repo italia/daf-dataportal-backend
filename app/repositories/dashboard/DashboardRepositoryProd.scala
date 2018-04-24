@@ -11,13 +11,12 @@ import akka.stream.ActorMaterializer
 import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.{MongoClient, MongoCollection, MongoCursor}
+import com.mongodb.casbah.{MongoClient, MongoCollection}
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
-import scala.collection.immutable.List
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
@@ -25,12 +24,9 @@ import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.ElasticDsl.{highlight, rangeQuery, _}
 import com.sksamuel.elastic4s.http.HttpClient
-import com.sksamuel.elastic4s.searches.{RescoreDefinition, SearchDefinition}
+import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
 import play.api.{Configuration, Environment, Logger}
-
-import scala.reflect.runtime.universe
-
 
 /**
   * Created by ale on 14/04/17.
@@ -643,7 +639,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
-    val index = "_all"
+    val index = "ckan"
     val fieldDatasetDcatName = "dcatapit.name"
     val fieldDatasetDcatTitle = "dcatapit.title"
     val fieldDatasetDcatNote = "dcatapit.notes"
@@ -686,7 +682,7 @@ class DashboardRepositoryProd extends DashboardRepository {
           .must(
             must(
               creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
-                createFilterStatus(filters.status) ::: createFilterDate(filters.date)
+                createFilterStatus(filters.status)
             ),
             should(
               must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
@@ -710,11 +706,10 @@ class DashboardRepositoryProd extends DashboardRepository {
             should(
               searchString.split(" ").flatMap(s => listFieldSearch
                 .map(field => matchQuery(field, s)))
-
             ),
             must(
               creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
-                createFilterStatus(filters.status) ::: createFilterDate(filters.date)
+                createFilterStatus(filters.status)
             ),
             should(
               must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
@@ -738,19 +733,16 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val res = client.execute{
       query
-        .aggregations(termsAgg(fieldAggr, "_type"), termsAgg("category", "dcatapit.theme.keyword"),
-          termsAgg("org_1", "dcatapit.owner_org.keyword"), termsAgg("org_2", "org.keyword"),
-          termsAgg("stat_1", "status"), termsAgg("stat_2", "published"), termsAgg("stat_3", "dcatapit.privatex"))
         .sourceInclude(fieldToReturn)
         .highlighting(listFieldSearch
-          .filterNot(s => s.equals("og") || s.equals("dcatapit.owner_org"))
+          .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))// || s.equals("widgets"))
           .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
             .fragmentSize(70)))
     }.await
 
     client.close()
 
-    wrapResponse(res, order, !searchString.equals(".*")) ++ createAggResp(res).sortBy(x => x.`type`).reverse
+    wrapResponse(res, order, !searchString.equals(".*"), filters.date)
   }
 
   private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
@@ -786,20 +778,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  private def createFilterDate(timestamp: Option[String]): List[QueryDefinition] = {
-    val datasetDate = "dcatapit.modified"
-    val dashNstoriesDate = "timestamp"
-
-    timestamp match {
-      case Some("") => List()
-      case Some(dates) => List(should(rangeQuery(datasetDate).gte(dates.split(" ")(0)).lte(dates.split(" ")(1)),
-        rangeQuery(dashNstoriesDate).gte(dates.split(" ")(0)).lte(dates.split(" ")(1))
-      ))
-      case _ => List()
-    }
+  private def filterDate(tupleDateSearchResult: List[(String, SearchResult)], timestamp: String): List[(String, SearchResult)] = {
+    val start = timestamp.split(" ")(0)
+    val end = timestamp.split(" ")(1)
+    tupleDateSearchResult.filter(result => (result._1 >= start) && (result._1 <= end))
   }
 
-  private def wrapResponse(query: SearchResponse, order: String, search: Boolean): Seq[SearchResult] = {
+  private def wrapResponse(query: SearchResponse, order: String, search: Boolean, timestamp: Option[String]): Seq[SearchResult] = {
     val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
       SearchResult(Some(source.`type`), Some(source.sourceAsString),
         if(search){
@@ -807,8 +792,8 @@ class DashboardRepositoryProd extends DashboardRepository {
             "{" +
               source.highlight.map(x =>
                 x._1 match {
-                  case "widgets" => s""""${x._1}": "${x._2.mkString("...").replace("\"", "\\\"")}""""
-                  case _ => s""""${x._1}": "${x._2.mkString("...")}""""
+                  case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
+                  case _ => s""""${x._1}": "${x._2.mkString("...")}"""
                 }
               ).mkString(",")
               + "}")
@@ -817,44 +802,143 @@ class DashboardRepositoryProd extends DashboardRepository {
     ).toSeq
 
     val tupleDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
-      (
-        x.source.get.split(",").map(
-          f => if (f.contains("\"timestamp\"") || f.contains("\"modified\""))
-            f.split(":")(1)
-          else "").toList
-          .filterNot(w => w.equals(""))(0), x)
+      (extractDate(x.`type`.get, x.source.get), x)
     ).toList
 
+    val res = timestamp match {
+      case Some("") => tupleDateSearchResult
+      case Some(x) => filterDate(tupleDateSearchResult, x)
+      case None => tupleDateSearchResult
+    }
+
     val result = order match {
-      case "score" => tupleDateSearchResult
-      case "asc" => tupleDateSearchResult.sortWith(_._1 < _._1)
-      case _ => tupleDateSearchResult.sortWith(_._1 > _._1)
+      case "score" => res
+      case "asc" => res.sortWith(_._1 < _._1)
+      case _ => res.sortWith(_._1 > _._1)
     }
 
-    result.map(elem => elem._2)
+    result.map(elem => elem._2) ++ aggregationSearch(res.map(x => x._2))
   }
 
-  private def aggToSearchResult(mapAgg: Map[String, Map[String, Int]]): Seq[SearchResult] = {
-    val mapOrg = mergeAgg(mapAgg, "organization", "org_1", "org_2", "")
-    val mapStatus = mergeAgg(mapAgg, "status", "stat_1", "stat_2", "stat_3")
-
-    (mapAgg.filterNot(s => s._1.equals("org_1") || s._1.equals("org_2") ||
-      s._1.equals("stat_1") || s._1.equals("stat_2") || s._1.equals("stat_3")) ++ mapOrg ++ mapStatus).map(
-      elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None)
-      ).toSeq
-  }
-
-  private def createAggResp(query: SearchResponse): Seq[SearchResult] = {
-    val mapAgg: Map[String, Map[String, Int]] = query.aggregations.map{ elem =>
-      val name = elem._1
-      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
-          .map(elem =>
-            wrapAggrResp(elem.values.toList)
-          )
-        .map(v => v._1 -> v._2).toMap
-      name -> valueMap
+  private def extractDate(typeDate: String, source: String): String = {
+    val json = Json.parse(source)
+    val result: JsLookupResult = typeDate match {
+      case "catalog_test" => json \ "dcatapit" \ "modified"
+      case _ => json \ "timestamp"
     }
-    aggToSearchResult(mapAgg)
+    parseDate(result.get.toString().replaceAll("\"", ""))
+  }
+
+  private def aggregationSearch(searchResult: List[SearchResult]): Seq[SearchResult] = {
+    val searchResultType = createTypeAggr(searchResult.map(x => x.`type`.get))
+    val searchResultStatus = createStatusAggr(searchResult)
+    val searchResultOrg = createOrgAggr(searchResult)
+    val searchResultTheme = createThemeAggr(searchResult)
+
+    Seq(searchResultType, searchResultStatus, searchResultOrg, searchResultTheme)
+  }
+
+  private def createThemeAggr(searchResult: List[SearchResult]): SearchResult = {
+    val aggrDataset = themeDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")))
+
+    val sourceString = aggrDataset.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
+    SearchResult(Some("category"), Some("{" + sourceString + "}"), None)
+  }
+
+  private def themeDataset(searchResult: List[SearchResult]): Map[String, Int] = {
+    val themeValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "dcatapit" \ "theme").get.toString()
+    )
+    themeValue.map(theme => theme -> themeValue.count(v => v.equals(theme))).sortWith(_._1 < _._1).toMap
+  }
+
+  private def createOrgAggr(searchResult: List[SearchResult]): SearchResult = {
+    val aggrStories = orgStories(searchResult.filter(x => x.`type`.get.equals("stories")))
+    val aggrDataset = orgDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")))
+    val aggreDashboards = orgDashboards(searchResult.filter(x => x.`type`.get.equals("dashboards")))
+
+    val listOrg = aggrStories.toList ++ aggrDataset.toList ++ aggreDashboards.toList
+    val merged = listOrg.groupBy(_._1).map{case (k, v) => k -> v.map(_._2).sum}
+    val sourceString = merged.toList.sortWith(_._1 < _._1).toMap.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
+    SearchResult(Some("organization"), Some("{" + sourceString + "}"), None)
+  }
+
+  private def orgStories(searchResult: List[SearchResult]): Map[String, Int] = {
+    val orgValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "org").get.toString()
+    )
+    orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
+  }
+
+  private def orgDashboards(searchResult: List[SearchResult]): Map[String, Int] = {
+    val orgValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "org").get.toString()
+    )
+    orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
+  }
+
+  private def orgDataset(searchResult: List[SearchResult]): Map[String, Int] = {
+    val orgValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "dcatapit" \ "owner_org").get.toString()
+    )
+    orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
+  }
+
+  private def createTypeAggr(typeString: List[String]): SearchResult = {
+    val countStories = typeString.count(t => t.equals("stories"))
+    val countDash = typeString.count(t => t.equals("dashboards"))
+    val countCatalogTest = typeString.count(t => t.equals("catalog_test"))
+
+    val sourceString = s"""{"catalog_test":"$countCatalogTest","dashboards":"$countDash","stories":"$countStories"}"""
+    SearchResult(Some("type"), Some(sourceString), None)
+  }
+
+  private def createStatusAggr(searchResult: List[SearchResult]): SearchResult = {
+    val aggrStories = statusStories(searchResult.filter(s => s.`type`.get.equals("stories")))
+    val aggrDataset = statusDataset(searchResult.filter(s => s.`type`.get.equals("catalog_test")))
+    val aggreDashboards = statusDashboards(searchResult.filter(s => s.`type`.get.equals("dashboards")))
+
+    val coutn0 = aggrStories("0") +  aggrDataset("0") + aggreDashboards("0")
+    val coutn1 = aggrStories("1") +  aggrDataset("1") + aggreDashboards("1")
+    val coutn2 = aggrStories("2") +  aggrDataset("2") + aggreDashboards("2")
+
+    SearchResult(Some("status"), Some(s"""{"0":"$coutn0","1":"$coutn1", "2":"$coutn2"}"""), None)
+  }
+
+  private def statusStories(searchResult: List[SearchResult]): Map[String, Int] = {
+    val statusValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "published").get.toString()
+    )
+    Map("0" -> statusValue.count(x => x.equals("0")), "1" -> statusValue.count(x => x.equals("1")), "2" -> statusValue.count(x => x.equals("2")))
+  }
+
+  private def statusDashboards(searchResult: List[SearchResult]): Map[String, Int] = {
+    val statusValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "status").get.toString()
+    )
+    Map("0" -> statusValue.count(x => x.equals("0")), "1" -> statusValue.count(x => x.equals("1")), "2" -> statusValue.count(x => x.equals("2")))
+  }
+
+  private def statusDataset(searchResult: List[SearchResult]): Map[String, Int] = {
+    val statusValue = searchResult.map(x =>
+      (Json.parse(x.source.get) \ "dcatapit" \ "privatex").get.toString()
+    )
+    val countTrue = statusValue.count(x => x.equals("true"))
+    val countFalse = statusValue.count(x => x.equals("false"))
+    Map("0" -> countTrue, "1" -> countTrue, "2" -> countFalse)
+  }
+
+  private def parseDate(date: String): String = {
+    if(date.contains("/")){
+      val day = date.split("/")(0)
+      val month = date.split("/")(1)
+      val year = date.split("/")(2)
+      List(year,month,day).mkString("-")
+    }
+    else if(date.contains("T")){
+      date.substring(0, date.indexOf("T"))
+    }
+    else date
   }
 
   private def parseMapAgg(map: Map[String, Int]): Map[String, Int] = {
@@ -868,20 +952,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       map
   }
 
-  private def mergeAgg(mapOrg: Map[String, Map[String, Int]], key: String, nameMap1: String, nameMap2: String, nameMap3: String): Map[String, Map[String, Int]] = {
-    val map1: Map[String, Int] = parseMapAgg(mapOrg.get(nameMap1).getOrElse(Map()))
-    val map2: Map[String, Int] = parseMapAgg(mapOrg.get(nameMap2).getOrElse(Map()))
-    val map3: Map[String, Int] = parseMapAgg(mapOrg.get(nameMap3).getOrElse(Map()))
-
-    val listKyes = map1.keySet ++ map2.keySet ++ map3.keySet
-
-    val res = listKyes.map(k =>
-      k -> (map1.getOrElse(k, 0) + map2.getOrElse(k, 0) + map3.getOrElse(k, 0))
-    ).map(v => v._1 -> v._2).toMap
-
-    Map(key -> res)
-  }
-
   private def wrapAggrResp(listCount: List[AnyVal]): (String, Int) = {
     if(listCount.length == 2) (listCount(0).toString, listCount(1).asInstanceOf[Int])
     else {
@@ -892,7 +962,9 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def listFields(obj: String): List[String] = {
+    import scala.reflect.runtime.universe
     import scala.reflect.runtime.universe._
+
     val objType: universe.Type = obj match {
       case "Dashboard" => typeOf[Dashboard]
       case "User-Story" => typeOf[UserStory]
@@ -902,4 +974,75 @@ class DashboardRepositoryProd extends DashboardRepository {
     }.toList
     fields
   }
+
+  def searchLast(username: String, groups: List[String]): Seq[SearchResult] = {
+    val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
+    val fieldDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+    val fieldStories = listFields("User-Story")
+    val fieldDash = listFields("Dashboard")
+
+    val queryDataset: SearchDefinition = queryHome("catalog_test", "dcatapit.modified.keyword", username, groups)
+    val queryStories = queryHome("stories", "timestamp.keyword", username, groups)
+    val queryDash = queryHome("dashboards", "timestamp.keyword", username, groups)
+    val queryAggr = queryHome("", "timestamp.keyword", username, groups)
+
+    val resultDataset = executeQueryHome(client, queryDataset, fieldDataset)
+    val resultDash = executeQueryHome(client, queryDash, fieldDash)
+    val resultStories = executeQueryHome(client, queryStories, fieldStories)
+    val resAggr = executeAggrQueryHome(client, queryAggr)
+
+    client.close()
+    val response = wrapResponseHome(resultDataset, "desc") ++ wrapResponseHome(resultDash, "desc")
+    response ++ wrapResponseHome(resultStories, "desc") ++ wrapAggrResponseHome(resAggr)
+  }
+
+  private def queryHome(typeElastic: String, dateField: String, username: String, groups: List[String]) = {
+    search("ckan").types(typeElastic).query(
+      boolQuery()
+        .must(
+          should(
+            must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
+            termQuery("dcatapit.privatex", "0"),
+            must(termQuery("status", "0"), termQuery("user", username)),
+            must(termQuery("published", "0"), termQuery("user", username)),
+            must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
+            must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
+            termQuery("status", "2"),
+            termQuery("published", "2")
+          )
+        )
+    ).sortByFieldDesc(dateField)
+      .size(3)
+  }
+
+  private def executeAggrQueryHome(client: HttpClient, query: SearchDefinition): SearchResponse = {
+    client.execute(query.aggregations(termsAgg("type", "_type"))).await
+  }
+
+  private def executeQueryHome(client: HttpClient, query: SearchDefinition, field: List[String]) = {
+    client.execute(query.sourceInclude(field)).await
+  }
+
+  private def wrapAggrResponseHome(query: SearchResponse) = {
+    val mapAggregation: Map[String, Map[String, Int]] = query.aggregations.map{ elem =>
+      val name = elem._1
+      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+        .map(elem =>
+          wrapAggrResp(elem.values.toList)
+        )
+        .map(v => v._1 -> v._2).toMap
+      name -> valueMap
+    }
+    mapAggregation.map(elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None))
+  }
+
+  private def wrapResponseHome(query: SearchResponse, order: String): Seq[SearchResult] = {
+    val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
+      SearchResult(Some(source.`type`), Some(source.sourceAsString), Some("{}"))
+    ).toSeq
+
+    seqSearchResult
+  }
+
 }

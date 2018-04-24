@@ -120,4 +120,8 @@ class DashboardRepositoryDev extends DashboardRepository {
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
     Seq(SearchResult(None, None, None))
   }
+
+  def searchLast(username: String, groups: List[String]): Seq[SearchResult] = {
+    Seq(SearchResult(None, None, None))
+  }
 }
