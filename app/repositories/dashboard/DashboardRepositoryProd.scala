@@ -216,8 +216,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     iframes(user).map{ _.filter(dash => dash.table.nonEmpty && tables.contains(dash.table.get) ) }
   }
 
-
-
   def iframes(user: String): Future[Seq[DashboardIframes]] = {
     println("-iframes-")
     val wsClient = AhcWSClient()
@@ -386,7 +384,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
     dashboards
   }
-
 
   def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
@@ -654,7 +651,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
-    val fieldAggr = "type"
 
     val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
       fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
@@ -696,8 +692,7 @@ class DashboardRepositoryProd extends DashboardRepository {
               termQuery("published", "2")
             )
           )
-      )
-        .limit(10000)
+      ).limit(10000)
     }
 
     def queryElasticsearch = {
@@ -723,8 +718,7 @@ class DashboardRepositoryProd extends DashboardRepository {
               termQuery("published", "2")
             )
           )
-      )
-        .limit(10000)
+      ).limit(10000)
     }
 
     val query: SearchDefinition = searchString match {
@@ -989,10 +983,14 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldStories = listFields("User-Story")
     val fieldDash = listFields("Dashboard")
 
-    val queryDataset: SearchDefinition = queryHome("catalog_test", "dcatapit.modified.keyword", username, groups)
-    val queryStories = queryHome("stories", "timestamp.keyword", username, groups)
-    val queryDash = queryHome("dashboards", "timestamp.keyword", username, groups)
-    val queryAggr = queryHome("", "timestamp.keyword", username, groups)
+    val queryDataset = queryHome("catalog_test", username, groups)
+    val queryStories = queryHome("stories", username, groups)
+      .sortByFieldDesc("timestamp.keyword")
+      .size(3)
+    val queryDash = queryHome("dashboards", username, groups)
+      .sortByFieldDesc("timestamp.keyword")
+      .size(3)
+    val queryAggr = queryHome("", username, groups)
 
     val resultDataset = executeQueryHome(client, queryDataset, fieldDataset)
     val resultDash = executeQueryHome(client, queryDash, fieldDash)
@@ -1000,12 +998,14 @@ class DashboardRepositoryProd extends DashboardRepository {
     val resAggr = executeAggrQueryHome(client, queryAggr)
 
     client.close()
-    val response = wrapResponseHome(resultDataset, "desc") ++ wrapResponseHome(resultDash, "desc")
-    response ++ wrapResponseHome(resultStories, "desc") ++ wrapAggrResponseHome(resAggr)
+
+    val responseDataset = extractLastDataset(wrapResponseHome(resultDataset))
+    responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories) ++ wrapAggrResponseHome(resAggr)
   }
 
-  private def queryHome(typeElastic: String, dateField: String, username: String, groups: List[String]) = {
-    search("ckan").types(typeElastic).query(
+  private def queryHome(typeElastic: String, username: String, groups: List[String]) = {
+//    search("ckan").types(typeElastic).query(
+    search("test3").types(typeElastic).query(
       boolQuery()
         .must(
           should(
@@ -1019,8 +1019,12 @@ class DashboardRepositoryProd extends DashboardRepository {
             termQuery("published", "2")
           )
         )
-    ).sortByFieldDesc(dateField)
-      .size(3)
+    )
+  }
+
+  private def extractLastDataset(seqDataset: Seq[SearchResult]) = {
+    val listDateDataset: List[(String, SearchResult)] = seqDataset.map(d => (extractDate(d.`type`.get, d.source.get), d)).toList
+    listDateDataset.sortWith(_._1 > _._1).take(3).map(x => x._2)
   }
 
   private def executeAggrQueryHome(client: HttpClient, query: SearchDefinition): SearchResponse = {
@@ -1044,12 +1048,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     mapAggregation.map(elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None))
   }
 
-  private def wrapResponseHome(query: SearchResponse, order: String): Seq[SearchResult] = {
-    val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
-      SearchResult(Some(source.`type`), Some(source.sourceAsString), Some("{}"))
+  private def wrapResponseHome(query: SearchResponse): Seq[SearchResult] = {
+    query.hits.hits.map(source =>
+      SearchResult(Some(source.`type`), Some(source.sourceAsString), None)
     ).toSeq
-
-    seqSearchResult
   }
 
 }
