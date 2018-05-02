@@ -74,12 +74,14 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val wsClient = AhcWSClient()
     val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
-      val tableId = iframe.table
+      val tableId = iframe.table.getOrElse("0")
       val internalUrl = localUrl + s"/metabase/table/$tableId"
       // Missing metabase session not working
       val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
        .map { resp =>
-         println(resp.json)
+         println("MERDA")
+         println(internalUrl)
+         println(resp.body)
          val tableName = (resp.json \ "name").as[String]
          iframe.copy(table = Some(tableName))
        }.map { x:DashboardIframes => scala.util.Success(x)}
@@ -214,6 +216,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     iframes(user).map{ _.filter(dash => dash.table.nonEmpty && tables.contains(dash.table.get) ) }
   }
 
+
+
   def iframes(user: String): Future[Seq[DashboardIframes]] = {
     println("-iframes-")
     val wsClient = AhcWSClient()
@@ -222,6 +226,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val supersetPublic = localUrl + "/superset/public_slice/" + user
     val grafanaPublic = localUrl + "/grafana/snapshots/" + user
     val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
+
 
     val request = wsClient.url(metabasePublic).get()
     // .andThen { case _ => wsClient.close() }
@@ -248,7 +253,6 @@ class DashboardRepositoryProd extends DashboardRepository {
         val uri = new URL(decodeSuperst)
         val queryString = uri.getQuery.split("&", 2)(0)
         val valore = queryString.split("=", 2)(1)
-
         if (valore.contains("{\"code") || vizType.equals("separtor") || vizType.equals("filter")) {
           DashboardIframes(None, None, None, None, None, None)
         } else {
@@ -258,7 +262,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
             DashboardIframes( Some("superset_" + slice_id.toString), Some(url),Some(vizType), Some("superset"), Some(title), Some(table) )
           } catch {
-            case e: Exception => e.printStackTrace(); println("ERROR"); DashboardIframes(None, None, None, None, None, None)
+            case e: Exception => e.printStackTrace(); println(x);println("ERROR"); DashboardIframes(None, None, None, None, None, None)
           }
         }
       })
@@ -286,10 +290,10 @@ class DashboardRepositoryProd extends DashboardRepository {
 
 
 
-    //val test: Future[Seq[DashboardIframes]] = for {
-    //  iframes <- metabase
-    //  iframesWithTable <- metabaseTableInfo(iframes)
-    //} yield iframesWithTable
+    val test: Future[Seq[DashboardIframes]] = for {
+        iframes <- metabase
+        iframesWithTable <- metabaseTableInfo(iframes)
+    } yield iframesWithTable
 
 
 
@@ -321,7 +325,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
 
-    val services  = List(metabase, superset, grafana, tdMetabase)
+    val services  = List(test, superset, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }

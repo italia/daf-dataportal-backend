@@ -32,8 +32,7 @@ class MetabaseController @Inject() (ws: WSClient,
 
   val local = conf.getString("app.local.url").get
 
-  private def cards(tableId :String) = {
-    val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
+  private def cards(tableId :String, sessionId :String) = {
     val url = URL + "/api/card?f=table&model_id=" + tableId
     ws.url(url)
       .withHeaders(("X-Metabase-Session", sessionId))
@@ -86,7 +85,7 @@ class MetabaseController @Inject() (ws: WSClient,
     }
   }*/
 
-  def tableInfo(tableId :String) = Action.async { implicit request =>
+ /* def tableInfo(tableId :String) = Action.async { implicit request =>
     val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
     val url = URL + "/api/table/" + tableId
     println(url)
@@ -94,7 +93,25 @@ class MetabaseController @Inject() (ws: WSClient,
     responseWs.map { response =>
       Ok(response.json)
     }
+  } */
+
+  def tableInfo(tableId :String) = Action.async { implicit request =>
+
+    val url = URL + "/api/table/" + tableId
+    Logger.debug("publicCard request:"+ url)
+
+    def callPublicSlice(cookie:String, wsClient:WSClient) = {
+      wsClient.url(url)
+        .withHeaders(("X-Metabase-Session", cookie),
+          ("Cookie", cookie))
+        .get()
+    }
+
+    sim.manageServiceCall( new LoginInfo(null,null,"metabase"),callPublicSlice ).map { response =>
+      Ok(response.json)
+    }
   }
+
 
  /* def isDatasetOnMetabase(tableName :String) = Action.async { implicit request =>
     val sessionId = cache.get[String]("metabase." + metausername).getOrElse("test")
@@ -138,7 +155,7 @@ class MetabaseController @Inject() (ws: WSClient,
   }
 
 
-  def cardsFromTable(tableName :String) = Action.async { implicit request =>
+  /*def cardsFromTable(tableName :String) = Action.async { implicit request =>
     val sessionId  = cache.get[String]("metabase." + metausername).getOrElse("test")
     val url = URL + "/api/table"
     println(url)
@@ -147,7 +164,7 @@ class MetabaseController @Inject() (ws: WSClient,
       val tables = response.json.as[Seq[JsValue]]
       val res: Seq[JsValue] = tables.filter(x => (x \ "name").as[String].equals(tableName))
       //Ok(Json.toJson(res))
-      val single = res.map(x => {
+      val single = res.map(x => {x
         (x \ "id").as[Int]
       })
       if (!single.isEmpty) {
@@ -163,8 +180,41 @@ class MetabaseController @Inject() (ws: WSClient,
     } yield card
 
     result.map {Ok(_)}
-  }
+  } */
 
+
+  def cardsFromTable(tableName :String) = Action.async { implicit request =>
+    //val url = URL + "/api/table"
+    def callTable(cookie:String, wsClient:WSClient)=
+      wsClient.url(URL + "/api/table").withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
+
+
+    val tablesId: Future[Option[Int]] = sim.manageServiceCall( new LoginInfo(null,null,"metabase"),callTable )
+      .map{ response =>
+        val tables = response.json.as[Seq[JsValue]]
+        val res: Seq[JsValue] = tables.filter(x => (x \ "name").as[String].equals(tableName))
+         println(Json.toJson(res))
+        val single = res.map(x => {
+          (x \ "id").as[Int]
+        })
+        if (!single.isEmpty) {
+          Some(single.head)
+        } else {
+          None
+        }
+    }
+
+
+    def callFilteredCard(cookie:String, wsClient:WSClient, urlParam :String) =
+      wsClient.url(urlParam).withHeaders(("X-Metabase-Session", cookie),("Cookie",cookie)).get()
+
+    val result: Future[JsValue] = for {
+      optId <- tablesId
+      card <-  sim.manageServiceCall(new LoginInfo(null,null,"metabase"),callFilteredCard(_,_, urlParam = URL + "/api/card?f=table&model_id=" + optId.getOrElse(0).toString)).map(_.json)
+    } yield card
+
+    result.map {Ok(_)}
+  }
 
 
   def publicCard(metauser :String) =  Action.async { implicit request =>
