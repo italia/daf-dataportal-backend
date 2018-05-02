@@ -22,7 +22,7 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.http.ElasticDsl.{highlight, rangeQuery, _}
+import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
@@ -1004,8 +1004,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def queryHome(typeElastic: String, username: String, groups: List[String]) = {
-//    search("ckan").types(typeElastic).query(
-    search("test3").types(typeElastic).query(
+    search("ckan").types(typeElastic).query(
       boolQuery()
         .must(
           should(
