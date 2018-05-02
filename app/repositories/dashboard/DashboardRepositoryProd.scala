@@ -26,6 +26,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl.{highlight, rangeQuery, _}
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
+import javax.swing.text.Highlighter.Highlight
 import play.api.{Configuration, Environment, Logger}
 
 /**
@@ -651,7 +652,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
     val fieldAggr = "type"
 
-    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
+    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
       fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
 
     val searchString = filters.text match {
@@ -784,15 +785,21 @@ class DashboardRepositoryProd extends DashboardRepository {
     val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
       SearchResult(Some(source.`type`), Some(source.sourceAsString),
         if(search){
-          Some(
-            "{" +
-              source.highlight.map(x =>
-                x._1 match {
-                  case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
-                  case _ => s""""${x._1}": "${x._2.mkString("...")}"""
-                }
-              ).mkString(",")
-              + "}")
+          source.highlight match {
+            case mapHighlight: Map[String, Seq[String]] => {
+              Some(
+                "{" +
+                  mapHighlight.map(x =>
+                    x._1 match {
+                      case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
+                      case _ => s""""${x._1}": "${x._2.mkString("...")}"""
+                    }
+                  ).mkString(",")
+                + "}"
+              )
+            }
+            case _ => Some("{}")
+          }
         } else Some("{}")
       )
     ).toSeq
