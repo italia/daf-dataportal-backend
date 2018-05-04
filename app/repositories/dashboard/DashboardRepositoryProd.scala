@@ -1033,7 +1033,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             termQuery("published", "2")
           )
         )
-    ).limit(10000)
+    )
   }
 
   private def extractLastDataset(seqDataset: Seq[SearchResult]) = {
