@@ -26,6 +26,7 @@ import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
+import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
 import javax.swing.text.Highlighter.Highlight
 import play.api.{Configuration, Environment, Logger}
 
@@ -655,10 +656,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
       fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
 
-    val searchString = filters.text match {
-      case Some("") => ".*"
-      case Some(x) => x
-      case None => ".*"
+    val searchText = filters.text match {
+      case Some("") => false
+      case Some(_) => true
+      case None => false
     }
 
     val searchType = filters.index match {
@@ -673,26 +674,15 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
-    def emptyQueryElasticsearch = {
-      search(index).types(searchType).query(
-        boolQuery()
-          .must(
-            must(
-              creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
-                createFilterStatus(filters.status)
-            ),
-            should(
-              must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
-              termQuery("dcatapit.privatex", "0"),
-              must(termQuery("status", "0"), termQuery("user", username)),
-              must(termQuery("published", "0"), termQuery("user", username)),
-              must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
-              must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
-              termQuery("status", "2"),
-              termQuery("published", "2")
-            )
-          )
-      ).limit(10000)
+    def textStringQuery = {
+      filters.text match {
+        case Some("") => List()
+        case Some(searchString) => {
+          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme))
+            .map(field => matchQuery(field, s))).toList ::: themeQueryString(searchString)
+        }
+        case None => List()
+      }
     }
 
     def queryElasticsearch = {
@@ -700,8 +690,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         boolQuery()
           .must(
             should(
-              searchString.split(" ").flatMap(s => listFieldSearch
-                .map(field => matchQuery(field, s)))
+              textStringQuery
             ),
             must(
               creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
@@ -721,23 +710,49 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(10000)
     }
 
-    val query: SearchDefinition = searchString match {
-      case ".*" => emptyQueryElasticsearch
-      case _ => queryElasticsearch
-    }
+    val query = queryElasticsearch
 
     val res = client.execute{
       query
         .sourceInclude(fieldToReturn)
         .highlighting(listFieldSearch
-          .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))// || s.equals("widgets"))
+          .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
           .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
-            .fragmentSize(70)))
+            .fragmentSize(70))
+        )
     }.await
 
     client.close()
 
-    wrapResponse(res, order, !searchString.equals(".*"), filters.date)
+    wrapResponse(res, order, searchText, filters.date)
+  }
+
+  private def themeQueryString(search: String): List[MatchQueryDefinition] = {
+    val mapTheme: Map[String, String] = Map(
+      "agricoltura" -> "AGRI",
+      "economia" -> "ECON",
+      "educazione" -> "EDUC",
+      "energia" -> "ENER",
+      "ambiente" -> "ENVI",
+      "governo" -> "GOVE",
+      "sanita" -> "HEAL",
+      "internazionale" -> "INTR",
+      "giustizia" -> "JUST",
+      "regione" -> "REGI",
+      "societa" -> "SOCI",
+      "tecnologia" -> "TECH",
+      "trasporto" -> "TRAN"
+    )
+
+    val searchTheme = search.split(" ").map(s =>
+      if(mapTheme.contains(s.toLowerCase)) mapTheme(s.toLowerCase)
+      else ""
+    ).toList.filterNot(s => s.equals(""))
+
+    if(searchTheme.nonEmpty)
+      searchTheme.map(s => matchQuery("dcatapit.theme", s))
+    else
+      List()
   }
 
   private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
