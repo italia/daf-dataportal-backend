@@ -615,8 +615,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def checkStoryResponse(story: UserStory, username: String, groups: List[String]): Boolean = {
-    if((story.user.getOrElse("no_user").equals(username) && story.published.getOrElse(-1) == 0) ||
-      (groups.contains(story.org.getOrElse("no_org")) && story.published.getOrElse(-1) == 1) ||
+    if((story.user.getOrElse("no_user").equals(username) && story.published.getOrElse(0) == 0) ||
+      (groups.contains(story.org.getOrElse("no_org")) && story.published.getOrElse(0) == 1) ||
       checkOpenStoryResponse(story)) true
     else false
   }
@@ -626,8 +626,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def checkDashboardResponse(dash: Dashboard, username: String, groups: List[String]): Boolean = {
-    if((dash.user.getOrElse("no_user").equals(username) && dash.status.getOrElse(-1) == 0) ||
-      (groups.contains(dash.org.getOrElse("no_org")) && dash.status.getOrElse(-1) == 1) ||
+    if((dash.user.getOrElse("no_user").equals(username) && dash.status.getOrElse(0) == 0) ||
+      (groups.contains(dash.org.getOrElse("no_org")) && dash.status.getOrElse(0) == 1) ||
       checkOpenDashboardResponse(dash)) true
     else false
   }
