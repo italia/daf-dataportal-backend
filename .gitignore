@@ -24,6 +24,7 @@ server.pid
 /conf/production.conf
 /conf/integration.conf
 /conf/testExt.conf
+/conf/testEnv.conf
 /dist/
 .cache
 .DS_Store
