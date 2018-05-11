@@ -80,9 +80,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       // Missing metabase session not working
       val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
        .map { resp =>
-         println("MERDA")
-         println(internalUrl)
-         println(resp.body)
          val tableName = (resp.json \ "name").as[String]
          iframe.copy(table = Some(tableName))
        }.map { x:DashboardIframes => scala.util.Success(x)}
