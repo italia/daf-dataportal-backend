@@ -708,7 +708,7 @@ class DashboardRepositoryProd extends DashboardRepository {
               termQuery("private", "false")
             )
           )
-      ).limit(5000)
+      ).limit(3000)
     }
 
     val query = queryElasticsearch
@@ -805,7 +805,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       (Json.parse(themeJson) \\ "theme").mkString(",")
     }
     else themeJson
-    if(themeString.equals("null") || themeString.equals("\"[]\"")) ""
+    if(themeString.equals("null") || themeString.equals("\"[]\"") || themeString.equals("")) "no_category"
     else themeString
   }
 
@@ -854,7 +854,8 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val result = seqSearchResult.filterNot(
       elem =>
-        elem.`type`.get.equals("ext_opendata") && listNameExtOpendata.contains((Json.parse(elem.source.get) \ "name").toString)
+        elem.`type`.get.equals("ext_opendata") &&
+          listNameExtOpendata.contains((Json.parse(elem.source.get) \ "name").getOrElse(Json.parse("")).toString)
     )
     result
   }
