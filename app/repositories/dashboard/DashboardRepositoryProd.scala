@@ -5,7 +5,7 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
-
+import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
@@ -28,6 +28,8 @@ import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
 import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
 import play.api.{Configuration, Environment, Logger}
+
+
 
 /**
   * Created by ale on 14/04/17.
@@ -633,6 +635,9 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
+
+    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "ckan"
     val fieldDatasetDcatName = "dcatapit.name"
@@ -644,7 +649,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.ext_opendata.name")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified", "name")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
@@ -705,10 +710,11 @@ class DashboardRepositoryProd extends DashboardRepository {
               termQuery("private", "false")
             )
           )
-      ).limit(3000)
+      ).limit(5000)
     }
 
     val query = queryElasticsearch
+
 
     val res = client.execute{
       query
@@ -718,7 +724,7 @@ class DashboardRepositoryProd extends DashboardRepository {
           .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
             .fragmentSize(70))
         )
-    }.await
+    }.await( 60.seconds)
 
     client.close()
 
@@ -822,6 +828,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       }
       case _ => source.sourceAsString
     }
+
     val highlight = if(search) {
       source.highlight match {
         case mapHighlight: Map[String, Seq[String]] => {
@@ -842,29 +849,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     SearchResult(Some(source.`type`), Some(sourceResponse), highlight)
   }
 
-  private def removeDuplicate(seqSearchResult: Seq[SearchResult]): Seq[SearchResult] = {
-    val listNameExtOpendata: List[String] = seqSearchResult
-      .filter(elem => elem.`type`.get.equals("catalog_test"))
-      .map(elem => {
-        Try((Json.parse(elem.source.get) \ "operational" \ "ext_opendata" \ "name").get.toString()).getOrElse("")
-      }).toList.filterNot(name => name.equals(""))
-
-    val result = seqSearchResult.filterNot(
-      elem =>
-        elem.`type`.get.equals("ext_opendata") &&
-          listNameExtOpendata.contains((Json.parse(elem.source.get) \ "name").getOrElse(Json.parse("")).toString)
-    )
-    result
-  }
-
   private def wrapResponse(query: SearchResponse, order: String, search: Boolean, timestamp: Option[String]): Seq[SearchResult] = {
     val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
       createSearchResult(source, search)
     ).toSeq
 
-    val seqResp = removeDuplicate(seqSearchResult)
-
-    val tupleDateSearchResult: List[(String, SearchResult)] = seqResp.map(x =>
+    val tupleDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
       (extractDate(x.`type`.get, x.source.get), x)
     ).toList
 
@@ -880,7 +870,9 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => res.sortWith(_._1 > _._1)
     }
 
-    result.map(elem => elem._2) ++ aggregationSearch(res.map(x => x._2))
+    val toReturn = result.map(elem => elem._2) ++ aggregationSearch(res.map(x => x._2))
+    Logger.logger.debug(s"find ${toReturn.size} result")
+    toReturn
   }
 
   private def extractDate(typeDate: String, source: String): String = {
