@@ -20,14 +20,13 @@ import utils.ConfigReader
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
-import com.sksamuel.elastic4s.http.search.SearchResponse
+import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
 import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
-import javax.swing.text.Highlighter.Highlight
 import play.api.{Configuration, Environment, Logger}
 
 /**
@@ -645,13 +644,14 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.ext_opendata.name")
+    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified", "name")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
-    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories
+    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories ++ fieldsOpenData
 
     val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
-      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org")
+      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org") ::: fieldsOpenData
 
     val searchText = filters.text match {
       case Some("") => false
@@ -675,7 +675,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       filters.text match {
         case Some("") => List()
         case Some(searchString) => {
-          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme))
+          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme"))
             .map(field => matchQuery(field, s))).toList ::: themeQueryString(searchString)
         }
         case None => List()
@@ -690,8 +690,8 @@ class DashboardRepositoryProd extends DashboardRepository {
               textStringQuery
             ),
             must(
-              creteThemeFilter(filters.theme, fieldDatasetDcatTheme) ::: createFilterOrg(filters.org) :::
-                createFilterStatus(filters.status)
+                createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
+              creteThemeFilter(filters.theme, "theme") ::: creteThemeFilter(filters.theme, fieldDatasetDcatTheme)
             ),
             should(
               must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
@@ -701,10 +701,11 @@ class DashboardRepositoryProd extends DashboardRepository {
               must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
               must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
               termQuery("status", "2"),
-              termQuery("published", "2")
+              termQuery("published", "2"),
+              termQuery("private", "false")
             )
           )
-      ).limit(10000)
+      ).limit(3000)
     }
 
     val query = queryElasticsearch
@@ -747,7 +748,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     ).toList.filterNot(s => s.equals(""))
 
     if(searchTheme.nonEmpty)
-      searchTheme.map(s => matchQuery("dcatapit.theme", s))
+      searchTheme.flatMap(s => List(matchQuery("dcatapit.theme", s), matchQuery("theme", s)))
     else
       List()
   }
@@ -760,7 +761,8 @@ class DashboardRepositoryProd extends DashboardRepository {
           case "2" => "0"
           case _ => "1"
         }
-        List(should(termsQuery("dcatapit.privatex", statusDataset), termsQuery("status", status.get), termsQuery("published", status.get)))
+        List(should(termsQuery("dcatapit.privatex", statusDataset), termsQuery("status", status.get),
+          termsQuery("published", status.get), termQuery("private", statusDataset)))
       }
       case _ => List()
     }
@@ -769,10 +771,13 @@ class DashboardRepositoryProd extends DashboardRepository {
   private def createFilterOrg(inputOrgFilter: Option[Seq[String]]) = {
     val datasetOrg = "dcatapit.owner_org"
     val dashNstorOrg = "org"
+    val opendataOrg = "organization.name"
 
     inputOrgFilter match {
       case Some(Seq()) => List()
-      case Some(org) => List(should(matchQuery(datasetOrg, inputOrgFilter), matchQuery(dashNstorOrg, org.mkString(" "))))
+      case Some(org) => List(should(matchQuery(datasetOrg, org.mkString(" ")),
+        matchQuery(dashNstorOrg, org.mkString(" "))),
+        matchQuery(opendataOrg, org.mkString(" ")))
       case _ => List()
     }
   }
@@ -791,30 +796,75 @@ class DashboardRepositoryProd extends DashboardRepository {
     tupleDateSearchResult.filter(result => (result._1 >= start) && (result._1 <= end))
   }
 
+  private def themeFormatter(json: JsValue): String = {
+    val themeJson = (json \ "theme").getOrElse(Json.parse("y")).toString()
+    val themeString = if(themeJson.contains("theme")){
+      (Json.parse(themeJson) \\ "theme").mkString(",")
+    }
+    else themeJson
+    if(themeString.equals("null") || themeString.equals("\"[]\"") || themeString.equals("")) "no_category"
+    else themeString
+  }
+
+  private def createSearchResult(source: SearchHit, search: Boolean): SearchResult = {
+    val sourceResponse: String = source.`type` match {
+      case "ext_opendata" =>  {
+        val theme = themeFormatter(Json.parse(source.sourceAsString))
+        val k = source.sourceAsMap.updated("theme", theme)
+        val res = k.map(elem =>
+          if(elem._2.isInstanceOf[Map[String, AnyRef]]) {
+            val value = (elem._2.asInstanceOf[Map[String, AnyRef]])
+              .map(child => s""""${child._1}":"${Try(child._2.toString.replaceAll("\"", "")).getOrElse("")}"""").mkString(",")
+            s""""${elem._1}":{$value}"""
+          }else s""""${elem._1}":"${Try(elem._2.toString.replaceAll("\"", "")).getOrElse("")}""""
+        ).mkString(",").replace("\n", "").replaceAll("\r", "").replaceAll("\t", "")
+        "{" + res + "}"
+      }
+      case _ => source.sourceAsString
+    }
+    val highlight = if(search) {
+      source.highlight match {
+        case mapHighlight: Map[String, Seq[String]] => {
+          Some(
+            "{" +
+              mapHighlight.map(x =>
+                x._1 match {
+                  case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
+                  case _ => s""""${x._1}": "${x._2.mkString("...")}"""
+                }
+              ).mkString(",")
+              + "}"
+          )
+        }
+        case _ => Some("{}")
+      }
+    } else Some("{}")
+    SearchResult(Some(source.`type`), Some(sourceResponse), highlight)
+  }
+
+  private def removeDuplicate(seqSearchResult: Seq[SearchResult]): Seq[SearchResult] = {
+    val listNameExtOpendata: List[String] = seqSearchResult
+      .filter(elem => elem.`type`.get.equals("catalog_test"))
+      .map(elem => {
+        Try((Json.parse(elem.source.get) \ "operational" \ "ext_opendata" \ "name").get.toString()).getOrElse("")
+      }).toList.filterNot(name => name.equals(""))
+
+    val result = seqSearchResult.filterNot(
+      elem =>
+        elem.`type`.get.equals("ext_opendata") &&
+          listNameExtOpendata.contains((Json.parse(elem.source.get) \ "name").getOrElse(Json.parse("")).toString)
+    )
+    result
+  }
+
   private def wrapResponse(query: SearchResponse, order: String, search: Boolean, timestamp: Option[String]): Seq[SearchResult] = {
     val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
-      SearchResult(Some(source.`type`), Some(source.sourceAsString),
-        if(search){
-          source.highlight match {
-            case mapHighlight: Map[String, Seq[String]] => {
-              Some(
-                "{" +
-                  mapHighlight.map(x =>
-                    x._1 match {
-                      case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
-                      case _ => s""""${x._1}": "${x._2.mkString("...")}"""
-                    }
-                  ).mkString(",")
-                + "}"
-              )
-            }
-            case _ => Some("{}")
-          }
-        } else Some("{}")
-      )
+      createSearchResult(source, search)
     ).toSeq
 
-    val tupleDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
+    val seqResp = removeDuplicate(seqSearchResult)
+
+    val tupleDateSearchResult: List[(String, SearchResult)] = seqResp.map(x =>
       (extractDate(x.`type`.get, x.source.get), x)
     ).toList
 
@@ -837,9 +887,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(source)
     val result: JsLookupResult = typeDate match {
       case "catalog_test" => json \ "dcatapit" \ "modified"
+      case "ext_opendata" => json \ "modified"
       case _ => json \ "timestamp"
     }
-    parseDate(result.get.toString().replaceAll("\"", ""))
+    parseDate(result.getOrElse(Json.parse("2017-07-23")).toString().replaceAll("\"", ""))
   }
 
   private def aggregationSearch(searchResult: List[SearchResult]): Seq[SearchResult] = {
@@ -852,25 +903,30 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def createThemeAggr(searchResult: List[SearchResult]): SearchResult = {
-    val aggrDataset = themeDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")))
+    val aggrDataset = themeDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")), false)
+    val aggrOpenData = themeDataset(searchResult.filter(x => x.`type`.get.equals("ext_opendata")), true)
 
-    val sourceString = aggrDataset.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
-    SearchResult(Some("category"), Some("{" + sourceString + "}"), None)
+    val listTheme = aggrDataset.toList ++ aggrOpenData.toList
+    val merged = listTheme.groupBy(_._1).map{case (k, v) => k -> v.map(_._2).sum}
+    val aggrString = merged.toList.sortWith(_._1 < _._1).toMap.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
+    SearchResult(Some("category"), Some("{" + aggrString + "}"), None)
   }
 
-  private def themeDataset(searchResult: List[SearchResult]): Map[String, Int] = {
+  private def themeDataset(searchResult: List[SearchResult], isOpen: Boolean): Map[String, Int] = {
     val themeValue = searchResult.map(x =>
-      (Json.parse(x.source.get) \ "dcatapit" \ "theme").get.toString()
+      if(isOpen)(Json.parse(x.source.get) \ "theme").get.toString()
+      else (Json.parse(x.source.get) \ "dcatapit" \ "theme").get.toString()
     )
     themeValue.map(theme => theme -> themeValue.count(v => v.equals(theme))).sortWith(_._1 < _._1).toMap
   }
 
   private def createOrgAggr(searchResult: List[SearchResult]): SearchResult = {
     val aggrStories = orgStories(searchResult.filter(x => x.`type`.get.equals("stories")))
-    val aggrDataset = orgDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")))
+    val aggrDataset = orgDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")), false)
+    val aggrDatasetOpen = orgDataset(searchResult.filter(x => x.`type`.get.equals("ext_opendata")), true)
     val aggreDashboards = orgDashboards(searchResult.filter(x => x.`type`.get.equals("dashboards")))
 
-    val listOrg = aggrStories.toList ++ aggrDataset.toList ++ aggreDashboards.toList
+    val listOrg = aggrStories.toList ++ aggrDataset.toList ++ aggreDashboards.toList ++ aggrDatasetOpen.toList
     val merged = listOrg.groupBy(_._1).map{case (k, v) => k -> v.map(_._2).sum}
     val sourceString = merged.toList.sortWith(_._1 < _._1).toMap.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
     SearchResult(Some("organization"), Some("{" + sourceString + "}"), None)
@@ -890,9 +946,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
   }
 
-  private def orgDataset(searchResult: List[SearchResult]): Map[String, Int] = {
+  private def orgDataset(searchResult: List[SearchResult], isOpen: Boolean): Map[String, Int] = {
     val orgValue = searchResult.map(x =>
-      (Json.parse(x.source.get) \ "dcatapit" \ "owner_org").get.toString()
+      if(isOpen) (Json.parse(x.source.get) \ "organization" \ "name").get.toString()
+      else (Json.parse(x.source.get) \ "dcatapit" \ "owner_org").get.toString()
     )
     orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
   }
@@ -901,8 +958,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     val countStories = typeString.count(t => t.equals("stories"))
     val countDash = typeString.count(t => t.equals("dashboards"))
     val countCatalogTest = typeString.count(t => t.equals("catalog_test"))
+    val countOpenData = typeString.count(t => t.equals("ext_opendata"))
 
-    val sourceString = s"""{"catalog_test":"$countCatalogTest","dashboards":"$countDash","stories":"$countStories"}"""
+    val sourceString = s"""{"catalog_test":"$countCatalogTest","dashboards":"$countDash","stories":"$countStories","ext_opendata":"$countOpenData"}"""
     SearchResult(Some("type"), Some(sourceString), None)
   }
 
@@ -910,10 +968,11 @@ class DashboardRepositoryProd extends DashboardRepository {
     val aggrStories = statusStories(searchResult.filter(s => s.`type`.get.equals("stories")))
     val aggrDataset = statusDataset(searchResult.filter(s => s.`type`.get.equals("catalog_test")))
     val aggreDashboards = statusDashboards(searchResult.filter(s => s.`type`.get.equals("dashboards")))
+    val aggreOpenData = searchResult.count(s => s.`type`.get.equals("ext_opendata"))
 
     val coutn0 = aggrStories("0") +  aggrDataset("0") + aggreDashboards("0")
     val coutn1 = aggrStories("1") +  aggrDataset("1") + aggreDashboards("1")
-    val coutn2 = aggrStories("2") +  aggrDataset("2") + aggreDashboards("2")
+    val coutn2 = aggrStories("2") +  aggrDataset("2") + aggreDashboards("2") + aggreOpenData
 
     SearchResult(Some("status"), Some(s"""{"0":"$coutn0","1":"$coutn1", "2":"$coutn2"}"""), None)
   }
@@ -946,23 +1005,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       val day = date.split("/")(0)
       val month = date.split("/")(1)
       val year = date.split("/")(2)
-      List(year,month,day).mkString("-")
+      s"""$year-$month-$day"""
     }
     else if(date.contains("T")){
       date.substring(0, date.indexOf("T"))
     }
     else date
-  }
-
-  private def parseMapAgg(map: Map[String, Int]): Map[String, Int] = {
-    if(map.contains("true") || map.contains("false")) {
-      val countTrue: Int = map.getOrElse("true", 0)
-      val countFalse: Int = map.getOrElse("false", 0)
-      val listT: List[(String, Int)] = if(map.contains("true")) List(("0", countTrue), ("1", countTrue)) else List()
-      val listF: List[(String, Int)] = if(map.contains("false")) List(("2", countFalse)) else List()
-      (listT ++ listF).map(elem => elem._1 -> elem._2).toMap
-    } else
-      map
   }
 
   private def wrapAggrResp(listCount: List[AnyVal]): (String, Int) = {
