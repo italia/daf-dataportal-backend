@@ -652,7 +652,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.ext_opendata.name")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified", "name")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
