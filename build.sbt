@@ -117,8 +117,10 @@ dockerRepository := { if(isStaging)Option("nexus.teamdigitale.test") else Option
 
 
 publishTo in ThisBuild := {
-  val nexus = if(isStaging) "http://nexus.teamdigitale.test:8081/repository/"
-              else "http://nexus.default.svc.cluster.local:8081/repository/"
+  val nexus = if(isStaging) {
+    "http://nexus.teamdigitale.test:8081/repository/"
+  } else
+    { "http://nexus.default.svc.cluster.local:8081/repository/"}
 
   if (isSnapshot.value)
     Some("snapshots" at nexus + "maven-snapshots/")
