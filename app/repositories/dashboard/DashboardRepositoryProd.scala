@@ -18,7 +18,7 @@ import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
