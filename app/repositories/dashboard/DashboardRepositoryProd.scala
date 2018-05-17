@@ -1062,6 +1062,38 @@ class DashboardRepositoryProd extends DashboardRepository {
     responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories) ++ wrapAggrResponseHome(resAggr)
   }
 
+  def searchLastPublic: Seq[SearchResult] = {
+    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+
+    val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
+    val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
+    val fieldsStories = listFields("User-Story")
+    val fieldsDash = listFields("Dashboard")
+
+    val queryDataset = queryHomePublic("catalog_test")
+    val queryOpendata = queryHomePublic("ext_opendata")
+    val queryStories = queryHomePublic("stories")
+      .sortByFieldDesc("timestamp.keyword")
+      .size(3)
+    val queryDash = queryHomePublic("dashboards")
+      .sortByFieldDesc("timestamp.keyword")
+      .size(3)
+    val queryAggr = queryHomePublic("")
+
+    val resultDataset = executeQueryHome(client, queryDataset, fieldsDataset)
+    val resultOpendata = executeQueryHome(client, queryOpendata, fieldsOpenData)
+    val resultDash = executeQueryHome(client, queryDash, fieldsDash)
+    val resultStories = executeQueryHome(client, queryStories, fieldsStories)
+    val resAggr = executeAggrQueryHome(client, queryAggr)
+
+    client.close()
+
+    val responseDataset = extractAllLastDataset(wrapResponseHome(resultDataset), wrapResponseHome(resultOpendata))
+    responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories) ++ wrapAggrResponseHome(resAggr)
+  }
+
   private def queryHome(typeElastic: String, username: String, groups: List[String]) = {
     search("ckan").types(typeElastic).query(
       boolQuery()
@@ -1073,6 +1105,20 @@ class DashboardRepositoryProd extends DashboardRepository {
             must(termQuery("published", "0"), termQuery("user", username)),
             must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
             must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
+            termQuery("status", "2"),
+            termQuery("published", "2"),
+            termQuery("private", "false")
+          )
+        )
+    )
+  }
+
+  private def queryHomePublic(typeElastic: String) = {
+    search("ckan").types(typeElastic).query(
+      boolQuery()
+        .must(
+          should(
+            termQuery("dcatapit.privatex", "0"),
             termQuery("status", "2"),
             termQuery("published", "2"),
             termQuery("private", "false")
