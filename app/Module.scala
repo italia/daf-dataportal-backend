@@ -1,14 +1,24 @@
 import com.google.inject.{AbstractModule, Singleton}
 import it.gov.daf.common.sso.client.LoginClientRemote
 import it.gov.daf.common.sso.common.{CacheWrapper, LoginClient}
-import play.api.{Configuration, Environment}
+import play.api.{Configuration, Environment, Logger}
+
+import scala.sys.process._
 
 @Singleton
 class Module(environment: Environment, configuration: Configuration) extends AbstractModule {
 
   def configure() = {
 
-    println("executing module..")
+    Logger.debug("executing module..")
+
+    Logger.debug("executing module..")
+
+    Logger.debug("--env--")
+    Logger.debug("ls -l".!! )
+    Logger.debug("-------")
+    Logger.debug("ls -l conf".!! )
+    Logger.debug("-------")
 
     bind(classOf[LoginClient]).to(classOf[LoginClientRemote])// for the initialization of SecuredInvocationManager
 

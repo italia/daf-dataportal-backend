@@ -5,6 +5,7 @@ import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
+
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -17,7 +18,7 @@ import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
@@ -653,7 +654,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
       fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
-    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified", "name")
+    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories ++ fieldsOpenData
@@ -885,7 +886,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case "ext_opendata" => json \ "modified"
       case _ => json \ "timestamp"
     }
-    parseDate(result.getOrElse(Json.parse("2017-07-23")).toString().replaceAll("\"", ""))
+    parseDate(result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", ""))
   }
 
   private def aggregationSearch(searchResult: List[SearchResult]): Seq[SearchResult] = {
@@ -1032,13 +1033,18 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   def searchLast(username: String, groups: List[String]): Seq[SearchResult] = {
+
+    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
-    val fieldDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
+    val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
       "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
-    val fieldStories = listFields("User-Story")
-    val fieldDash = listFields("Dashboard")
+    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
+    val fieldsStories = listFields("User-Story")
+    val fieldsDash = listFields("Dashboard")
 
     val queryDataset = queryHome("catalog_test", username, groups)
+    val queryOpendata = queryHome("ext_opendata", "", Nil)
     val queryStories = queryHome("stories", username, groups)
       .sortByFieldDesc("timestamp.keyword")
       .size(3)
@@ -1047,14 +1053,15 @@ class DashboardRepositoryProd extends DashboardRepository {
       .size(3)
     val queryAggr = queryHome("", username, groups)
 
-    val resultDataset = executeQueryHome(client, queryDataset, fieldDataset)
-    val resultDash = executeQueryHome(client, queryDash, fieldDash)
-    val resultStories = executeQueryHome(client, queryStories, fieldStories)
+    val resultDataset = executeQueryHome(client, queryDataset, fieldsDataset)
+    val resultOpendata = executeQueryHome(client, queryOpendata, fieldsOpenData)
+    val resultDash = executeQueryHome(client, queryDash, fieldsDash)
+    val resultStories = executeQueryHome(client, queryStories, fieldsStories)
     val resAggr = executeAggrQueryHome(client, queryAggr)
 
     client.close()
 
-    val responseDataset = extractLastDataset(wrapResponseHome(resultDataset))
+    val responseDataset = extractAllLastDataset(wrapResponseHome(resultDataset), wrapResponseHome(resultOpendata))
     responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories) ++ wrapAggrResponseHome(resAggr)
   }
 
@@ -1070,15 +1077,24 @@ class DashboardRepositoryProd extends DashboardRepository {
             must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
             must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
             termQuery("status", "2"),
-            termQuery("published", "2")
+            termQuery("published", "2"),
+            termQuery("private", "false")
           )
         )
     )
   }
 
-  private def extractLastDataset(seqDataset: Seq[SearchResult]) = {
-    val listDateDataset: List[(String, SearchResult)] = seqDataset.map(d => (extractDate(d.`type`.get, d.source.get), d)).toList
-    listDateDataset.sortWith(_._1 > _._1).take(3).map(x => x._2)
+  private def extractLastDataset(seqDatasetDaf: Seq[SearchResult]) = {
+    val listDateDatasetDaf: List[(String, SearchResult)] = seqDatasetDaf.map(
+      d => (extractDate(d.`type`.get, d.source.get), d)
+    ).toList
+    listDateDatasetDaf.sortWith(_._1 > _._1).take(3)
+  }
+
+  private def extractAllLastDataset(seqDatasetDaf: Seq[SearchResult], seqDatasetOpen: Seq[SearchResult]) = {
+    val lastDatasetDaf = extractLastDataset(seqDatasetDaf)
+    val lastDatasetOpen = extractLastDataset(seqDatasetOpen)
+    (lastDatasetDaf ++ lastDatasetOpen).sortWith(_._1 > _._1).take(3).map(d => d._2)
   }
 
   private def executeAggrQueryHome(client: HttpClient, query: SearchDefinition): SearchResponse = {
@@ -1104,7 +1120,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   private def wrapResponseHome(query: SearchResponse): Seq[SearchResult] = {
     query.hits.hits.map(source =>
-      SearchResult(Some(source.`type`), Some(source.sourceAsString), None)
+      createSearchResult(source, false)
     ).toSeq
   }
 
