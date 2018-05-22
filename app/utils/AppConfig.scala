@@ -49,6 +49,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
 
 object ConfigReader {
   private val config = new AppConfig(Configuration.load(Environment.simple()))
+
+  require(config.elasticsearchUrl.nonEmpty, "A elasticsearch url must be specified")
+
   def getDbHost: String = config.dbHost.getOrElse("localhost")
   def getDbPort: Int = config.dbPort.getOrElse(27017)
   def getCkanHost = config.ckanHost.getOrElse("localhost")
@@ -82,7 +85,7 @@ object ConfigReader {
   def kyloUser = config.kyloUser.getOrElse("dladmin")
   def kyloPwd = config.kyloPassword.getOrElse("XXXXXXXXX")
 
-  def getElasticsearchUrl = config.elasticsearchUrl.getOrElse("http://localhost")
+  def getElasticsearchUrl = config.elasticsearchUrl.get
   def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
 
 }

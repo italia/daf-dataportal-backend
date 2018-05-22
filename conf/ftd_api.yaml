@@ -363,6 +363,25 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/public/elasticsearch/home":
+      get:
+        tags:
+        - elasticsearch
+        summary: return last 3 dataset, dashboard, stories and the count of resource
+        operationId: searchLastPublic
+        produces:
+        - application/json
+        responses:
+          200:
+            description: Successful operation
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/SearchResult'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/dashboard/create/{tableName}/{fileType}":
     post:
       tags:

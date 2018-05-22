@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-            
+                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -209,6 +209,11 @@ package ftd_api.yaml {
           val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
           IframesByTableName200(iframesByName)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
+        }
+        val searchLastPublic = searchLastPublicAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLastPublic
+            SearchLastPublic200(DashboardRegistry.dashboardService.searchLastPublic)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLastPublic
         }
         val allDistributionLiceses = allDistributionLicesesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
@@ -698,6 +703,14 @@ package ftd_api.yaml {
 
    NotImplementedYet
    // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.searchLastHome
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLastHome
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLastHome
      */
 
     

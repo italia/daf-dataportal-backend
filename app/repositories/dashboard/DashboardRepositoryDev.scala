@@ -124,4 +124,8 @@ class DashboardRepositoryDev extends DashboardRepository {
   def searchLast(username: String, groups: List[String]): Seq[SearchResult] = {
     Seq(SearchResult(None, None, None))
   }
+
+  def searchLastPublic: Seq[SearchResult] = {
+    Seq(SearchResult(None, None, None))
+  }
 }
