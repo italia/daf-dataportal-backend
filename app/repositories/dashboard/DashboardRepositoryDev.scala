@@ -128,4 +128,8 @@ class DashboardRepositoryDev extends DashboardRepository {
   def searchLastPublic: Seq[SearchResult] = {
     Seq(SearchResult(None, None, None))
   }
+
+  def searchTextPublic(filters: Filters): Seq[SearchResult] = {
+    Seq(SearchResult(None, None, None))
+  }
 }
