@@ -382,6 +382,34 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/public/elasticsearch/search":
+      post:
+        tags:
+        - elasticsearch
+        summary: search datasets, dashboards and stories
+        operationId: searchFullTextPublic
+        consumes:
+        - application/json
+        produces:
+        - application/json
+        parameters:
+        - name: filters
+          in: body
+          description: filter to use in search
+          required: true
+          schema:
+            $ref: '#/definitions/Filters'
+        responses:
+          200:
+            description: Successful operation
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/SearchResult'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/dashboard/create/{tableName}/{fileType}":
     post:
       tags:

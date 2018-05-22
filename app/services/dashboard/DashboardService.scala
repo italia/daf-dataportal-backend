@@ -99,6 +99,10 @@ trait DashboardServiceComponent {
     def searchLastPublic: Seq[SearchResult] = {
       dashboardRepository.searchLastPublic
     }
+
+    def searchTextPublic(filters: Filters): Seq[SearchResult] = {
+      dashboardRepository.searchTextPublic(filters)
+    }
   }
 }
 
