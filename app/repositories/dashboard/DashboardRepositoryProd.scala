@@ -734,13 +734,9 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val query = queryElasticsearch(200, searchType).sourceInclude(fieldToReturn)
       .aggregations(
-        //aggregazione per tipologia -> name: type
         termsAgg("type", "_type"),
-        //aggregazioni per status -> name: status
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        //aggregazioni organizzazioni -> name: organization
         termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
-        //aggregazioni per categoria -> name category
         termsAgg("cat_cat", "dcatapit.theme.keyword"), termsAgg("cat_ext", "theme.keyword")
       )
       .highlighting(listFieldSearch
@@ -1237,13 +1233,9 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val query = queryElasticsearch(200, searchType).sourceInclude(fieldToReturn)
       .aggregations(
-        //aggregazione per tipologia -> name: type
         termsAgg("type", "_type"),
-        //aggregazioni per status -> name: status
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        //aggregazioni organizzazioni -> name: organization
         termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
-        //aggregazioni per categoria -> name category
         termsAgg("cat_cat", "dcatapit.theme.keyword"), termsAgg("cat_ext", "theme.keyword")
       )
       .highlighting(listFieldSearch
