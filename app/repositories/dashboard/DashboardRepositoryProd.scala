@@ -13,7 +13,7 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection}
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -632,6 +632,28 @@ class DashboardRepositoryProd extends DashboardRepository {
     dash.status.getOrElse(-1) == 2
   }
 
+  def getDataApp: Seq[DataApp] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val db = mongoClient(source)
+
+    Logger.logger.debug(s"mongodb address: ${mongoClient.address}")
+
+    val coll = db("data_application")
+    val result = coll.find().toList
+    mongoClient.close()
+    val jsonString = com.mongodb.util.JSON.serialize(result)
+    val json = Json.parse(jsonString)
+    val dataAppJsResult = json.validate[Seq[DataApp]]
+    val dataApp = dataAppJsResult match {
+      case s: JsSuccess[Seq[DataApp]] => s.get
+      case _: JsError => Seq()
+    }
+
+    Logger.logger.debug(s"find ${dataApp.size} results")
+
+    dataApp
+  }
+
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
@@ -740,16 +762,14 @@ class DashboardRepositoryProd extends DashboardRepository {
       )
     ).await(30.seconds)
 
+    client.close()
+
     val responseMatch: SearchResponse = responseQuery.responses(0)
-    //aggregazioni
     val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-    //conteggio degli opendata senza categoria
     val responseNoCat: Map[String, AnyRef] = responseQuery.responses(1).aggregations
 
     val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
     val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
-
-    client.close()
 
     searchResults ++ aggregationResults
   }
@@ -807,9 +827,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     SearchResult(Some("category"), Some("{" + mergeAggr(listTheme).mkString(",") + "}"), None)
   }
 
-  //TODO sort degli elementi
   private def mergeAggr(listAggr: List[(String, Int)]) = {
-    listAggr.groupBy(_._1).map{case (k, v) => s""""$k": "${v.map(_._2).sum}""""}
+    listAggr.groupBy(_._1).toList.sortBy(_._1).map{case (k, v) => s""""$k": "${v.map(_._2).sum}""""}
   }
 
   private def themeQueryString(search: String): List[MatchQueryDefinition] = {
@@ -954,8 +973,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => res.sortWith(_._1 > _._1)
     }
 
-    val toReturn = result.map(elem => elem._2)// ++ aggregationSearch(res.map(x => x._2))
-    Logger.logger.debug(s"find ${toReturn.size} result")
+    val toReturn = result.map(elem => elem._2)
+    Logger.logger.debug(s"find ${toReturn.size} results")
     toReturn
   }
 
@@ -968,113 +987,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
     parseDate(result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", ""))
   }
-
-//  private def aggregationSearch(searchResult: List[SearchResult]): Seq[SearchResult] = {
-//    val searchResultType = createTypeAggr(searchResult.map(x => x.`type`.get))
-//    val searchResultStatus = createStatusAggr(searchResult)
-//    val searchResultOrg = createOrgAggr(searchResult)
-//    val searchResultTheme = createThemeAggr(searchResult)
-//
-//    Seq(searchResultType, searchResultStatus, searchResultOrg, searchResultTheme)
-//  }
-
-//  private def createThemeAggr(searchResult: List[SearchResult]): SearchResult = {
-//    val aggrDataset = themeDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")), false)
-//    val aggrOpenData = themeDataset(searchResult.filter(x => x.`type`.get.equals("ext_opendata")), true)
-//
-//    val listTheme = aggrDataset.toList ++ aggrOpenData.toList
-//    val merged = listTheme.groupBy(_._1).map{case (k, v) => k -> v.map(_._2).sum}
-//    val aggrString = merged.toList.sortWith(_._1 < _._1).toMap.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
-//    SearchResult(Some("category"), Some("{" + aggrString + "}"), None)
-//  }
-
-//  private def themeDataset(searchResult: List[SearchResult], isOpen: Boolean): Map[String, Int] = {
-//    val themeValue = searchResult.map(x =>
-//      if(isOpen)(Json.parse(x.source.get) \ "theme").get.toString()
-//      else (Json.parse(x.source.get) \ "dcatapit" \ "theme").get.toString()
-//    )
-//    themeValue.map(theme => theme -> themeValue.count(v => v.equals(theme))).sortWith(_._1 < _._1).toMap
-//  }
-
-//  private def createOrgAggr(searchResult: List[SearchResult]): SearchResult = {
-//    val aggrStories = orgStories(searchResult.filter(x => x.`type`.get.equals("stories")))
-//    val aggrDataset = orgDataset(searchResult.filter(x => x.`type`.get.equals("catalog_test")), false)
-//    val aggrDatasetOpen = orgDataset(searchResult.filter(x => x.`type`.get.equals("ext_opendata")), true)
-//    val aggreDashboards = orgDashboards(searchResult.filter(x => x.`type`.get.equals("dashboards")))
-//
-//    val listOrg = aggrStories.toList ++ aggrDataset.toList ++ aggreDashboards.toList ++ aggrDatasetOpen.toList
-//    val merged = listOrg.groupBy(_._1).map{case (k, v) => k -> v.map(_._2).sum}
-//    val sourceString = merged.toList.sortWith(_._1 < _._1).toMap.map(x => s"""${x._1}:"${x._2}"""").mkString(",")
-//    SearchResult(Some("organization"), Some("{" + sourceString + "}"), None)
-//  }
-
-//  private def orgStories(searchResult: List[SearchResult]): Map[String, Int] = {
-//    val orgValue = searchResult.map(x =>
-//      (Json.parse(x.source.get) \ "org").get.toString()
-//    )
-//    orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
-//  }
-
-//  private def orgDashboards(searchResult: List[SearchResult]): Map[String, Int] = {
-//    val orgValue = searchResult.map(x =>
-//      (Json.parse(x.source.get) \ "org").get.toString()
-//    )
-//    orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
-//  }
-
-//  private def orgDataset(searchResult: List[SearchResult], isOpen: Boolean): Map[String, Int] = {
-//    val orgValue = searchResult.map(x =>
-//      if(isOpen) (Json.parse(x.source.get) \ "organization" \ "name").get.toString()
-//      else (Json.parse(x.source.get) \ "dcatapit" \ "owner_org").get.toString()
-//    )
-//    orgValue.map(org => org -> orgValue.count(s => s.equals(org))).toMap
-//  }
-
-//  private def createTypeAggr(typeString: List[String]): SearchResult = {
-//    val countStories = typeString.count(t => t.equals("stories"))
-//    val countDash = typeString.count(t => t.equals("dashboards"))
-//    val countCatalogTest = typeString.count(t => t.equals("catalog_test"))
-//    val countOpenData = typeString.count(t => t.equals("ext_opendata"))
-//
-//    val sourceString = s"""{"catalog_test":"$countCatalogTest","dashboards":"$countDash","stories":"$countStories","ext_opendata":"$countOpenData"}"""
-//    SearchResult(Some("type"), Some(sourceString), None)
-//  }
-
-//  private def createStatusAggr(searchResult: List[SearchResult]): SearchResult = {
-//    val aggrStories = statusStories(searchResult.filter(s => s.`type`.get.equals("stories")))
-//    val aggrDataset = statusDataset(searchResult.filter(s => s.`type`.get.equals("catalog_test")))
-//    val aggreDashboards = statusDashboards(searchResult.filter(s => s.`type`.get.equals("dashboards")))
-//    val aggreOpenData = searchResult.count(s => s.`type`.get.equals("ext_opendata"))
-//
-//    val coutn0 = aggrStories("0") +  aggrDataset("0") + aggreDashboards("0")
-//    val coutn1 = aggrStories("1") +  aggrDataset("1") + aggreDashboards("1")
-//    val coutn2 = aggrStories("2") +  aggrDataset("2") + aggreDashboards("2") + aggreOpenData
-//
-//    SearchResult(Some("status"), Some(s"""{"0":"$coutn0","1":"$coutn1", "2":"$coutn2"}"""), None)
-//  }
-
-//  private def statusStories(searchResult: List[SearchResult]): Map[String, Int] = {
-//    val statusValue = searchResult.map(x =>
-//      (Json.parse(x.source.get) \ "published").get.toString()
-//    )
-//    Map("0" -> statusValue.count(x => x.equals("0")), "1" -> statusValue.count(x => x.equals("1")), "2" -> statusValue.count(x => x.equals("2")))
-//  }
-
-//  private def statusDashboards(searchResult: List[SearchResult]): Map[String, Int] = {
-//    val statusValue = searchResult.map(x =>
-//      (Json.parse(x.source.get) \ "status").get.toString()
-//    )
-//    Map("0" -> statusValue.count(x => x.equals("0")), "1" -> statusValue.count(x => x.equals("1")), "2" -> statusValue.count(x => x.equals("2")))
-//  }
-
-//  private def statusDataset(searchResult: List[SearchResult]): Map[String, Int] = {
-//    val statusValue = searchResult.map(x =>
-//      (Json.parse(x.source.get) \ "dcatapit" \ "privatex").get.toString()
-//    )
-//    val countTrue = statusValue.count(x => x.equals("true"))
-//    val countFalse = statusValue.count(x => x.equals("false"))
-//    Map("0" -> countTrue, "1" -> countTrue, "2" -> countFalse)
-//  }
 
   private def parseDate(date: String): String = {
     if(date.contains("/")){
@@ -1142,9 +1054,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     client.close()
 
     val responseDataset = extractAllLastDataset(wrapResponseHome(resultDataset), wrapResponseHome(resultOpendata))
-    val result = responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories) ++ wrapAggrResponseHome(resAggr)
-    Logger.logger.debug(s"find ${result.size} result")
-    result
+    val result = responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories)
+    Logger.logger.debug(s"find ${result.size} results")
+    result ++ wrapAggrResponseHome(resAggr)
   }
 
   def searchLastPublic: Seq[SearchResult] = {
@@ -1172,7 +1084,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     client.close()
 
     val responseDataset = extractAllLastDataset(wrapResponseHome(resultDataset), wrapResponseHome(resultOpendata))
-    responseDataset ++ wrapResponseHome(resultStories) ++ wrapAggrResponseHome(resAggr)
+    val result = responseDataset ++ wrapResponseHome(resultStories)
+    Logger.logger.debug(s"find ${result.size} results")
+    result ++ wrapAggrResponseHome(resAggr)
   }
 
   private def queryHome(typeElastic: String, username: String, groups: List[String]) = {
@@ -1351,16 +1265,14 @@ class DashboardRepositoryProd extends DashboardRepository {
       )
     ).await(30.seconds)
 
+    client.close()
+
     val responseMatch: SearchResponse = responseQuery.responses(0)
-    //aggregazioni
     val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-    //conteggio degli opendata senza categoria
     val responseNoCat: Map[String, AnyRef] = responseQuery.responses(1).aggregations
 
     val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
     val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
-
-    client.close()
 
     searchResults ++ aggregationResults
   }

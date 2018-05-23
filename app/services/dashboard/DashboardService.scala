@@ -2,7 +2,7 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
 
@@ -102,6 +102,10 @@ trait DashboardServiceComponent {
 
     def searchTextPublic(filters: Filters): Seq[SearchResult] = {
       dashboardRepository.searchTextPublic(filters)
+    }
+
+    def getDataApp: Seq[DataApp] = {
+      dashboardRepository.getDataApp
     }
   }
 }
