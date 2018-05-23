@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                
+                                                                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -294,6 +294,11 @@ package ftd_api.yaml {
          // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
+        val searchFullTextPublic = searchFullTextPublicAction { (filters: Filters) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
+            SearchFullTextPublic200(DashboardRegistry.dashboardService.searchTextPublic(filters))
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
+        }
         val snapshotbyid = snapshotbyidAction { input: (String, String) =>
             val (iframe_id, sizexsize) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
@@ -315,6 +320,11 @@ package ftd_api.yaml {
     //  })
           Snapshotbyid200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
+        }
+        val deleteDataApplication = deleteDataApplicationAction { (data_app: DataApp) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
         }
         val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
@@ -581,6 +591,12 @@ package ftd_api.yaml {
             Deletedashboard200(DashboardRegistry.dashboardService.deleteDashboard(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletedashboard
         }
+        val getDataApplication = getDataApplicationAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplication
+            //            GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
+          GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplication
+        }
         val kyloInferschema = kyloInferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
@@ -686,6 +702,14 @@ package ftd_api.yaml {
 
   NotImplementedYet
   // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.deleteDataApp
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApp
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApp
      */
 
     

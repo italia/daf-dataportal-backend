@@ -382,6 +382,79 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/public/elasticsearch/search":
+      post:
+        tags:
+        - elasticsearch
+        summary: search datasets, dashboards and stories
+        operationId: searchFullTextPublic
+        consumes:
+        - application/json
+        produces:
+        - application/json
+        parameters:
+        - name: filters
+          in: body
+          description: filter to use in search
+          required: true
+          schema:
+            $ref: '#/definitions/Filters'
+        responses:
+          200:
+            description: Successful operation
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/SearchResult'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
+  "/public/data-application":
+    get:
+      tag:
+      - data-application
+      summary: return the data-application saved in db
+      operationId: getDataApplication
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Succesful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DataApp'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/delete/data-application":
+      delete:
+        tag:
+        - data-application
+        summary: return the data-application saved in db
+        operationId: deleteDataApplication
+        produces:
+        - application/json
+        consumes:
+        - application/json
+        parameters:
+        - name: data-app
+          in: body
+          description: data-application to delete
+          required: true
+          schema:
+            $ref: '#/definitions/DataApp'
+        responses:
+          200:
+            description: Succesful operation
+            schema:
+              $ref: '#/definitions/DataApp'
+          default:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
   "/dashboard/create/{tableName}/{fileType}":
     post:
       tags:
@@ -1392,6 +1465,17 @@ definitions:
       message:
         type: string
       fields:
+        type: string
+  DataApp:
+    type: object
+    properties:
+      title:
+        type: string
+      url:
+        type: string
+      creator:
+        type: string
+      description:
         type: string
   SearchResult:
     type: object

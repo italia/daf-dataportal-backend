@@ -2,7 +2,7 @@ package repositories.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
 
 import scala.concurrent.Future
 
@@ -30,6 +30,8 @@ trait DashboardRepository {
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult]
   def searchLast(username: String, groups: List[String]): Seq[SearchResult]
   def searchLastPublic: Seq[SearchResult]
+  def searchTextPublic(filters: Filters): Seq[SearchResult]
+  def getDataApp: Seq[DataApp]
 }
 
 object DashboardRepository {
