@@ -106,7 +106,7 @@ class SettingsRepositoryProd extends SettingsRepository {
           case _: JsError => Left(Error(Some(0), Some("Error in get settings"), Some("")))
         }
       }
-      case None => Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None))
+      case None => Right(Settings(None, None, None, None, None, None, None, None, None, None, None, None))
     }
   }
 
@@ -122,12 +122,8 @@ class SettingsRepositoryProd extends SettingsRepository {
          |  "mediumURL":"${settings.mediumURL.getOrElse("")}",
          |  "notizieURL": "${settings.notizieURL.getOrElse("")}",
          |  "forumURL": "${settings.forumURL.getOrElse("")}",
-         |  "footerLogoAGID":"${settings.footerLogoAGID.getOrElse("")}",
-         |  "footerLogoGov":"${settings.footerLogoGov.getOrElse("")}",
-         |  "footerLogoDevITA":"${settings.footerLogoDevITA.getOrElse("")}",
-         |  "footerNomeEnte":"${settings.footerNomeEnte.getOrElse("")}",
-         |  "footerPrivacy":"${settings.footerPrivacy.getOrElse("")}",
-         |  "footerLegal":"${settings.footerLegal.getOrElse("")}",
+         |  "bodyIllustrazione":"${settings.bodyIllustrazione.getOrElse("")}",
+         |  "bodyEsplora":"${settings.bodyEsplora.getOrElse("")}",
          |  "organization":"${settings.organization.getOrElse("")}"
          |}
       """.stripMargin

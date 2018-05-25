@@ -1525,6 +1525,10 @@ definitions:
         type: string
       headerDescTool:
         type: string
+      bodyIllustrazione:
+        type: string
+      bodyEsplora:
+        type: string
       twitterURL:
         type: string
       mediumURL:
@@ -1533,17 +1537,7 @@ definitions:
         type: string
       forumURL:
         type: string
-      footerLogoAGID:
-        type: string
-      footerLogoGov:
-        type: string
-      footerLogoDevITA:
-        type: string
-      footerNomeEnte:
-        type: string
-      footerPrivacy:
-        type: string
-      footerLegal:
+      domain:
         type: string
       organization:
         type: string
