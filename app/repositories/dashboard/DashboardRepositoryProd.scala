@@ -13,7 +13,7 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection}
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
 import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -888,7 +888,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     theme match {
       case Some(Seq()) => List()
       case Some(t) => t.map(s =>
-        if(s.equals("no_category")) should(matchQuery("_type", "ext_opendata"), boolQuery().not(existsQuery("theme")))
+        if(s.equals("no_category")) must(matchQuery("_type", "ext_opendata"), boolQuery().not(existsQuery("theme")))
         else should(matchQuery("theme", s))
       ).toList
       case _ => List()
@@ -917,11 +917,13 @@ class DashboardRepositoryProd extends DashboardRepository {
         val theme = themeFormatter(Json.parse(source.sourceAsString))
         val k = source.sourceAsMap.updated("theme", theme)
         val res = k.map(elem =>
-          if(elem._2.isInstanceOf[Map[String, AnyRef]]) {
-            val value = (elem._2.asInstanceOf[Map[String, AnyRef]])
-              .map(child => s""""${child._1}":"${Try(child._2.toString.replaceAll("\"", "")).getOrElse("")}"""").mkString(",")
-            s""""${elem._1}":{$value}"""
-          }else s""""${elem._1}":"${Try(elem._2.toString.replaceAll("\"", "")).getOrElse("")}""""
+          elem._2 match {
+            case map: Map[String, AnyRef] =>
+              val value = map
+                .map(child => s""""${child._1}":"${Try(child._2.toString.replaceAll("\"", "")).getOrElse("")}"""").mkString(",")
+              s""""${elem._1}":{$value}"""
+            case _ => s""""${elem._1}":"${Try(elem._2.toString.replaceAll("\"", "")).getOrElse("")}""""
+          }
         ).mkString(",").replace("\n", "").replaceAll("\r", "").replaceAll("\t", "")
         "{" + res + "}"
       }
@@ -1142,7 +1144,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   private def wrapAggrResponseHome(query: SearchResponse) = {
     val mapAggregation: Map[String, Map[String, Int]] = query.aggregations.map{ elem =>
       val name = elem._1
-      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+      val valueMap: Map[String, Int] = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
         .map(elem =>
           wrapAggrResp(elem.values.toList)
         )
