@@ -14,7 +14,7 @@ name := "daf-datipubblici"
 
 //version in ThisBuild := "1.0-alpha.1"
 
-version in ThisBuild := "1.0.1-SNAPSHOT"
+version in ThisBuild := "1.0.2-SNAPSHOT"
 
 val isStaging = System.getProperty("STAGING") != null
 
@@ -80,7 +80,7 @@ resolvers ++= Seq(
 )
 
 resolvers ++= { if(isStaging) Seq("daf repo" at "http://nexus.teamdigitale.test:8081/repository/maven-public/")
-                else Seq("daf repo" at "http://nexus.default.svc.cluster.local:8081/repository/maven-public/")}
+                else Seq("daf repo" at "http://nexus.daf.teamdigitale.it:8081/repository/maven-public/")}
 
 
 playScalaCustomTemplateLocation := Some(baseDirectory.value / "templates")
@@ -113,14 +113,14 @@ dockerExposedPorts := Seq(9000, 7000)
 dockerEntrypoint := { if(isStaging)Seq(s"bin/${name.value}", "-Dconfig.file=conf/productionNew.conf")
                       else Seq(s"bin/${name.value}", "-Dconfig.file=conf/production.conf")}
 
-dockerRepository := { if(isStaging)Option("nexus.teamdigitale.test") else Option("10.98.74.120:5000") }
+dockerRepository := { if(isStaging)Option("nexus.teamdigitale.test") else Option("nexus.daf.teamdigitale.it") }
 
 
 publishTo in ThisBuild := {
   val nexus = if(isStaging) {
     "http://nexus.teamdigitale.test:8081/repository/"
   } else
-    { "http://nexus.default.svc.cluster.local:8081/repository/"}
+    { "http://nexus.daf.teamdigitale.it:8081/repository/"}
 
   if (isSnapshot.value)
     Some("snapshots" at nexus + "maven-snapshots/")
