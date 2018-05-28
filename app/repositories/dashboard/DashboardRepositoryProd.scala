@@ -31,7 +31,6 @@ import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
 import play.api.{Configuration, Environment, Logger}
 
 
-
 /**
   * Created by ale on 14/04/17.
   */
@@ -814,12 +813,16 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   private def parseAggrTheme(mapThemeDaf: Map[String, Int], mapThemeOpen: Map[String, Int], mapThemeNoCat: Map[String, Int]) = {
     def extractAggregationTheme(name: String, count: Int): List[(String, Int)] = {
-      if(name.contains("theme")) (Json.parse(name) \\ "theme").map(t => (t.result.get.toString().replace("\"", ""), count)).toList
+      if(name.contains("theme")){
+        val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
+        List((themes, count))
+      }
       else List((name, count))
     }
-
-    val listThemeOpen = mapThemeOpen.toList.flatMap(elem => extractAggregationTheme(elem._1, elem._2))
-    val listTheme: List[(String, Int)] = listThemeOpen ++ mapThemeDaf.toList ++ mapThemeNoCat.toList
+    val listThemeOpen: List[(String, Int)] = mapThemeOpen.toList.flatMap(elem => extractAggregationTheme(elem._1, elem._2))
+    val countNoThemeOpen = listThemeOpen.filter(elem => elem._1.equals("[]") || elem._1.equals("")).map(elem => elem._2).sum
+    val listNoTheme = List(("no_category", mapThemeNoCat.values.sum + countNoThemeOpen))
+    val listTheme = listThemeOpen.filterNot(elem => elem._1.equals("[]") || elem._1.equals("")) ++ mapThemeDaf.toList ++ listNoTheme
     SearchResult(Some("category"), Some("{" + mergeAggr(listTheme).mkString(",") + "}"), None)
   }
 
@@ -902,12 +905,12 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def themeFormatter(json: JsValue): String = {
-    val themeJson = (json \ "theme").getOrElse(Json.parse("y")).toString()
+    val themeJson = (json \ "theme").getOrElse(Json.parse("no_category")).toString()
     val themeString = if(themeJson.contains("theme")){
-      (Json.parse(themeJson) \\ "theme").mkString(",")
-    }
-    else themeJson
-    if(themeString.equals("null") || themeString.equals("\"[]\"") || themeString.equals("")) "no_category"
+      val listThemes: Array[String] = themeJson.toString.replace("\"[", "").replace("]\"", "").replace("},", "} # ").split(" # ")
+      listThemes.map(elem => (Json.parse(elem.trim.replace("\\", "")) \ "theme").get).toList.map(s => s.toString().replace("\"", "")).mkString(",")
+    } else themeJson
+    if(themeString.equals("null") || themeString.equals("\"[]\"") || themeString.equals("\"\"")) "no_category"
     else themeString
   }
 
