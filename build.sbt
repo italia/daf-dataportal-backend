@@ -111,7 +111,7 @@ dockerCommands := dockerCommands.value.flatMap {
 dockerExposedPorts := Seq(9000, 7000)
 
 dockerEntrypoint := { if(isStaging)Seq(s"bin/${name.value}", "-Dconfig.file=conf/productionNew.conf")
-                      else Seq(s"bin/${name.value}", "-Dconfig.file=conf/production.conf")}
+                      else Seq(s"bin/${name.value}", "-Dconfig.file=conf/productionNew.conf")}
 
 dockerRepository := { if(isStaging)Option("nexus.teamdigitale.test") else Option("nexus.daf.teamdigitale.it") }
 
