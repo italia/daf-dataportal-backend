@@ -731,7 +731,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(200, searchType).sourceInclude(fieldToReturn)
+    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
@@ -822,8 +822,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val listThemeOpen: List[(String, Int)] = mapThemeOpen.toList.flatMap(elem => extractAggregationTheme(elem._1, elem._2))
     val countNoThemeOpen = listThemeOpen.filter(elem => elem._1.equals("[]") || elem._1.equals("")).map(elem => elem._2).sum
     val listNoTheme = List(("no_category", mapThemeNoCat.values.sum + countNoThemeOpen))
-    val listTheme = listThemeOpen.filterNot(elem => elem._1.equals("[]") || elem._1.equals("")) ++ mapThemeDaf.toList ++ listNoTheme
-    SearchResult(Some("category"), Some("{" + mergeAggr(listTheme).mkString(",") + "}"), None)
+    val listThemes = listThemeOpen.filterNot(elem => elem._1.equals("[]") || elem._1.equals("")) ++ mapThemeDaf.toList ++ listNoTheme
+    SearchResult(Some("category"), Some("{" + mergeAggr(listThemes.filterNot(elem => elem._2 == 0)).mkString(",") + "}"), None)
   }
 
   private def mergeAggr(listAggr: List[(String, Int)]) = {
@@ -941,7 +941,7 @@ class DashboardRepositoryProd extends DashboardRepository {
               mapHighlight.map(x =>
                 x._1 match {
                   case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
-                  case _ => s""""${x._1}": "${x._2.mkString("...")}""""
+                  case _ => s""""${x._1}": "${x._2.mkString("...").replace("\"", "\\\"").replace("\n", "")}""""
                 }
               ).mkString(",")
               + "}"
@@ -980,11 +980,10 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def extractDate(typeDate: String, source: String): String = {
-    val json = Json.parse(source)
     val result: JsLookupResult = typeDate match {
-      case "catalog_test" => json \ "dcatapit" \ "modified"
-      case "ext_opendata" => json \ "modified"
-      case _ => json \ "timestamp"
+      case "catalog_test" => Json.parse(source) \ "dcatapit" \ "modified"
+      case "ext_opendata" => Json.parse(source.replace("\\", "\\\"")) \ "modified"
+      case _ => Json.parse(source) \ "timestamp"
     }
     parseDate(result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", ""))
   }
@@ -1236,7 +1235,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(200, searchType).sourceInclude(fieldToReturn)
+    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
