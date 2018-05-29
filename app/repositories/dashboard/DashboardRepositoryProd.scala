@@ -941,7 +941,7 @@ class DashboardRepositoryProd extends DashboardRepository {
               mapHighlight.map(x =>
                 x._1 match {
                   case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
-                  case _ => s""""${x._1}": "${x._2.mkString("...")}"""
+                  case _ => s""""${x._1}": "${x._2.mkString("...")}""""
                 }
               ).mkString(",")
               + "}"
