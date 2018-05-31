@@ -709,7 +709,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
-          .must(
+          must(
             should(
               textStringQuery
             ),
@@ -718,15 +718,15 @@ class DashboardRepositoryProd extends DashboardRepository {
               createThemeFilter(filters.theme)
             ),
             should(
-              must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
-              termQuery("dcatapit.privatex", "0"),
-              must(termQuery("status", "0"), termQuery("user", username)),
-              must(termQuery("published", "0"), termQuery("user", username)),
-              must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
-              must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
-              termQuery("status", "2"),
-              termQuery("published", "2"),
-              termQuery("private", "false")
+              must(termQuery("dcatapit.privatex", true), matchQuery("dcatapit.owner_org", groups.mkString(" ")).operator("OR")),
+              termQuery("dcatapit.privatex", false),
+              must(termQuery("status", 0), termQuery("user", username)),
+              must(termQuery("published", 0), termQuery("user", username)),
+              must(termQuery("status", 1), matchQuery("org", groups.mkString(" ")).operator("OR")),
+              must(termQuery("published", 1), matchQuery("org", groups.mkString(" ")).operator("OR")),
+              termQuery("status", 2),
+              termQuery("published", 2),
+              termQuery("private", false)
             )
           )
       ).limit(limitResult)
@@ -736,8 +736,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
-        termsAgg("cat_cat", "dcatapit.theme.keyword"), termsAgg("cat_ext", "theme.keyword")
+        termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000), termsAgg("org_ext", "organization.name.keyword").size(1000),
+        termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000), termsAgg("cat_ext", "theme.keyword").size(1000)
       )
       .highlighting(listFieldSearch
         .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
@@ -834,7 +834,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             should(
               termQuery("dcatapit.privatex", false),
-              termQuery("published", "2"),
+              termQuery("published", 2),
               termQuery("private", false)
             )
           )
@@ -846,7 +846,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
         termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
-        termsAgg("cat_cat", "dcatapit.theme.keyword"), termsAgg("cat_ext", "theme.keyword")
+        termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000), termsAgg("cat_ext", "theme.keyword").size(1000)
       )
       .highlighting(listFieldSearch
         .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
@@ -987,13 +987,23 @@ class DashboardRepositoryProd extends DashboardRepository {
   private def createFilterOrg(inputOrgFilter: Option[Seq[String]]) = {
     val datasetOrg = "dcatapit.owner_org"
     val dashNstorOrg = "org"
-    val opendataOrg = "organization.name"
+    val opendataOrg = "organization.name.keyword"
 
     inputOrgFilter match {
       case Some(Seq()) => List()
-      case Some(org) => List(should(matchQuery(datasetOrg, org.mkString(" ")),
-        matchQuery(dashNstorOrg, org.mkString(" "))),
-        matchQuery(opendataOrg, org.mkString(" ")))
+      case Some(org) => {
+        List(
+          should(
+            org.flatMap(nameOrg =>
+              List(
+                matchQuery(datasetOrg, nameOrg).operator("AND"),
+                matchQuery(dashNstorOrg, nameOrg).operator("AND"),
+                matchQuery(opendataOrg, nameOrg).operator("AND")
+              )
+            )
+          )
+        )
+      }
       case _ => List()
     }
   }
@@ -1002,7 +1012,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     val result: List[BoolQueryDefinition] = theme match {
       case Some(Seq()) => List()
       case Some(t) => t.map(s =>
-        if(s.equals("no_category")) must(matchQuery("_type", "ext_opendata"), boolQuery().not(existsQuery("theme")))
+        if(s.equals("no_category")){
+          should(
+            must(matchQuery("_type", "ext_opendata"), boolQuery().not(existsQuery("theme.keyword"))),
+            matchQuery("theme.keyword", ""),
+            matchQuery("theme.keyword", "[]")
+          )
+        }
         else should(matchQuery("theme", s).operator(Operator.AND), matchQuery("dcatapit.theme.keyword", s).operator(Operator.AND))
       ).toList
       case _ => List()
