@@ -845,7 +845,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
+        termsAgg("org_stdash", "org.keyword").size(1000), termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000), termsAgg("org_ext", "organization.title.keyword").size(1000),
         termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000), termsAgg("cat_ext", "theme.keyword").size(1000)
       )
       .highlighting(listFieldSearch
