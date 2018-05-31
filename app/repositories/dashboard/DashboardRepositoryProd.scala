@@ -28,6 +28,7 @@ import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
 import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
+import org.elasticsearch.index.query.Operator
 import play.api.{Configuration, Environment, Logger}
 
 
@@ -714,7 +715,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-              creteThemeFilter(filters.theme, "theme") ::: creteThemeFilter(filters.theme, fieldDatasetDcatTheme)
+              createThemeFilter(filters.theme)
             ),
             should(
               must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
@@ -761,7 +762,117 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val responseMatch: SearchResponse = responseQuery.responses(0)
     val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-    val responseNoCat: Map[String, AnyRef] = responseQuery.responses(1).aggregations
+    val responseNoCat: Map[String, AnyRef] =  if(searchType.equals("") || searchType.contains("ext_opendata"))responseQuery.responses(1).aggregations else Map()
+
+    val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
+    val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
+
+    searchResults ++ aggregationResults
+  }
+
+  def searchTextPublic(filters: Filters): Seq[SearchResult] = {
+    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+
+    val client: HttpClient = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
+    val index = "ckan"
+    val fieldDatasetDcatName = "dcatapit.name"
+    val fieldDatasetDcatTitle = "dcatapit.title"
+    val fieldDatasetDcatNote = "dcatapit.notes"
+    val fieldDatasetDcatTheme = "dcatapit.theme"
+    val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
+    val fieldUsDsTitle = "title"
+    val fieldUsDsSub = "subtitle"
+    val fieldUsDsWget = "widgets"
+    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
+    val fieldStories = listFields("User-Story")
+    val fieldToReturn = fieldDataset ++ fieldStories ++ fieldsOpenData
+
+    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
+      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org") ::: fieldsOpenData
+
+    val searchText = filters.text match {
+      case Some("") => false
+      case Some(_) => true
+      case None => false
+    }
+
+    val searchType = filters.index match {
+      case Some(List()) => ""
+      case Some(x) => x.mkString(",")
+      case None => ""
+    }
+
+    val order = filters.order match {
+      case Some("score") => "score"
+      case Some("asc") => "asc"
+      case _ => "desc"
+    }
+
+    def textStringQuery = {
+      filters.text match {
+        case Some("") => List()
+        case Some(searchString) => {
+          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme"))
+            .map(field => matchQuery(field, s))).toList ::: themeQueryString(searchString)
+        }
+        case None => List()
+      }
+    }
+
+    def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
+      search(index).types(searchTypeInQuery).query(
+        boolQuery()
+          .must(
+            should(
+              textStringQuery
+            ),
+            must(
+              createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
+                createThemeFilter(filters.theme)
+            ),
+            should(
+              termQuery("dcatapit.privatex", false),
+              termQuery("published", "2"),
+              termQuery("private", false)
+            )
+          )
+      ).limit(limitResult)
+    }
+
+    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
+      .aggregations(
+        termsAgg("type", "_type"),
+        termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
+        termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
+        termsAgg("cat_cat", "dcatapit.theme.keyword"), termsAgg("cat_ext", "theme.keyword")
+      )
+      .highlighting(listFieldSearch
+        .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
+        .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
+          .fragmentSize(70))
+      )
+
+    val queryAggregationNoCat = queryElasticsearch(0, "ext_opendata")
+      .fetchSource(false)
+      .aggregations(
+        missingAgg("no_category", "theme.keyword")
+      )
+
+    val responseQuery: MultiSearchResponse = client.execute(
+      multi(
+        query,
+        queryAggregationNoCat
+      )
+    ).await(30.seconds)
+
+    client.close()
+
+
+    val responseMatch: SearchResponse = responseQuery.responses(0)
+    val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
+    val responseNoCat: Map[String, AnyRef] = if(searchType.equals("") || searchType.contains("ext_opendata"))responseQuery.responses(1).aggregations else Map()
 
     val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
     val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
@@ -779,7 +890,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         .map(v => v._1 -> v._2).toMap
       name -> valueMap
     }
-    val listNoCat = responseNoCat.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count")))
+    val listNoCat: Map[String, Int] = responseNoCat.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count")))
 
     val themeAggregation = parseAggrTheme(mapAggr("cat_cat"), mapAggr("cat_ext"), listNoCat)
     val statusAggr = parseAggrStatus(mapAggr("status_dash"), mapAggr("status_st"), mapAggr("status_cat"), mapAggr("status_ext"))
@@ -814,7 +925,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   private def parseAggrTheme(mapThemeDaf: Map[String, Int], mapThemeOpen: Map[String, Int], mapThemeNoCat: Map[String, Int]) = {
     def extractAggregationTheme(name: String, count: Int): List[(String, Int)] = {
       if(name.contains("theme")){
-        val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
+        val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).sortWith(_<_).mkString(",")
         List((themes, count))
       }
       else List((name, count))
@@ -887,15 +998,16 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  private def creteThemeFilter(theme: Option[Seq[String]], fieldDatasetDcatTheme: String): List[BoolQueryDefinition] = {
-    theme match {
+  private def createThemeFilter(theme: Option[Seq[String]]): List[BoolQueryDefinition] = {
+    val result: List[BoolQueryDefinition] = theme match {
       case Some(Seq()) => List()
       case Some(t) => t.map(s =>
         if(s.equals("no_category")) must(matchQuery("_type", "ext_opendata"), boolQuery().not(existsQuery("theme")))
-        else should(matchQuery("theme", s))
+        else should(matchQuery("theme", s).operator(Operator.AND), matchQuery("dcatapit.theme.keyword", s).operator(Operator.AND))
       ).toList
       case _ => List()
     }
+    List(should(result))
   }
 
   private def filterDate(tupleDateSearchResult: List[(String, SearchResult)], timestamp: String): List[(String, SearchResult)] = {
@@ -927,29 +1039,27 @@ class DashboardRepositoryProd extends DashboardRepository {
               s""""${elem._1}":{$value}"""
             case _ => s""""${elem._1}":"${Try(elem._2.toString.replaceAll("\"", "")).getOrElse("")}""""
           }
-        ).mkString(",").replace("\n", "").replaceAll("\r", "").replaceAll("\t", "")
+        ).mkString(",").replaceAll("\n", "").replaceAll("\r", "").replaceAll("\t", "")
         "{" + res + "}"
       }
       case _ => source.sourceAsString
     }
-
-    val highlight = if(search) {
-      source.highlight match {
-        case mapHighlight: Map[String, Seq[String]] => {
-          Some(
-            "{" +
-              mapHighlight.map(x =>
-                x._1 match {
-                  case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
-                  case _ => s""""${x._1}": "${x._2.mkString("...").replace("\"", "\\\"").replace("\n", "")}""""
-                }
-              ).mkString(",")
-              + "}"
-          )
-        }
-        case _ => Some("{}")
+    val highlight = source.highlight match {
+      case mapHighlight: Map[String, Seq[String]] => {
+        Some(
+          "{" +
+            mapHighlight.map(x =>
+              x._1 match {
+                case "widgets" => s""""${x._1}": "${(Json.parse(source.sourceAsString) \ "widgets").get.toString()}""""
+                case _ => s""""${x._1}": "${x._2.mkString("...").replace("\"", "\\\"").replace("\n", "")}""""
+              }
+            ).mkString(",")
+            + "}"
+        )
       }
-    } else Some("{}")
+      case _ => Some("{}")
+    }
+
     SearchResult(Some(source.`type`), Some(sourceResponse), highlight)
   }
 
@@ -1113,10 +1223,10 @@ class DashboardRepositoryProd extends DashboardRepository {
       boolQuery()
         .must(
           should(
-            termQuery("dcatapit.privatex", "0"),
+            termQuery("dcatapit.privatex", false),
             termQuery("status", "2"),
             termQuery("published", "2"),
-            termQuery("private", "false")
+            termQuery("private", false)
           )
         )
     )
@@ -1160,117 +1270,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     query.hits.hits.map(source =>
       createSearchResult(source, false)
     ).toSeq
-  }
-
-  def searchTextPublic(filters: Filters): Seq[SearchResult] = {
-    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
-
-    val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
-    val index = "ckan"
-    val fieldDatasetDcatName = "dcatapit.name"
-    val fieldDatasetDcatTitle = "dcatapit.title"
-    val fieldDatasetDcatNote = "dcatapit.notes"
-    val fieldDatasetDcatTheme = "dcatapit.theme"
-    val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
-    val fieldUsDsTitle = "title"
-    val fieldUsDsSub = "subtitle"
-    val fieldUsDsWget = "widgets"
-    val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
-    val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
-    val fieldDashboard = listFields("Dashboard")
-    val fieldStories = listFields("User-Story")
-    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories ++ fieldsOpenData
-
-    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
-      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org") ::: fieldsOpenData
-
-    val searchText = filters.text match {
-      case Some("") => false
-      case Some(_) => true
-      case None => false
-    }
-
-    val searchType = filters.index match {
-      case Some(List()) => ""
-      case Some(x) => x.mkString(",")
-      case None => ""
-    }
-
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
-      case _ => "desc"
-    }
-
-    def textStringQuery = {
-      filters.text match {
-        case Some("") => List()
-        case Some(searchString) => {
-          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme"))
-            .map(field => matchQuery(field, s))).toList ::: themeQueryString(searchString)
-        }
-        case None => List()
-      }
-    }
-
-    def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
-      search(index).types(searchTypeInQuery).query(
-        boolQuery()
-          .must(
-            should(
-              textStringQuery
-            ),
-            must(
-              createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-                creteThemeFilter(filters.theme, "theme") ::: creteThemeFilter(filters.theme, fieldDatasetDcatTheme)
-            ),
-            should(
-              termQuery("dcatapit.privatex", "0"),
-              termQuery("status", "2"),
-              termQuery("published", "2"),
-              termQuery("private", "false")
-            )
-          )
-      ).limit(limitResult)
-    }
-
-    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
-      .aggregations(
-        termsAgg("type", "_type"),
-        termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword"), termsAgg("org_ext", "organization.title.keyword"),
-        termsAgg("cat_cat", "dcatapit.theme.keyword"), termsAgg("cat_ext", "theme.keyword")
-      )
-      .highlighting(listFieldSearch
-        .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
-        .map(x => highlight(x).preTag("<span style='background-color:#0BD9D3'>").postTag("</span>")
-          .fragmentSize(70))
-      )
-
-    val queryAggregationNoCat = queryElasticsearch(0, "ext_opendata")
-      .fetchSource(false)
-      .aggregations(
-        missingAgg("no_category", "theme.keyword")
-      )
-
-    val responseQuery: MultiSearchResponse = client.execute(
-      multi(
-        query,
-        queryAggregationNoCat
-      )
-    ).await(30.seconds)
-
-    client.close()
-
-    val responseMatch: SearchResponse = responseQuery.responses(0)
-    val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-    val responseNoCat: Map[String, AnyRef] = responseQuery.responses(1).aggregations
-
-    val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
-    val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
-
-    searchResults ++ aggregationResults
   }
 
 }
