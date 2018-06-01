@@ -23,6 +23,7 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.{MultiSearchResponse, SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
+import com.sksamuel.elastic4s.analyzers.ItalianLanguageAnalyzer
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
@@ -845,7 +846,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        termsAgg("org_stdash", "org.keyword").size(1000), termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000), termsAgg("org_ext", "organization.title.keyword").size(1000),
+        termsAgg("org_stdash", "org.keyword").size(1000), termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000), termsAgg("org_ext", "organization.name.keyword").size(1000),
         termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000), termsAgg("cat_ext", "theme.keyword").size(1000)
       )
       .highlighting(listFieldSearch
@@ -891,7 +892,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       name -> valueMap
     }
     val listNoCat: Map[String, Int] = responseNoCat.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count")))
-
     val themeAggregation = parseAggrTheme(mapAggr("cat_cat"), mapAggr("cat_ext"), listNoCat)
     val statusAggr = parseAggrStatus(mapAggr("status_dash"), mapAggr("status_st"), mapAggr("status_cat"), mapAggr("status_ext"))
     val orgAggr = parseAggrOrg(mapAggr("org_stdash"), mapAggr("org_cat"), mapAggr("org_ext"))
@@ -925,8 +925,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   private def parseAggrTheme(mapThemeDaf: Map[String, Int], mapThemeOpen: Map[String, Int], mapThemeNoCat: Map[String, Int]) = {
     def extractAggregationTheme(name: String, count: Int): List[(String, Int)] = {
       if(name.contains("theme")){
-        val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).sortWith(_<_).mkString(",")
-        List((themes, count))
+        val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
+        themes.split(",").map(t => (t, count)).toList
       }
       else List((name, count))
     }
