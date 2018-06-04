@@ -24,13 +24,11 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.{MultiSearchResponse, SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.analyzers.ItalianLanguageAnalyzer
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
-import com.sksamuel.elastic4s.searches.queries.matches.{MatchQueryDefinition, MultiMatchQueryDefinition}
-import org.apache.lucene.analysis.it.ItalianAnalyzer
+import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
 import org.elasticsearch.index.query.Operator
 import play.api.{Configuration, Environment, Logger}
 
