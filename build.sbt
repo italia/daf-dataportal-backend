@@ -14,7 +14,7 @@ name := "daf-datipubblici"
 
 //version in ThisBuild := "1.0-alpha.1"
 
-version in ThisBuild := "1.0.2-SNAPSHOT"
+version in ThisBuild := "1.0.3-SNAPSHOT"
 
 val isStaging = System.getProperty("STAGING") != null
 
