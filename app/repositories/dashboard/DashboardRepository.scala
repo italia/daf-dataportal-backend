@@ -29,7 +29,7 @@ trait DashboardRepository {
   def publicDashboardById(id: String): Dashboard
   def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult]
   def searchLast(username: String, groups: List[String]): Seq[SearchResult]
-  def searchLastPublic: Seq[SearchResult]
+  def searchLastPublic(org: Option[String]): Seq[SearchResult]
   def searchTextPublic(filters: Filters): Seq[SearchResult]
   def getDataApp: Seq[DataApp]
 }
