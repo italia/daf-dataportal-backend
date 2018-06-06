@@ -125,7 +125,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(SearchResult(None, None, None))
   }
 
-  def searchLastPublic: Seq[SearchResult] = {
+  def searchLastPublic(org: Option[String]): Seq[SearchResult] = {
     Seq(SearchResult(None, None, None))
   }
 

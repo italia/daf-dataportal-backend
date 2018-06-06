@@ -371,6 +371,14 @@ paths:
         operationId: searchLastPublic
         produces:
         - application/json
+        consumes:
+        - application/json
+        parameters:
+          - name: org
+            in: query
+            description: organization
+            required: false
+            type: string
         responses:
           200:
             description: Successful operation

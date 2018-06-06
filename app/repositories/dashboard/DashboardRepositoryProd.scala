@@ -1,5 +1,6 @@
 package repositories.dashboard
 
+import java.io
 import java.io.File
 import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
@@ -23,7 +24,6 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.{MultiSearchResponse, SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.analyzers.ItalianLanguageAnalyzer
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
@@ -696,23 +696,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
-    def textStringQuery = {
-      filters.text match {
-        case Some("") => List()
-        case Some(searchString) => {
-          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme"))
-            .map(field => matchQuery(field, s))).toList ::: themeQueryString(searchString)
-        }
-        case None => List()
-      }
-    }
-
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
           must(
             should(
-              textStringQuery
+              textStringQuery(filters.text, listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme")))
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
@@ -811,23 +800,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
-    def textStringQuery = {
-      filters.text match {
-        case Some("") => List()
-        case Some(searchString) => {
-          searchString.split(" ").flatMap(s => listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme"))
-            .map(field => matchQuery(field, s))).toList ::: themeQueryString(searchString)
-        }
-        case None => List()
-      }
-    }
-
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
           .must(
             should(
-              textStringQuery
+              textStringQuery(filters.text, listFieldSearch.filterNot(f => f.equals(fieldDatasetDcatTheme) || f.equals("theme")))
             ),
             must(
               createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
@@ -879,6 +857,16 @@ class DashboardRepositoryProd extends DashboardRepository {
     val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
 
     searchResults ++ aggregationResults
+  }
+
+  private def textStringQuery(text: Option[String], listFields: List[String]) = {
+    text match {
+      case Some("") => List()
+      case Some(searchString) => {
+        listFields.map(field => matchQuery(field, searchString)) ::: themeQueryString(searchString)
+      }
+      case None => List()
+    }
   }
 
   private def createAggregationResponse(resAggr: Map[String, AnyRef], responseNoCat: Map[String, AnyRef]): Seq[SearchResult] = {
@@ -1185,8 +1173,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     result ++ wrapAggrResponseHome(resAggr)
   }
 
-  def searchLastPublic: Seq[SearchResult] = {
+  def searchLastPublic(org: Option[String]): Seq[SearchResult] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+    Logger.logger.debug(s"organization: $org")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
@@ -1195,12 +1184,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")
 
-    val queryDataset = queryHomePublic("catalog_test")
-    val queryOpendata = queryHomePublic("ext_opendata")
-    val queryStories = queryHomePublic("stories")
+    val queryDataset = queryHomePublic("catalog_test", org)
+    val queryOpendata = queryHomePublic("ext_opendata", org)
+    val queryStories = queryHomePublic("stories", org)
       .sortByFieldDesc("timestamp.keyword")
       .size(3)
-    val queryAggr = queryHomePublic("")
+    val queryAggr = queryHomePublic("", org)
 
     val resultDataset = executeQueryHome(client, queryDataset, fieldsDataset)
     val resultOpendata = executeQueryHome(client, queryOpendata, fieldsOpenData)
@@ -1234,16 +1223,30 @@ class DashboardRepositoryProd extends DashboardRepository {
     )
   }
 
-  private def queryHomePublic(typeElastic: String) = {
+  private def queryHomePublic(typeElastic: String, org: Option[String]) = {
+    def createTermQueryPublicHomeOrg(org: String) = {
+      should(
+        must(termQuery("dcatapit.owner_org", org), termQuery("dcatapit.privatex", false)),
+        must(termQuery("org", org), termQuery("published", "2")),
+        must(termQuery("organization.name", org), termQuery("private", false))
+      )
+    }
+    def createTermQueryPublicHomeNoOrg = {
+      should(
+        termQuery("dcatapit.privatex", false),
+        termQuery("status", "2"),
+        termQuery("published", "2"),
+        termQuery("private", false)
+      )
+    }
+
     search("ckan").types(typeElastic).query(
       boolQuery()
         .must(
-          should(
-            termQuery("dcatapit.privatex", false),
-            termQuery("status", "2"),
-            termQuery("published", "2"),
-            termQuery("private", false)
-          )
+          org match {
+            case Some(organization) => createTermQueryPublicHomeOrg(organization)
+            case _ => createTermQueryPublicHomeNoOrg
+          }
         )
     )
   }

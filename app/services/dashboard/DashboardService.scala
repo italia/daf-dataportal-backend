@@ -96,8 +96,8 @@ trait DashboardServiceComponent {
       dashboardRepository.searchLast(username, groups)
     }
 
-    def searchLastPublic: Seq[SearchResult] = {
-      dashboardRepository.searchLastPublic
+    def searchLastPublic(org: Option[String]): Seq[SearchResult] = {
+      dashboardRepository.searchLastPublic(org)
     }
 
     def searchTextPublic(filters: Filters): Seq[SearchResult] = {
