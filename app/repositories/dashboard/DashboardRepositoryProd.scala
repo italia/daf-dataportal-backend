@@ -22,7 +22,6 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
-import com.sksamuel.elastic4s.analyzers.{ItalianLanguageAnalyzer, StopAnalyzer}
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
@@ -837,25 +836,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       .aggregations(
         missingAgg("no_category", "theme.keyword")
       )
-
-//    val responseQuery: MultiSearchResponse = client.execute(
-//      multi(
-//        query,
-//        queryAggregationNoCat
-//      )
-//    ).await(30.seconds)
-//
-//    client.close()
-//
-//
-//    val responseMatch: SearchResponse = responseQuery.responses(0)
-//    val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-//    val responseNoCat: Map[String, AnyRef] = if(searchType.equals("") || searchType.contains("ext_opendata"))responseQuery.responses(1).aggregations else Map()
-//
-//    val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
-//    val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
-//
-//    searchResults ++ aggregationResults
 
     val responseFutureQuery: Future[SearchResponse] = client.execute(query)
     val futureSearchResults = wrapResponse(responseFutureQuery, order, searchText, filters.date)
