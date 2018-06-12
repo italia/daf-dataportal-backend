@@ -27,10 +27,10 @@ trait DashboardRepository {
   def storiesPublic(org: Option[String]): Seq[UserStory]
   def dashboardsPublic(org: Option[String]): Seq[Dashboard]
   def publicDashboardById(id: String): Dashboard
-  def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult]
-  def searchLast(username: String, groups: List[String]): Seq[SearchResult]
-  def searchLastPublic(org: Option[String]): Seq[SearchResult]
-  def searchTextPublic(filters: Filters): Seq[SearchResult]
+  def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]]
+  def searchLast(username: String, groups: List[String]): Future[List[SearchResult]]
+  def searchLastPublic(org: Option[String]): Future[List[SearchResult]]
+  def searchTextPublic(filters: Filters): Future[List[SearchResult]]
   def getDataApp: Seq[DataApp]
 }
 
