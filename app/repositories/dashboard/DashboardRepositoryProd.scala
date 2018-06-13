@@ -1,13 +1,11 @@
 package repositories.dashboard
 
-import java.io
 import java.io.File
 import java.net.URL
 import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
 
-import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.mongodb
@@ -22,16 +20,14 @@ import utils.ConfigReader
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Try}
-import com.sksamuel.elastic4s.http.search.{MultiSearchResponse, SearchHit, SearchResponse}
+import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
 import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.ElasticDsl._
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
-import com.sksamuel.elastic4s.searches.queries.matches.MatchQueryDefinition
 import org.elasticsearch.index.query.Operator
 import play.api.{Configuration, Environment, Logger}
-
 
 /**
   * Created by ale on 14/04/17.
@@ -655,7 +651,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     dataApp
   }
 
-  def searchText(filters: Filters, username: String, groups: List[String]): Seq[SearchResult] = {
+  def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -741,26 +737,28 @@ class DashboardRepositoryProd extends DashboardRepository {
         missingAgg("no_category", "theme.keyword")
       )
 
-    val responseQuery: MultiSearchResponse = client.execute(
-      multi(
-        query,
-        queryAggregationNoCat
-      )
-    ).await(30.seconds)
+    val responseFutureQuery: Future[SearchResponse] = client.execute(query)
+    val futureSearchResults = wrapResponse(responseFutureQuery, order, searchText, filters.date)
 
-    client.close()
+    val futureMapAggregation: Future[Map[String, AnyRef]] = responseFutureQuery.map(r => r.aggregations)
 
-    val responseMatch: SearchResponse = responseQuery.responses(0)
-    val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-    val responseNoCat: Map[String, AnyRef] =  if(searchType.equals("") || searchType.contains("ext_opendata"))responseQuery.responses(1).aggregations else Map()
+    val responseFutureQueryNoCat: Option[Future[Map[String, AnyRef]]] = searchType match {
+      case "" => Some(client.execute(queryAggregationNoCat).map(q => q.aggregations))
+      case "ext_opendata" => Some(client.execute(queryAggregationNoCat).map(q => q.aggregations))
+      case _ => None
+    }
 
-    val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
-    val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
+    val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
-    searchResults ++ aggregationResults
+    val response = for{
+      searchResult <- futureSearchResults
+      aggregationResult <- futureAggregationResults
+    } yield searchResult ::: aggregationResult
+
+    response
   }
 
-  def searchTextPublic(filters: Filters): Seq[SearchResult] = {
+  def searchTextPublic(filters: Filters): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client: HttpClient = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -839,78 +837,104 @@ class DashboardRepositoryProd extends DashboardRepository {
         missingAgg("no_category", "theme.keyword")
       )
 
-    val responseQuery: MultiSearchResponse = client.execute(
-      multi(
-        query,
-        queryAggregationNoCat
-      )
-    ).await(30.seconds)
+    val responseFutureQuery: Future[SearchResponse] = client.execute(query)
+    val futureSearchResults = wrapResponse(responseFutureQuery, order, searchText, filters.date)
 
-    client.close()
+    val futureMapAggregation: Future[Map[String, AnyRef]] = responseFutureQuery.map(r => r.aggregations)
 
+    val responseFutureQueryNoCat: Option[Future[Map[String, AnyRef]]] = searchType match {
+      case "" => Some(client.execute(queryAggregationNoCat).map(q => q.aggregations))
+      case "ext_opendata" => Some(client.execute(queryAggregationNoCat).map(q => q.aggregations))
+      case _ => None
+    }
+    val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
-    val responseMatch: SearchResponse = responseQuery.responses(0)
-    val responseAggr: Map[String, AnyRef] = responseQuery.responses(0).aggregations
-    val responseNoCat: Map[String, AnyRef] = if(searchType.equals("") || searchType.contains("ext_opendata"))responseQuery.responses(1).aggregations else Map()
+    val response = for{
+      searchResult <- futureSearchResults
+      aggregationResult <- futureAggregationResults
+    } yield searchResult ::: aggregationResult
 
-    val searchResults = wrapResponse(responseMatch, order, searchText, filters.date)
-    val aggregationResults = createAggregationResponse(responseAggr, responseNoCat)
-
-    searchResults ++ aggregationResults
+    response
   }
 
   private def textStringQuery(text: Option[String], listFields: List[String]) = {
+    def setOperator(str: String) = {
+      if(str.charAt(0) == '\"' && str.last == '\"') "AND"
+      else "OR"
+    }
     text match {
       case Some("") => List()
       case Some(searchString) => {
-        listFields.map(field => matchQuery(field, searchString)) ::: themeQueryString(searchString)
+        listFields
+          .map(field =>
+            matchQuery(field, searchString)
+              .operator(setOperator(searchString))) ::: themeQueryString(searchString)
       }
       case None => List()
     }
   }
 
-  private def createAggregationResponse(resAggr: Map[String, AnyRef], responseNoCat: Map[String, AnyRef]): Seq[SearchResult] = {
-    val mapAggr = resAggr.map{ elem =>
-      val name = elem._1
-      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
-        .map(elem =>
-          wrapAggrResp(elem.values.toList)
-        )
-        .map(v => v._1 -> v._2).toMap
-      name -> valueMap
+  private def createAggregationResponse(resAggr: Future[Map[String, AnyRef]], responseNoCat: Option[Future[Map[String, AnyRef]]]) = {
+    val  futureMapAggr: Future[Map[String, Map[String, Int]]] = resAggr
+      .map(mapAggr =>
+        mapAggr
+          .map{ elem =>
+            val name = elem._1
+            val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+              .map(elemMap =>
+                wrapAggrResp(elemMap.values.toList)
+              ).map(v => v._1 -> v._2).toMap
+            name -> valueMap
+          }
+    )
+
+    val futureMapNoCat: Future[Map[String, Int]] = responseNoCat match {
+      case Some(futureRespNoCat) => futureRespNoCat.map(mapNoCat => mapNoCat.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count"))))
+      case None => Future(Map[String, Int]())
     }
-    val listNoCat: Map[String, Int] = responseNoCat.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count")))
-    val themeAggregation = parseAggrTheme(mapAggr("cat_cat"), mapAggr("cat_ext"), listNoCat)
-    val statusAggr = parseAggrStatus(mapAggr("status_dash"), mapAggr("status_st"), mapAggr("status_cat"), mapAggr("status_ext"))
-    val orgAggr = parseAggrOrg(mapAggr("org_stdash"), mapAggr("org_cat"), mapAggr("org_ext"))
-    val typeAggr = parseAggrType(mapAggr("type"))
 
-    Seq(typeAggr, statusAggr, orgAggr, themeAggregation)
+    val futureRespAggr = for{
+      futureThemeAggr <- parseAggrTheme(futureMapAggr, futureMapNoCat)
+      futureStatusAggr <- parseAggrStatus(futureMapAggr)
+      futureOrgAggr <- parseAggrOrg(futureMapAggr)
+      futureTypeAggr <- parseAggrType(futureMapAggr)
+    }yield List(futureTypeAggr, futureStatusAggr, futureOrgAggr, futureThemeAggr)
+
+    futureRespAggr
   }
 
-  private def parseAggrType(typeAggr: Map[String, Int]) = {
-    SearchResult(Some("type"), Some("{" + mergeAggr(typeAggr.toList).mkString(",") + "}"), None)
+  private def parseAggrType(futureMapAggr: Future[Map[String, Map[String, Int]]]) = {
+    futureMapAggr.map(mapAggr => SearchResult(Some("type"), Some("{" + mergeAggr(mapAggr("type").toList).mkString(",") + "}"), None))
   }
 
-  private def parseAggrOrg(orgDashSt: Map[String, Int], orgCat: Map[String, Int], orgExt: Map[String, Int]) = {
-    val listAggrOrg = orgDashSt.toList ++ orgCat.toList ++ orgExt.toList
-    SearchResult(Some("organization"), Some("{" + mergeAggr(listAggrOrg).mkString(",") + "}"), None)
+  private def parseAggrOrg(futureMapAggr: Future[Map[String, Map[String, Int]]]) = {
+    val futureListAggrOrg = for{
+      orgCat <- futureMapAggr.map(mapAggr => mapAggr("org_cat").toList)
+      orgExt <- futureMapAggr.map(mapAggr => mapAggr("org_ext").toList)
+      orgStDash <- futureMapAggr.map(mapAggr => mapAggr("org_stdash").toList)
+    } yield orgCat ::: orgExt ::: orgStDash
+
+    futureListAggrOrg.map(listAggrOrg => SearchResult(Some("organization"), Some("{" + mergeAggr(listAggrOrg).mkString(",") + "}"), None))
   }
 
-  private def parseAggrStatus(statusDash: Map[String, Int], statusSt: Map[String, Int], statusCat: Map[String, Int], statusExt: Map[String, Int]) = {
+  private def parseAggrStatus(futureMapAggr: Future[Map[String, Map[String, Int]]]): Future[SearchResult] = {
     def convertAggrDataset(mapStatus: Map[String, Int]) = {
       val countTrue: Int = mapStatus.getOrElse("true", 0)
       val countFalse: Int = mapStatus.getOrElse("false", 0)
       Map("0" -> countTrue, "1" -> countTrue, "2" -> countFalse)
     }
-    val aggrCat = convertAggrDataset(statusCat)
-    val aggrExt = convertAggrDataset(statusExt)
 
-    val listStatus = aggrCat.toList ++ aggrExt.toList ++ statusDash.toList ++ statusSt.toList
-    SearchResult(Some("status"), Some("{" + mergeAggr(listStatus).mkString(",") + "}"), None)
+    val futureListStatus = for {
+      aggrCat <- futureMapAggr.map(mapAggr => convertAggrDataset(mapAggr("status_cat")).toList)
+      aggrExt <- futureMapAggr.map(mapAggr => convertAggrDataset(mapAggr("status_ext")).toList)
+      aggrDash <- futureMapAggr.map(mapAggr => mapAggr("status_dash").toList)
+      aggrSt <- futureMapAggr.map(mapAggr => mapAggr("status_st").toList)
+    }yield aggrCat ::: aggrExt ::: aggrDash ::: aggrSt
+
+    futureListStatus.map(listStatus => SearchResult(Some("status"), Some("{" + mergeAggr(listStatus).mkString(",") + "}"), None))
   }
 
-  private def parseAggrTheme(mapThemeDaf: Map[String, Int], mapThemeOpen: Map[String, Int], mapThemeNoCat: Map[String, Int]) = {
+  private def parseAggrTheme(futureMapAggr: Future[Map[String, Map[String, Int]]], futureMapNoCat: Future[Map[String, Int]]): Future[SearchResult] = {
     def extractAggregationTheme(name: String, count: Int): List[(String, Int)] = {
       if(name.contains("theme")){
         val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
@@ -918,18 +942,28 @@ class DashboardRepositoryProd extends DashboardRepository {
       }
       else List((name, count))
     }
-    val listThemeOpen: List[(String, Int)] = mapThemeOpen.toList.flatMap(elem => extractAggregationTheme(elem._1, elem._2))
-    val countNoThemeOpen = listThemeOpen.filter(elem => elem._1.equals("[]") || elem._1.equals("")).map(elem => elem._2).sum
-    val listNoTheme = List(("no_category", mapThemeNoCat.values.sum + countNoThemeOpen))
-    val listThemes = listThemeOpen.filterNot(elem => elem._1.equals("[]") || elem._1.equals("")) ++ mapThemeDaf.toList ++ listNoTheme
-    SearchResult(Some("category"), Some("{" + mergeAggr(listThemes.filterNot(elem => elem._2 == 0)).mkString(",") + "}"), None)
+
+    val futureListThemeOpen: Future[List[(String, Int)]] = futureMapAggr.map(mapAggr => mapAggr("cat_cat").toList.flatMap(elem => extractAggregationTheme(elem._1, elem._2)))
+    val futureCountNoThemeOpen: Future[Int] = futureListThemeOpen.map(listThemeOpen => listThemeOpen.filter(elem => elem._1.equals("[]") || elem._1.equals("")).map(elem => elem._2).sum)
+    val futureListNoTheme = for{
+      mapThemeNoCat <- futureMapNoCat
+      countNoThemeOpen <- futureCountNoThemeOpen
+    }  yield List(("no_category", mapThemeNoCat.values.sum + countNoThemeOpen))
+
+    val futureListThemes: Future[List[(String, Int)]] = for {
+      mapThemeDaf <- futureMapAggr.map(mapAggr => mapAggr("cat_cat").toList)
+      listNoTheme <- futureListNoTheme
+      listThemeOpen <- futureListThemeOpen.map(listThemeExt => listThemeExt.filterNot(elem => elem._1.equals("[]") || elem._1.equals("")))
+    }yield listThemeOpen ::: mapThemeDaf ::: listNoTheme
+
+    futureListThemes.map(listThemes => SearchResult(Some("category"), Some("{" + mergeAggr(listThemes.filterNot(elem => elem._2 == 0)).mkString(",") + "}"), None))
   }
 
   private def mergeAggr(listAggr: List[(String, Int)]) = {
     listAggr.groupBy(_._1).toList.sortBy(_._1).map{case (k, v) => s""""$k": "${v.map(_._2).sum}""""}
   }
 
-  private def themeQueryString(search: String): List[MatchQueryDefinition] = {
+  private def themeQueryString(search: String): List[QueryDefinition] = {
     val mapTheme: Map[String, String] = Map(
       "agricoltura" -> "AGRI",
       "economia" -> "ECON",
@@ -947,12 +981,11 @@ class DashboardRepositoryProd extends DashboardRepository {
     )
 
     val searchTheme = search.split(" ").map(s =>
-      if(mapTheme.contains(s.toLowerCase)) mapTheme(s.toLowerCase)
-      else ""
+      mapTheme.getOrElse(s, "")
     ).toList.filterNot(s => s.equals(""))
 
     if(searchTheme.nonEmpty)
-      searchTheme.flatMap(s => List(matchQuery("dcatapit.theme", s), matchQuery("theme", s)))
+      searchTheme.flatMap(s => List(termQuery("dcatapit.theme", s), matchQuery("theme", s)))
     else
       List()
   }
@@ -1014,10 +1047,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     List(should(result))
   }
 
-  private def filterDate(tupleDateSearchResult: List[(String, SearchResult)], timestamp: String): List[(String, SearchResult)] = {
+  private def filterDate(futureTupleSearchResults: Future[List[(String, SearchResult)]], timestamp: String): Future[List[(String, SearchResult)]] = {
     val start = timestamp.split(" ")(0)
     val end = timestamp.split(" ")(1)
-    tupleDateSearchResult.filter(result => (result._1 >= start) && (result._1 <= end))
+    futureTupleSearchResults.map(tupleSearchResults => tupleSearchResults.filter(result => (result._1 >= start) && (result._1 <= end)))
   }
 
   private def themeFormatter(json: JsValue): String = {
@@ -1067,29 +1100,27 @@ class DashboardRepositoryProd extends DashboardRepository {
     SearchResult(Some(source.`type`), Some(sourceResponse), highlight)
   }
 
-  private def wrapResponse(query: SearchResponse, order: String, search: Boolean, timestamp: Option[String]): Seq[SearchResult] = {
-    val seqSearchResult: Seq[SearchResult] = query.hits.hits.map(source =>
-      createSearchResult(source, search)
-    ).toSeq
-
-    val tupleDateSearchResult: List[(String, SearchResult)] = seqSearchResult.map(x =>
-      (extractDate(x.`type`.get, x.source.get), x)
-    ).toList
+  private def wrapResponse(query: Future[SearchResponse], order: String, search: Boolean, timestamp: Option[String]): Future[List[SearchResult]] = {
+    val futureTupleSearchResult: Future[List[(String, SearchResult)]] = query.map(q =>
+      q.hits.hits.map(source =>
+        createSearchResult(source, search)
+      ).toList.map(searchResult => (extractDate(searchResult.`type`.get, searchResult.source.get), searchResult))
+    )
 
     val res = timestamp match {
-      case Some("") => tupleDateSearchResult
-      case Some(x) => filterDate(tupleDateSearchResult, x)
-      case None => tupleDateSearchResult
+      case Some("") => futureTupleSearchResult
+      case Some(x) => filterDate(futureTupleSearchResult, x)
+      case None => futureTupleSearchResult
     }
 
     val result = order match {
       case "score" => res
-      case "asc" => res.sortWith(_._1 < _._1)
-      case _ => res.sortWith(_._1 > _._1)
+      case "asc" => res.map(r => r.sortWith(_._1 < _._1))
+      case _ => res.map(r => r.sortWith(_._1 > _._1))
     }
 
-    val toReturn = result.map(elem => elem._2)
-    Logger.logger.debug(s"find ${toReturn.size} results")
+    val toReturn = result.map(r => r.map(elem => elem._2))
+    toReturn onComplete (r => Logger.logger.debug(s"find ${r.getOrElse(List()).size}"))
     toReturn
   }
 
@@ -1138,8 +1169,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     fields
   }
 
-  def searchLast(username: String, groups: List[String]): Seq[SearchResult] = {
-
+  def searchLast(username: String, groups: List[String]) = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -1159,21 +1189,25 @@ class DashboardRepositoryProd extends DashboardRepository {
       .size(3)
     val queryAggr = queryHome("", username, groups)
 
-    val resultDataset = executeQueryHome(client, queryDataset, fieldsDataset)
-    val resultOpendata = executeQueryHome(client, queryOpendata, fieldsOpenData)
-    val resultDash = executeQueryHome(client, queryDash, fieldsDash)
-    val resultStories = executeQueryHome(client, queryStories, fieldsStories)
-    val resAggr = executeAggrQueryHome(client, queryAggr)
+    val resultFutureDataset: Future[SearchResponse] = executeQueryHome(client, queryDataset, fieldsDataset)
+    val resultFutureOpendata: Future[SearchResponse] = executeQueryHome(client, queryOpendata, fieldsOpenData)
+    val resultFutureDash: Future[SearchResponse] = executeQueryHome(client, queryDash, fieldsDash)
+    val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
+    val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
-    client.close()
+    val result = for{
+      resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
+      resFutureStories <- wrapResponseHome(resultFutureStories)
+      resFutureDash <- wrapResponseHome(resultFutureDash)
+      resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
+    } yield resFutureDataset ::: resFutureStories ::: resFutureDash ::: resFutureAggr
 
-    val responseDataset = extractAllLastDataset(wrapResponseHome(resultDataset), wrapResponseHome(resultOpendata))
-    val result = responseDataset ++ wrapResponseHome(resultDash) ++ wrapResponseHome(resultStories)
-    Logger.logger.debug(s"find ${result.size} results")
-    result ++ wrapAggrResponseHome(resAggr)
+    result onComplete(r => Logger.logger.debug(s"find ${r.getOrElse(List()).size} results"))
+
+    result
   }
 
-  def searchLastPublic(org: Option[String]): Seq[SearchResult] = {
+  def searchLastPublic(org: Option[String]) = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
     Logger.logger.debug(s"organization: $org")
 
@@ -1191,17 +1225,19 @@ class DashboardRepositoryProd extends DashboardRepository {
       .size(3)
     val queryAggr = queryHomePublic("", org)
 
-    val resultDataset = executeQueryHome(client, queryDataset, fieldsDataset)
-    val resultOpendata = executeQueryHome(client, queryOpendata, fieldsOpenData)
-    val resultStories = executeQueryHome(client, queryStories, fieldsStories)
-    val resAggr = executeAggrQueryHome(client, queryAggr)
+    val resultFutureDataset: Future[SearchResponse] = executeQueryHome(client, queryDataset, fieldsDataset)
+    val resultFutureOpendata: Future[SearchResponse] = executeQueryHome(client, queryOpendata, fieldsOpenData)
+    val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
+    val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
-    client.close()
+    val result: Future[List[SearchResult]] = for{
+      resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
+      resFutureStories <- wrapResponseHome(resultFutureStories)
+      resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
+    }yield resFutureDataset ::: resFutureStories ::: resFutureAggr
 
-    val responseDataset = extractAllLastDataset(wrapResponseHome(resultDataset), wrapResponseHome(resultOpendata))
-    val result = responseDataset ++ wrapResponseHome(resultStories)
-    Logger.logger.debug(s"find ${result.size} results")
-    result ++ wrapAggrResponseHome(resAggr)
+    result onComplete (r => Logger.logger.debug(s"find ${r.getOrElse(List()).size} results"))
+    result
   }
 
   private def queryHome(typeElastic: String, username: String, groups: List[String]) = {
@@ -1258,37 +1294,43 @@ class DashboardRepositoryProd extends DashboardRepository {
     listDateDatasetDaf.sortWith(_._1 > _._1).take(3)
   }
 
-  private def extractAllLastDataset(seqDatasetDaf: Seq[SearchResult], seqDatasetOpen: Seq[SearchResult]) = {
-    val lastDatasetDaf = extractLastDataset(seqDatasetDaf)
-    val lastDatasetOpen = extractLastDataset(seqDatasetOpen)
-    (lastDatasetDaf ++ lastDatasetOpen).sortWith(_._1 > _._1).take(3).map(d => d._2)
+  private def extractAllLastDataset(seqDatasetDaf: Future[Seq[SearchResult]], seqDatasetOpen: Future[List[SearchResult]]) = {
+    val listDaf: Future[List[(String, SearchResult)]] = seqDatasetDaf map (daf => extractLastDataset(daf))
+    val listOpen: Future[List[(String, SearchResult)]] = seqDatasetOpen map (open => extractLastDataset(open))
+    val listDataset: Future[List[(String, SearchResult)]] = mergeListFuture(listDaf, listOpen)
+    val result: Future[List[SearchResult]] = listDataset map (l => l.sortBy(_._1).take(3).map(elem => elem._2))
+    result
   }
 
-  private def executeAggrQueryHome(client: HttpClient, query: SearchDefinition): SearchResponse = {
-    client.execute(query.aggregations(termsAgg("type", "_type"))).await
+  private def mergeListFuture(listDaf: Future[List[(String, SearchResult)]], listOpen: Future[List[(String, SearchResult)]]): Future[List[(String, SearchResult)]] = {
+    for{
+      daf <- listDaf
+      open <- listOpen
+    } yield daf ::: open
   }
 
-  private def executeQueryHome(client: HttpClient, query: SearchDefinition, field: List[String]): SearchResponse = {
-    client.execute(query.sourceInclude(field)).await
+  private def executeAggrQueryHome(client: HttpClient, query: SearchDefinition): Future[SearchResponse] = {
+    client.execute(query.aggregations(termsAgg("type", "_type")))
   }
 
-  private def wrapAggrResponseHome(query: SearchResponse) = {
-    val mapAggregation: Map[String, Map[String, Int]] = query.aggregations.map{ elem =>
+  private def executeQueryHome(client: HttpClient, query: SearchDefinition, field: List[String]): Future[SearchResponse] = {
+    client.execute(query.sourceInclude(field))
+  }
+
+  private def wrapAggrResponseHome(query: Future[SearchResponse]) = {
+   query map(q => q.aggregations.map{ elem =>
       val name = elem._1
-      val valueMap: Map[String, Int] = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
-        .map(elem =>
-          wrapAggrResp(elem.values.toList)
-        )
-        .map(v => v._1 -> v._2).toMap
+      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+        .map(bucket => wrapAggrResp(bucket.values.toList)).map(v => v._1 -> v._2).toMap
       name -> valueMap
-    }
-    mapAggregation.map(elem => SearchResult(Some(elem._1), Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None))
+        }.map(elem =>SearchResult(Some(elem._1),Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None)).toList
+      )
   }
 
-  private def wrapResponseHome(query: SearchResponse): Seq[SearchResult] = {
-    query.hits.hits.map(source =>
+  private def wrapResponseHome(query: Future[SearchResponse]): Future[List[SearchResult]] = {
+    query map (q => q.hits.hits.map(source =>
       createSearchResult(source, false)
-    ).toSeq
+    ).toList)
   }
 
 }
