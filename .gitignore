@@ -22,7 +22,6 @@ server.pid
 *.eml
 *.sc
 /localConfigs/*
-/conf/production.conf
 /conf/integration.conf
 /conf/testExt.conf
 /conf/testEnv.conf
