@@ -21,7 +21,7 @@ test-result
 server.pid
 *.eml
 *.sc
-/conf/production.conf
+*/localConfigs/*
 /conf/integration.conf
 /conf/testExt.conf
 /conf/testEnv.conf
