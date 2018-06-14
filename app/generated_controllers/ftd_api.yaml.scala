@@ -56,7 +56,9 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+
+
+  
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -476,6 +478,11 @@ package ftd_api.yaml {
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
+        val getDataApplications = getDataApplicationsAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplications
+            GetDataApplications200(DashboardRegistry.dashboardService.getAllDataApp)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplications
+        }
         val kyloSystemName = kyloSystemNameAction { (name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
             val systemUrl = ConfigReader.kyloSystemUrl
@@ -590,12 +597,6 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletedashboard
             Deletedashboard200(DashboardRegistry.dashboardService.deleteDashboard(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletedashboard
-        }
-        val getDataApplication = getDataApplicationAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplication
-            //            GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
-          GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplication
         }
         val kyloInferschema = kyloInferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
@@ -718,6 +719,15 @@ package ftd_api.yaml {
    // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
    NotImplementedYet
    // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getDataApplication
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplication
+            //            GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
+          GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplication
      */
 
     

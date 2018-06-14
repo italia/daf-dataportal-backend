@@ -133,8 +133,8 @@ class DashboardRepositoryDev extends DashboardRepository {
     Future(List(SearchResult(None, None, None)))
   }
 
-  def getDataApp: Seq[DataApp] = {
-    Seq(DataApp(None, None, None, None))
+  def getAllDataApp: Seq[DataApp] = {
+    Seq(DataApp(None, None, None, None, None, None))
   }
 
 }

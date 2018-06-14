@@ -418,12 +418,12 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
-  "/public/data-application":
+  "/public/data-applications":
     get:
       tag:
       - data-application
-      summary: return the data-application saved in db
-      operationId: getDataApplication
+      summary: return the data-applications saved in db
+      operationId: getDataApplications
       produces:
       - application/json
       responses:
@@ -1479,11 +1479,23 @@ definitions:
     properties:
       title:
         type: string
-      url:
+      applicationURL:
         type: string
-      creator:
+      previewBase64:
+        type: string
+      author:
         type: string
       description:
+        type: string
+      sharingLinks:
+        type: object
+        $ref: '#/definitions/SharingLinks'
+  SharingLinks:
+    type: object
+    properties:
+      medium:
+        type: string
+      github:
         type: string
   SearchResult:
     type: object
