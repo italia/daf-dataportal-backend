@@ -629,13 +629,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     dash.status.getOrElse(-1) == 2
   }
 
-  def getDataApp: Seq[DataApp] = {
+  def getAllDataApp: Seq[DataApp] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
 
     Logger.logger.debug(s"mongodb address: ${mongoClient.address}")
 
-    val coll = db("data_application")
+    val coll = db("data_applications")
     val result = coll.find().toList
     mongoClient.close()
     val jsonString = com.mongodb.util.JSON.serialize(result)
