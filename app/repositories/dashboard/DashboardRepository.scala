@@ -31,7 +31,7 @@ trait DashboardRepository {
   def searchLast(username: String, groups: List[String]): Future[List[SearchResult]]
   def searchLastPublic(org: Option[String]): Future[List[SearchResult]]
   def searchTextPublic(filters: Filters): Future[List[SearchResult]]
-  def getDataApp: Seq[DataApp]
+  def getAllDataApp: Seq[DataApp]
 }
 
 object DashboardRepository {

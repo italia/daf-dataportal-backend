@@ -103,8 +103,8 @@ trait DashboardServiceComponent {
       dashboardRepository.searchTextPublic(filters)
     }
 
-    def getDataApp: Seq[DataApp] = {
-      dashboardRepository.getDataApp
+    def getAllDataApp: Seq[DataApp] = {
+      dashboardRepository.getAllDataApp
     }
   }
 }
