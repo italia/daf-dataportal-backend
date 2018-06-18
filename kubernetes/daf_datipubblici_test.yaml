@@ -106,3 +106,5 @@ spec:
 #      - name: hadoopconf
 #        hostPath:
 #          path: /etc/hadoop/conf
+      nodeSelector:
+        nifi: "false"

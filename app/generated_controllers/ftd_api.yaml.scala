@@ -478,7 +478,7 @@ package ftd_api.yaml {
         }
         val getDataApplications = getDataApplicationsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplications
-            GetDataApplications200(DashboardRegistry.dashboardService.getAllDataApp)
+            GetDataApplications200(DashboardRegistry.dashboardSevice.getAllDataApp)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplications
         }
         val kyloSystemName = kyloSystemNameAction { (name: String) =>  
