@@ -259,10 +259,12 @@ class DashboardRepositoryProd extends DashboardRepository {
         }
       })
 
-      iframes.filter {
+      val filtered = iframes.filter {
         case DashboardIframes(Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => true
         case _ => false
       }
+      filtered.sortWith((a,b) => (a.identifier.get > b.identifier.get))
+
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
