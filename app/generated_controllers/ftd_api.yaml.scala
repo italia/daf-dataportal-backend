@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+            
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -480,7 +480,7 @@ package ftd_api.yaml {
         }
         val getDataApplications = getDataApplicationsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplications
-            GetDataApplications200(DashboardRegistry.dashboardSevice.getAllDataApp)
+            GetDataApplications200(DashboardRegistry.dashboardService.getAllDataApp)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplications
         }
         val kyloSystemName = kyloSystemNameAction { (name: String) =>  
