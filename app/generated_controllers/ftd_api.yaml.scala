@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+            
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
