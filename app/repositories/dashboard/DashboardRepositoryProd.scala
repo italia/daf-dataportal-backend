@@ -291,7 +291,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
 
 
-     val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
+  /*   val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
 
        Logger.debug(s"tMetabase iframe response: $json")
@@ -317,9 +317,9 @@ class DashboardRepositoryProd extends DashboardRepository {
         DashboardIframes( Some("grafana_" + id.toString), Some(url),None,Some("grafana"), Some(title), None)
       })
     }
+*/
 
-
-    val services  = List(test, superset, grafana, tdMetabase)
+    val services  = List(test, superset) //, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
