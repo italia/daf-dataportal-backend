@@ -96,6 +96,14 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   }
 
+  private def extractToInt(indentifier :String): Int = {
+    try {
+      indentifier.split("_")(1).toInt
+    } catch {
+      case e: Exception => 0
+    }
+  }
+
   def save(upFile: File, tableName: String, fileType: String): Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
@@ -263,8 +271,10 @@ class DashboardRepositoryProd extends DashboardRepository {
         case DashboardIframes(Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => true
         case _ => false
       }
-      filtered.sortWith((a,b) => (a.identifier.get > b.identifier.get))
 
+      val res = filtered.sortWith((a,b) => (extractToInt(a.identifier.get) > extractToInt(b.identifier.get)))
+
+      res
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
