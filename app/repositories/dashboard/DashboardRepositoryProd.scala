@@ -294,7 +294,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
 
 
-    val test: Future[Seq[DashboardIframes]] = for {
+    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
         iframes <- metabase
         iframesWithTable <- metabaseTableInfo(iframes)
     } yield iframesWithTable
@@ -329,7 +329,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 */
 
-    val services  = List(test, superset) //, grafana, tdMetabase)
+    val services  = List(superset, metabaseWithTables) //, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
