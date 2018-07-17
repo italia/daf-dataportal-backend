@@ -26,6 +26,8 @@ class ProxyController @Inject()(ws: WSClient,
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
 
+  private val kafkaUrl = ConfigReader.getKafkaProxyUrl
+
   val server = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
 
@@ -89,6 +91,18 @@ class ProxyController @Inject()(ws: WSClient,
     val jsonString = com.mongodb.util.JSON.serialize(datasets)
     val json = Json.parse(jsonString)
     Ok(json)
+  }
+
+
+  def dafKafkaProxy(action: String) = Action.async { implicit request =>
+    val headerString = request.headers.headers.map{ case (k, v) => (k, v)}.toMap
+    val responseWs = ws.url(kafkaUrl + "/" + action)
+      .withHeaders(headerString.updated("Content-Type", "application/vnd.kafka.v2+json").toList: _*)
+      .post(request.body.asJson.get)
+
+    responseWs.map { response =>
+      Ok(response.body).as("application/json")
+    }
   }
 
 

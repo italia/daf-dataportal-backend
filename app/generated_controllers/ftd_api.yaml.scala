@@ -24,6 +24,7 @@ import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
+import services.push_notification.PushNotificationRegistry
 import play.api.Configuration
 import it.gov.daf.common.utils.WebServiceUtil
 import play.api.libs.ws.WSClient
@@ -56,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                    
+                                                                                                        
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -323,6 +324,22 @@ package ftd_api.yaml {
           Snapshotbyid200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
         }
+        val createSubscription = createSubscriptionAction { (subscription: Subscription) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createSubscription
+            val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+            val resp: Future[Either[Error, Success]] = PushNotificationRegistry.pushNotificationService.save(user, subscription)
+            resp.flatMap{
+              case Right(r) => CreateSubscription200(r)
+              case Left(l) => CreateSubscription500(l)
+            }
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.createSubscription
+        }
+        val deleteSubscription = deleteSubscriptionAction { (pushNotification: Subscription) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
+        }
         val deleteDataApplication = deleteDataApplicationAction { (data_app: DataApp) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
             NotImplementedYet
@@ -575,6 +592,12 @@ package ftd_api.yaml {
       UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
         }
+        val getSubscriptions = getSubscriptionsAction { (user: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getSubscriptions
+            GetSubscriptions200(PushNotificationRegistry.pushNotificationService.getSubscriptions(user))
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getSubscriptions
+        }
         val deletestory = deletestoryAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletestory
             Deletestory200(DashboardRegistry.dashboardService.deleteStory(story_id))
@@ -706,6 +729,14 @@ package ftd_api.yaml {
      */
 
     
+     // Dead code for absent methodFtd_apiYaml.subscribeP
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.subscribeP
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.subscribeP
+     */
+
+    
      // Dead code for absent methodFtd_apiYaml.deleteDataApp
      /*
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApp
@@ -719,6 +750,14 @@ package ftd_api.yaml {
    // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
    NotImplementedYet
    // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getSubscription
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getSubscription
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getSubscription
      */
 
     
