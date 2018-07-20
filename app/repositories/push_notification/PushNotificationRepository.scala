@@ -1,12 +1,15 @@
 package repositories.push_notification
 
-import ftd_api.yaml.{Error, Subscription, Success}
+import ftd_api.yaml.{Error, Subscription, Success, Notification}
 
 import scala.concurrent.Future
 
 trait PushNotificationRepository {
-  def save(user: String, subscription: Subscription): Future[Either[Error, Success]]
+  def saveSubscription(user: String, subscription: Subscription): Future[Either[Error, Success]]
   def getSubscriptions(user: String): Future[Seq[Subscription]]
+  def saveNotifications(notification: Notification): Future[Either[Error, Success]]
+  def updateNotifications(notifications: Seq[Notification]): Future[Either[Error, Success]]
+  def getAllNotifications(user: String): Future[Seq[Notification]]
 
 }
 
