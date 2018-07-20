@@ -1451,7 +1451,119 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-
+  "/notifications/{user}":
+    get:
+      tags:
+      - PushNotification
+      summary: get all notifications for the user
+      operationId: getAllNotifications
+      produces:
+        - applicaton/json
+      parameters:
+      - name: user
+        in: path
+        description: user
+        required: true
+        type: string
+      responses:
+        200:
+          description: set of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+      - PushNotification
+      summary: delete a notification for the user
+      operationId: deleteAllNotifications
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+      - name: user
+        in: path
+        description: the user
+        required: true
+        type: string
+      - name: notifation
+        in: body
+        description: the notification to delete
+        required: true
+        schema:
+          $ref: '#/definitions/Notification'
+      responses:
+        200:
+          description: notification
+          schema:
+            $ref: '#/definitions/Notification'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/notification/save":
+    post:
+      tags:
+      - PushNotification
+      summary: save notification in payload
+      operationId: saveNotification
+      consumes:
+      - application/json
+      parameters:
+      - name: notification
+        in: body
+        description: notification to save
+        required: true
+        schema:
+          $ref: '#/definitions/Notification'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        500:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/update":
+    post:
+      tags:
+      - PushNotification
+      summary: update notifications in payload
+      operationId: updateNotifications
+      consumes:
+      - application/json
+      parameters:
+      - name: notifications
+        in: body
+        description: array of notification to save
+        required: true
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/Notification'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Success"
+        500:
+          description: error in update notifications
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -1513,6 +1625,31 @@ definitions:
       table:
         type: string
       viz_type:
+        type: string
+  Notification:
+    type: object
+    properties:
+      notificationtype:
+        type: string
+      user:
+        type: string
+      timestamp:
+        type: string
+      status:
+        type: integer
+        format: int32
+      offset:
+        type: integer
+        format: int32
+      info:
+        type: object
+        $ref: '#/definitions/InfoNotification'
+  InfoNotification:
+    type: object
+    properties:
+      name:
+        type: string
+      title:
         type: string
   Filters:
     type: object
@@ -1767,7 +1904,6 @@ definitions:
         type: string
       url:
         type: string
-#  PushNotification:
   Subscription:
     type: object
     required:
@@ -1781,8 +1917,6 @@ definitions:
       keys:
         type: object
         $ref: '#/definitions/KeysType'
-      auth:
-        type: string
   KeysType:
     type: object
     required:
