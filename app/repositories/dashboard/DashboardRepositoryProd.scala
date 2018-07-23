@@ -262,7 +262,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
             DashboardIframes( Some("superset_" + slice_id.toString), Some(url),Some(vizType), Some("superset"), Some(title), Some(table) )
           } catch {
-            case e: Exception => e.printStackTrace(); /*println(x);println("ERROR"); */ DashboardIframes(None, None, None, None, None, None)
+            case e: Exception => /*e.printStackTrace(); println(x);println("ERROR"); */ DashboardIframes(None, None, None, None, None, None)
           }
         }
       })
