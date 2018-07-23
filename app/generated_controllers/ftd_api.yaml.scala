@@ -33,6 +33,7 @@ import play.api.Environment
 import scala.io.Source
 import play.api.libs.json._
 import services.settings.SettingsRegistry
+import services.push_notification.PushNotificationRegistry
 import utils.InferSchema._
 import akka.stream.scaladsl.FileIO
 import play.api.mvc.MultipartFormData.{DataPart,FilePart}
@@ -56,10 +57,9 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                        
 
 
-    // ----- End of unmanaged code area for package Ftd_apiYaml
+   // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
                                val configuration: Configuration,
@@ -182,7 +182,7 @@ package ftd_api.yaml {
               credentials.groups.toList.filterNot(g => Role.roles.contains(g))))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
-        val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+        val stories = storiesAction { input: (NotificationOffset, NotificationOffset, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
@@ -229,6 +229,18 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetCatalogFormat(catalogName)
       CatalogDistrubutionFormat200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
+        }
+        val getAllNotifications = getAllNotificationsAction { (user: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllNotifications
+            GetAllNotifications200(PushNotificationRegistry.pushNotificationService.getAllNotifications(user))
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllNotifications
+        }
+        val deleteAllNotifications = deleteAllNotificationsAction { input: (String, Notification) =>
+            val (user, notifation) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
         }
         val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
@@ -323,12 +335,28 @@ package ftd_api.yaml {
           Snapshotbyid200(response)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.snapshotbyid
         }
+        val createSubscription = createSubscriptionAction { (subscription: Subscription) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.createSubscription
+            val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+            val resp = PushNotificationRegistry.pushNotificationService.saveSubscription(user, subscription)
+            resp.flatMap{
+              case Right(r) => CreateSubscription200(r)
+              case Left(l) => CreateSubscription500(l)
+            }
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.createSubscription
+        }
+        val deleteSubscription = deleteSubscriptionAction { (pushNotification: Subscription) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
+        }
         val deleteDataApplication = deleteDataApplicationAction { (data_app: DataApp) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
         }
-        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+        val dashboards = dashboardsAction { input: (NotificationOffset, NotificationOffset, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
@@ -478,6 +506,15 @@ package ftd_api.yaml {
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
+        val updateNotifications = updateNotificationsAction { (notifications: NotificationsUpdatePostNotifications) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateNotifications
+            val resul = PushNotificationRegistry.pushNotificationService.updateNotifications(notifications)
+          resul.flatMap{
+            case Right(r) => UpdateNotifications200(r)
+            case Left(l) => UpdateNotifications500(l)
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateNotifications
+        }
         val getDataApplications = getDataApplicationsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplications
             GetDataApplications200(DashboardRegistry.dashboardService.getAllDataApp)
@@ -499,7 +536,7 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }
-        val publicStories = publicStoriesAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+        val publicStories = publicStoriesAction { input: (DistributionLabel, NotificationOffset, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
             PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(org))
@@ -520,7 +557,7 @@ package ftd_api.yaml {
       Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, NotificationOffset, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
             PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(org))
@@ -574,6 +611,12 @@ package ftd_api.yaml {
             val success = DashboardRegistry.dashboardService.update(upfile, tableName, fileType)
       UpdateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTable
+        }
+        val getSubscriptions = getSubscriptionsAction { (user: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getSubscriptions
+            GetSubscriptions200(PushNotificationRegistry.pushNotificationService.getSubscriptions(user))
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getSubscriptions
         }
         val deletestory = deletestoryAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletestory
@@ -675,6 +718,16 @@ package ftd_api.yaml {
             val success = DashboardRegistry.dashboardService.save(upfile, tableName, fileType)
       CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
+        }
+        val saveNotification = saveNotificationAction { (notification: Notification) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveNotification
+            val resul = PushNotificationRegistry.pushNotificationService.saveNotifications(notification)
+          resul.flatMap{
+            case Right(r) => SaveNotification200(r)
+            case Left(l) => SaveNotification500(l)
+          }
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveNotification
         }
         val getDomains = getDomainsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDomains
