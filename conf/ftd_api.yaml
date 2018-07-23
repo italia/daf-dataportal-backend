@@ -1651,6 +1651,8 @@ definitions:
         type: string
       title:
         type: string
+      errors:
+        type: string
   Filters:
     type: object
     properties:
