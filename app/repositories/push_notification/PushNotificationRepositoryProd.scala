@@ -1,8 +1,11 @@
 package repositories.push_notification
 
-import com.mongodb.DBObject
+import com.mongodb
+import com.mongodb.casbah
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.MongoClient
+import com.mongodb.casbah.query.Imports
+import com.mongodb.casbah.query.Imports.DBObject
 import ftd_api.yaml.{Error, Notification, Subscription, Success}
 import play.api.Logger
 import utils.ConfigReader
@@ -87,22 +90,30 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   override def updateNotifications(notifications: Seq[Notification]): Future[Either[Error, Success]] = {
     import ftd_api.yaml.ResponseWrites.NotificationWrites.writes
 
+    def createQuery(user: String, offset: Int): Imports.DBObject = {
+      import mongodb.casbah.query.Imports._
+
+      val queryOffset = mongodb.casbah.Imports.MongoDBObject("offset" -> offset)
+      val queryUser = mongodb.casbah.Imports.MongoDBObject("user" -> user)
+      $and(queryOffset, queryUser)
+    }
+
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("notifications")
-    val seqJson: Seq[(Int, JsValue)] = notifications.map(n => (n.offset.get, writes(n)))
-    val seqMongoObj = seqJson.map{case (offset, json) =>
-      (offset, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
+    val seqJson = notifications.map(n => (n.offset.get, n.user.get, writes(n)))
+    val seqMongoObj = seqJson.map{ case (offset, user, json) =>
+      (offset, user, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
     }
-    val mongoResults = seqMongoObj.map{
-      case (offset, mongoObj) => (offset, coll.findAndModify(MongoDBObject("offset" -> offset), mongoObj))
+    val mongoResults: Seq[(Int, casbah.TypeImports.WriteResult)] = seqMongoObj.map{
+      case (offset, user, mongoObj) => (offset, coll.update(createQuery(user, offset), mongoObj))
     }
-    mongoResults.foreach{
-      case (offset, None) => Logger.logger.debug(s"$offset not found")
-      case (offset, Some(_)) => Logger.logger.debug(s"$offset updated")
-    }
+    mongoResults.foreach(elem =>
+      if(elem._2.getN == 1) Logger.logger.debug(s"${elem._1} updated")
+      else Logger.logger.debug(s"${elem._1} not found")
+    )
 
-    val result = if(mongoResults.exists(x => x._2.isEmpty))
+    val result = if(mongoResults.exists(x => x._2.getN() == 0))
       Left(Error(Some(500), Some("error in update notifications"), None))
     else
       Right(Success(Some("all notifications are updated"), None))
