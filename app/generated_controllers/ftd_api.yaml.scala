@@ -57,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+        
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -508,8 +508,8 @@ package ftd_api.yaml {
         }
         val updateNotifications = updateNotificationsAction { (notifications: NotificationsUpdatePostNotifications) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateNotifications
-            val resul = PushNotificationRegistry.pushNotificationService.updateNotifications(notifications)
-          resul.flatMap{
+            val result = PushNotificationRegistry.pushNotificationService.updateNotifications(notifications)
+          result.flatMap{
             case Right(r) => UpdateNotifications200(r)
             case Left(l) => UpdateNotifications500(l)
           }
