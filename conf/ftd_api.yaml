@@ -1465,6 +1465,14 @@ paths:
         description: user
         required: true
         type: string
+      - name: limit
+        in: query
+        description: maximum number of resutls to return
+        required: false
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 500
       responses:
         200:
           description: set of notifications
@@ -1472,6 +1480,10 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Notification'
+        401:
+          description: set of notifications
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1560,6 +1572,31 @@ paths:
           description: error in update notifications
           schema:
             $ref: "#/definitions/Error"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/check-new/{user}":
+    get:
+      tags:
+      - PushNotification
+      summary: check if there are new notifications
+      operationId: checkNewNotifications
+      produces:
+      - application/json
+      parameters:
+      - name: user
+        in: path
+        description: user who request notifications
+        required: true
+        type: string
+      responses:
+        200:
+          description: set of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
         default:
           description: Unexpected error
           schema:
