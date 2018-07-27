@@ -21,6 +21,9 @@ pipeline{
                     ls
                     kubectl delete configmap datipubblici-conf
                     kubectl create configmap datipubblici-conf --from-file=conf/test/prodBase.conf
+                    cd kubernetes
+                    kubectl delete -f  daf_datipubblici_test.yaml
+                    kubectl create -f  daf_datipubblici_test.yaml
                     '''
                 }
             }
