@@ -20,7 +20,7 @@ pipeline{
                     sh '''
                     ls
                     kubectl delete configmap datipubblici-conf
-                    kubectl create configmap datipubblici-conf --from-file=/conf/test/prodBase.conf
+                    kubectl create configmap datipubblici-conf --from-file=conf/test/prodBase.conf
                     '''
                 }
             }
