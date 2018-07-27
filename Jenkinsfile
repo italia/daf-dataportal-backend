@@ -14,6 +14,7 @@ pipeline{
          }
         }*/
         stage('Staging'){
+            steps{
             script{
                 if(env.BRANCH_NAME=='testci'){
                     sh '''
@@ -21,6 +22,7 @@ pipeline{
                     kubectl create -f conf/test/prodBase.conf
                     '''
                 }
+            }
             }
         }
      }
