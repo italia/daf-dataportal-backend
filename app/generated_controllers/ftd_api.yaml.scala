@@ -57,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                        
+                                                                            
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -233,8 +233,8 @@ package ftd_api.yaml {
         val getAllNotifications = getAllNotificationsAction { input: (String, PublicDashboardsGetLimit) =>
             val (user, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllNotifications
-            val username = CredentialManager.readCredentialFromRequest(currentRequest).username
-          if(username.equals(user) || CredentialManager.isDafAdmin(currentRequest))
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+          if(credential.username.equals(user) || CredentialManager.isDafAdmin(currentRequest))
             GetAllNotifications200(PushNotificationRegistry.pushNotificationService.getAllNotifications(user, limit))
           else
             GetAllNotifications401(Error(Some(401), Some(s"Unauthorized to read notifications for ${user}"), None))
@@ -500,7 +500,11 @@ package ftd_api.yaml {
         }
         val checkNewNotifications = checkNewNotificationsAction { (user: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.checkNewNotifications
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+          if(credential.username.equals(user) || CredentialManager.isDafAdmin(currentRequest))
             CheckNewNotifications200(PushNotificationRegistry.pushNotificationService.checkNewNotifications(user))
+          else
+            CheckNewNotifications401(Error(Some(401), Some(s"Unauthorized to read notifications for ${user}"), None))
 //            NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.checkNewNotifications
         }

@@ -1,7 +1,8 @@
 package repositories.push_notification
 
 import com.mongodb
-import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
+import com.mongodb.casbah
+import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
 import com.mongodb.casbah.{MongoClient, commons}
 import com.mongodb.casbah.query.Imports.DBObject
 import ftd_api.yaml.{Error, Notification, Subscription, Success}
@@ -29,9 +30,9 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     MongoClient(server, List(credentials))(dbName)(collName)
   }
 
-  private def componiQuery(query: Query) =  {
+  private def composeQuery(query: Query) =  {
     def simpleQuery(queryComponent: QueryComponent) = {
-      MongoDBObject(queryComponent.nameField -> queryComponent.valueField)
+      mongodb.casbah.Imports.MongoDBObject(queryComponent.nameField -> queryComponent.valueField)
     }
 
     def multiAndQuery(seqQueryComponent: Seq[QueryComponent]) = {
@@ -48,6 +49,14 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       case m: MultiQuery => multiAndQuery(m.seqQueryConditions)
     }
 
+  }
+
+  private def validateSeqNotifications(seqMongoDBObj: Seq[casbah.Imports.DBObject]): JsResult[Seq[Notification]] = {
+    import ftd_api.yaml.BodyReads.NotificationReads
+
+    val jsonString = com.mongodb.util.JSON.serialize(seqMongoDBObj)
+    val json = Json.parse(jsonString)
+    json.validate[Seq[Notification]]
   }
 
   private def notificationToJson(notification: Notification) = {
@@ -80,7 +89,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     import ftd_api.yaml.BodyReads.SubscriptionReads
 
     val coll = getMongoCollection("subscriptions")
-    val results = coll.find(componiQuery(SimpleQuery(QueryComponent("user", user)))).toList
+    val results = coll.find(composeQuery(SimpleQuery(QueryComponent("user", user)))).toList
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
     val subscriptionsJsResult = json.validate[Seq[Subscription]]
@@ -119,7 +128,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       case (offset, user, mongoObj) =>
         (offset, user,
           coll.update(
-            componiQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("offset", offset)))),
+            composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("offset", offset)))),
         mongoObj)
       )
     }
@@ -138,17 +147,14 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def getAllNotifications(user: String, limit: Option[Int]): Future[Seq[Notification]] = {
-    import ftd_api.yaml.BodyReads.NotificationReads
+    Logger.logger.debug(s"get all notifications for user $user")
 
-    val coll = getMongoCollection("notifications")
-    val query: commons.Imports.DBObject = MongoDBObject("user" -> user)
-    val results = coll.find(query).limit(limit.getOrElse(0))
-      .sort(MongoDBObject("timestamp" -> -1)
-      ).toList
-    val jsonString = com.mongodb.util.JSON.serialize(results)
-    val json = Json.parse(jsonString)
-    val notificationsJsResult = json.validate[Seq[Notification]]
-    val notifications = notificationsJsResult match {
+    val results = getMongoCollection("notifications")
+      .find(composeQuery(SimpleQuery(QueryComponent("user", user))))
+      .limit(limit.getOrElse(0))
+      .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
+      .toList
+    val notifications = validateSeqNotifications(results) match {
       case s: JsSuccess[Seq[Notification]] => s.get
       case _: JsError => Seq()
     }
@@ -157,17 +163,14 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def checkNewNotifications(user: String): Future[Seq[Notification]] = {
-    import ftd_api.yaml.BodyReads.NotificationReads
-
     Logger.logger.debug(s"check new notifications for user $user")
 
     val seqQueryConditions = Seq(QueryComponent("user", user), QueryComponent("status", 0))
-    val result = getMongoCollection("notifications").find(componiQuery(MultiQuery(seqQueryConditions)))
-      .sort(MongoDBObject("timestamp" -> -1)).toList
-    val jsonStrig = com.mongodb.util.JSON.serialize(result)
-    val json = Json.parse(jsonStrig)
-    val notificationsJsResult = json.validate[Seq[Notification]]
-    val notifications = notificationsJsResult match {
+    val result = getMongoCollection("notifications")
+      .find(composeQuery(MultiQuery(seqQueryConditions)))
+      .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
+      .toList
+    val notifications = validateSeqNotifications(result) match {
       case s: JsSuccess[Seq[Notification]] => s.get
       case _: JsError => Seq()
     }
