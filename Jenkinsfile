@@ -4,19 +4,19 @@ pipeline{
         stage('Build') {
          steps {
              script{
-             if(env.BRANCH_NAME=='testci2'){
+             /*if(env.BRANCH_NAME=='testci2'){
                 sh '''
                 STAGING=true;
                 sbt " -DSTAGING=$STAGING; reload ; compile;  docker:publish"
                 '''
-                }
+                }*/
             }
          }
         }
         stage('Staging'){
             steps{
             script{
-                if(env.BRANCH_NAME=='testci2'){
+                /*if(env.BRANCH_NAME=='testci2'){
                     sh '''
                     ls
                     kubectl delete configmap datipubblici-conf
@@ -25,7 +25,7 @@ pipeline{
                     kubectl delete -f  daf_datipubblici_test.yaml
                     kubectl create -f  daf_datipubblici_test.yaml
                     '''
-                }
+                }*/
             }
             }
         }
