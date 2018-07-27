@@ -22,7 +22,11 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
     Future.successful(Right(Success(None, None)))
   }
 
-  override def getAllNotifications(user: String): Future[Seq[Notification]] = {
+  override def getAllNotifications(user: String, limit: Option[Int]): Future[Seq[Notification]] = {
+    Future.successful(Seq[Notification]())
+  }
+
+  override def checkNewNotifications(user: String): Future[Seq[Notification]] = {
     Future.successful(Seq[Notification]())
   }
 }

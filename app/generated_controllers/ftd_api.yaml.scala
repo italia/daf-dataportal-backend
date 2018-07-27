@@ -57,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                                                                            
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -230,9 +230,14 @@ package ftd_api.yaml {
       CatalogDistrubutionFormat200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
         }
-        val getAllNotifications = getAllNotificationsAction { (user: String) =>  
+        val getAllNotifications = getAllNotificationsAction { input: (String, PublicDashboardsGetLimit) =>
+            val (user, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllNotifications
-            GetAllNotifications200(PushNotificationRegistry.pushNotificationService.getAllNotifications(user))
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+          if(credential.username.equals(user) || CredentialManager.isDafAdmin(currentRequest))
+            GetAllNotifications200(PushNotificationRegistry.pushNotificationService.getAllNotifications(user, limit))
+          else
+            GetAllNotifications401(Error(Some(401), Some(s"Unauthorized to read notifications for ${user}"), None))
 //          NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllNotifications
         }
@@ -492,6 +497,16 @@ package ftd_api.yaml {
               credentials.username, credentials.groups.toList.filterNot(g => Role.roles.contains(g)), dashboard_id)
             )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
+        }
+        val checkNewNotifications = checkNewNotificationsAction { (user: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.checkNewNotifications
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+          if(credential.username.equals(user) || CredentialManager.isDafAdmin(currentRequest))
+            CheckNewNotifications200(PushNotificationRegistry.pushNotificationService.checkNewNotifications(user))
+          else
+            CheckNewNotifications401(Error(Some(401), Some(s"Unauthorized to read notifications for ${user}"), None))
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.checkNewNotifications
         }
         val allDistributionFormats = allDistributionFormatsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
@@ -759,28 +774,11 @@ package ftd_api.yaml {
      */
 
     
-     // Dead code for absent methodFtd_apiYaml.deleteDataApp
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApp
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApp
-     */
-
-    
      // Dead code for absent methodFtd_apiYaml.getsport
      /*
    // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
    NotImplementedYet
    // ----- End of unmanaged code area for action  Ftd_apiYaml.getsport
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.getDataApplication
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDataApplication
-            //            GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
-          GetDataApplication200(DashboardRegistry.dashboardService.getDataApp)
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDataApplication
      */
 
     
@@ -790,14 +788,6 @@ package ftd_api.yaml {
 
    NotImplementedYet
    // ----- End of unmanaged code area for action  Ftd_apiYaml.sport
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.searchLastHome
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLastHome
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLastHome
      */
 
     
