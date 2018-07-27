@@ -19,7 +19,8 @@ pipeline{
                 if(env.BRANCH_NAME=='testci2'){
                     sh '''
                     ls
-                    kubectl create configmap --from-file=conf/test/prodBase.conf
+                    kubectl delete configmap datipubblici-conf
+                    kubectl create configmap datipubblici-conf --from-file=/conf/test/prodBase.conf
                     '''
                 }
             }
