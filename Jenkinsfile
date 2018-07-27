@@ -19,7 +19,7 @@ pipeline{
                 if(env.BRANCH_NAME=='testci2'){
                     sh '''
                     ls
-                    kubectl create --from-file=conf/test/prodBase.conf
+                    kubectl create configmap --from-file=conf/test/prodBase.conf
                     '''
                 }
             }
