@@ -26,8 +26,12 @@ trait PushNotificationServiceComponent {
     def updateNotifications(notification: Seq[Notification]) = {
       pushNotificationRepository.updateNotifications(notification)
     }
-    def getAllNotifications(user: String) = {
-      pushNotificationRepository.getAllNotifications(user)
+    def getAllNotifications(user: String, limit: Option[Int]) = {
+      pushNotificationRepository.getAllNotifications(user, limit)
+    }
+
+    def checkNewNotifications(user: String): Future[Seq[Notification]] = {
+      pushNotificationRepository.checkNewNotifications(user)
     }
 
   }

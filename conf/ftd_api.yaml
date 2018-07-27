@@ -1465,6 +1465,14 @@ paths:
         description: user
         required: true
         type: string
+      - name: limit
+        in: query
+        description: maximum number of resutls to return
+        required: false
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 500
       responses:
         200:
           description: set of notifications
@@ -1472,6 +1480,10 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Notification'
+        401:
+          description: Unauthorized to read notifications
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1564,6 +1576,35 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/notifications/check-new/{user}":
+    get:
+      tags:
+      - PushNotification
+      summary: check if there are new notifications
+      operationId: checkNewNotifications
+      produces:
+      - application/json
+      parameters:
+      - name: user
+        in: path
+        description: user who request notifications
+        required: true
+        type: string
+      responses:
+        200:
+          description: set of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
+        401:
+          description: Unauthorized to read notifications
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -1650,6 +1691,8 @@ definitions:
       name:
         type: string
       title:
+        type: string
+      errors:
         type: string
   Filters:
     type: object
@@ -1904,7 +1947,6 @@ definitions:
         type: string
       url:
         type: string
-#  PushNotification:
   Subscription:
     type: object
     required:
@@ -1927,6 +1969,5 @@ definitions:
         type: string
       auth:
         type: string
-
 
 
