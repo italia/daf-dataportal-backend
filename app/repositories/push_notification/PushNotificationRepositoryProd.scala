@@ -75,11 +75,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val resultInsert = coll.insert(obj)
 
     if(resultInsert.wasAcknowledged()){
-      Logger.logger.debug(s"subscription saved for user $user")
+      logger.debug(s"subscription saved for user $user")
       Future.successful(Right(Success(Some(s"subscription saved for user $user"), None)))
     }
     else{
-      Logger.logger.debug(s"error in save subscription for user $user")
+      logger.debug(s"error in save subscription for user $user")
       Future.successful(Left(Error(Some(500), Some(s"error in save subsciption for user $user"), None)))
     }
 
@@ -106,11 +106,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val obj = com.mongodb.util.JSON.parse(notificationToJson(notification).toString()).asInstanceOf[DBObject]
     val result = coll.insert(obj)
     val response = if(result.wasAcknowledged()){
-      Logger.logger.debug(s"notification saved in mongo")
+      logger.debug(s"notification saved in mongo")
       Right(Success(Some(s"notification saved in mongo"), None))
     }
     else{
-      Logger.logger.debug(s"error in save notification")
+      logger.debug(s"error in save notification")
       Left(Error(None, Some(s"error in save notification"), None))
     }
     Future.successful(response)
@@ -134,8 +134,8 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     }
 
     mongoResults.foreach { case(offset, user, writeResultMongo) =>
-      if (writeResultMongo.getN == 1) Logger.logger.debug(s"offset $offset updated for user $user")
-      else Logger.logger.debug(s"$offset for user $user not found")
+      if (writeResultMongo.getN == 1) logger.debug(s"offset $offset updated for user $user")
+      else logger.debug(s"$offset for user $user not found")
     }
 
     val result = if(mongoResults.exists{ case (_, _, writeResultMongo) => writeResultMongo.getN == 0})
@@ -147,7 +147,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def getAllNotifications(user: String, limit: Option[Int]): Future[Seq[Notification]] = {
-    Logger.logger.debug(s"get all notifications for user $user")
+    logger.debug(s"get all notifications for user $user")
 
     val results = getMongoCollection("notifications")
       .find(composeQuery(SimpleQuery(QueryComponent("user", user))))
@@ -158,12 +158,12 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       case s: JsSuccess[Seq[Notification]] => s.get
       case _: JsError => Seq()
     }
-    Logger.logger.debug(s"getAllNotificaitons: finds ${notifications.size} notifications for user $user")
+    logger.debug(s"getAllNotificaitons: finds ${notifications.size} notifications for user $user")
     Future.successful(notifications)
   }
 
   override def checkNewNotifications(user: String): Future[Seq[Notification]] = {
-    Logger.logger.debug(s"check new notifications for user $user")
+    logger.debug(s"check new notifications for user $user")
 
     val seqQueryConditions = Seq(QueryComponent("user", user), QueryComponent("status", 0))
     val result = getMongoCollection("notifications")
