@@ -34,39 +34,39 @@ class SettingServiceSpecs extends FlatSpec with Matchers with PropertyChecks {
   val name = "nomeProva"
 
   val settingsRepositoryProd: SettingsRepositoryProd = new SettingsRepositoryProd
-  val settings: Settings = Settings(
-    Some("https://developers.italia.it/assets/icons/dt-logo.svg"),
-    Some("https://medium.com/team-per-la-trasformazione-digitale/"),
-    Some("https://twitter.com/datigovit"),
-    Some("https://designers.italia.it/note-legali/"),
-    Some("TEAM PER LA TRASFORMAZIONE DIGITALE"),
-    Some("https://teamdigitale.governo.it/images/loghi/governo.svg"),
-    Some("https://developers.italia.it/news"),
-    Some("https://forum.italia.it"),
-    Some("1"),
-    Some("/daf"),
-    Some("https://designers.italia.it/privacy-policy/"),
-    Some("https://www.spid.gov.it/assets/img/agid-logo-bb.svg"),
-    Some("Il framework dei dati pubblici del Paese"),
-    Some("https://developers.italia.it/assets/icons/logo-it.png")
-  )
-  val settings2: Settings = Settings(
-    Some("https://developers.italia.it/assets/icons/dt-logo.svg"),
-    Some("https://medium.com/team-per-la-trasformazione-digitale/"),
-    Some("https://twitter.com/datigovit"),
-    Some("https://designers.italia.it/note-legali/"),
-    Some("TEAM PER LA TRASFORMAZIONE DIGITALE"),
-    Some("https://teamdigitale.governo.it/images/loghi/governo.svg"),
-    Some("https://developers.italia.it/news"),
-    Some("https://forum.italia.it"),
-    Some("13"),
-    Some("/daf"),
-    Some("https://designers.italia.it/privacy-policy/"),
-    Some("https://www.spid.gov.it/assets/img/agid-logo-bb.svg"),
-    Some("Il framework dei dati pubblici del Paese"),
-    Some("https://developers.italia.it/assets/icons/logo-it.png")
-  )
-  val json = settingsRepositoryProd.settingsToJson(settings)
+//  val settings: Settings = Settings(
+//    Some("https://developers.italia.it/assets/icons/dt-logo.svg"),
+//    Some("https://medium.com/team-per-la-trasformazione-digitale/"),
+//    Some("https://twitter.com/datigovit"),
+//    Some("https://designers.italia.it/note-legali/"),
+//    Some("TEAM PER LA TRASFORMAZIONE DIGITALE"),
+//    Some("https://teamdigitale.governo.it/images/loghi/governo.svg"),
+//    Some("https://developers.italia.it/news"),
+//    Some("https://forum.italia.it"),
+//    Some("1"),
+//    Some("/daf"),
+//    Some("https://designers.italia.it/privacy-policy/"),
+//    Some("https://www.spid.gov.it/assets/img/agid-logo-bb.svg"),
+//    Some("Il framework dei dati pubblici del Paese"),
+//    Some("https://developers.italia.it/assets/icons/logo-it.png")
+//  )
+//  val settings2: Settings = Settings(
+//    Some("https://developers.italia.it/assets/icons/dt-logo.svg"),
+//    Some("https://medium.com/team-per-la-trasformazione-digitale/"),
+//    Some("https://twitter.com/datigovit"),
+//    Some("https://designers.italia.it/note-legali/"),
+//    Some("TEAM PER LA TRASFORMAZIONE DIGITALE"),
+//    Some("https://teamdigitale.governo.it/images/loghi/governo.svg"),
+//    Some("https://developers.italia.it/news"),
+//    Some("https://forum.italia.it"),
+//    Some("13"),
+//    Some("/daf"),
+//    Some("https://designers.italia.it/privacy-policy/"),
+//    Some("https://www.spid.gov.it/assets/img/agid-logo-bb.svg"),
+//    Some("Il framework dei dati pubblici del Paese"),
+//    Some("https://developers.italia.it/assets/icons/logo-it.png")
+//  )
+//  val json = settingsRepositoryProd.settingsToJson(settings)
 
 
 //  "SettingsRepositoryProd clean db" should "" in {
