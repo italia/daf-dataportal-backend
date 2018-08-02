@@ -763,14 +763,14 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => None
     }
 
-    client.close()
-
     val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
     val response = for{
       searchResult <- futureSearchResults
       aggregationResult <- futureAggregationResults
     } yield searchResult ::: aggregationResult
+
+    response onComplete{ _ => client.close()}
 
     response
   }
@@ -865,7 +865,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => None
     }
 
-    client.close()
 
     val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
@@ -873,6 +872,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       searchResult <- futureSearchResults
       aggregationResult <- futureAggregationResults
     } yield searchResult ::: aggregationResult
+
+    response onComplete{ _ => client.close()}
 
     response
   }
@@ -1215,8 +1216,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
     val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
-    client.close()
-
     val result = for{
       resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
       resFutureStories <- wrapResponseHome(resultFutureStories)
@@ -1224,7 +1223,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
     } yield resFutureDataset ::: resFutureStories ::: resFutureDash ::: resFutureAggr
 
-    result onComplete(r => Logger.logger.debug(s"find ${r.getOrElse(List()).size} results"))
+    result onComplete{r => client.close(); Logger.logger.debug(s"find ${r.getOrElse(List()).size} results")}
 
     result
   }
@@ -1252,15 +1251,13 @@ class DashboardRepositoryProd extends DashboardRepository {
     val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
     val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
-    client.close()
-
     val result: Future[List[SearchResult]] = for{
       resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
       resFutureStories <- wrapResponseHome(resultFutureStories)
       resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
     }yield resFutureDataset ::: resFutureStories ::: resFutureAggr
 
-    result onComplete (r => Logger.logger.debug(s"find ${r.getOrElse(List()).size} results"))
+    result onComplete {r => client.close(); Logger.logger.debug(s"find ${r.getOrElse(List()).size} results")}
     result
   }
 
