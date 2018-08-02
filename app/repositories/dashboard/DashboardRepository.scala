@@ -2,7 +2,8 @@ package repositories.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
+import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 
@@ -10,11 +11,11 @@ import scala.concurrent.Future
   * Created by ale on 14/04/17.
   */
 trait DashboardRepository {
-  def save(upFile: File, tableName: String, fileType: String): Success
+  def save(upFile: File, tableName: String, fileType: String, wsClient: WSClient): Success
   def update(upFile: File, tableName: String, fileType: String): Success
   def tables(): Seq[Catalog]
-  def iframes(metaUser: String): Future[Seq[DashboardIframes]]
-  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]]
+  def iframes(metaUser: String, wsClient: WSClient): Future[Seq[DashboardIframes]]
+  def iframesByOrg(user: String,org: String, wsClient: WSClient): Future[Seq[DashboardIframes]]
   def dashboards(username:String, groups: List[String], status: Option[Int]): Seq[Dashboard]
   def dashboardById(username: String, groups: List[String], id: String): Dashboard
   def saveDashboard(dashboard: Dashboard, user: String): Success

@@ -26,10 +26,6 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   val logger = Logger.logger
 
 
-  private def getMongoCollection(collName: String) = {
-    MongoClient(server, List(credentials))(dbName)(collName)
-  }
-
   private def composeQuery(query: Query) =  {
     def simpleQuery(queryComponent: QueryComponent) = {
       mongodb.casbah.Imports.MongoDBObject(queryComponent.nameField -> queryComponent.valueField)
@@ -68,11 +64,14 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   override def saveSubscription(user: String, subscription: Subscription): Future[Either[Error, Success]] = {
     import ftd_api.yaml.ResponseWrites.SubscriptionWrites.writes
 
-    val coll = getMongoCollection("subscriptions")
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("subscriptions")
     val json = writes(subscription)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
     obj.put("user", user)
     val resultInsert = coll.insert(obj)
+    mongoClient.close()
 
     if(resultInsert.wasAcknowledged()){
       logger.debug(s"subscription saved for user $user")
@@ -88,8 +87,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   override def getSubscriptions(user: String): Future[Seq[Subscription]] = {
     import ftd_api.yaml.BodyReads.SubscriptionReads
 
-    val coll = getMongoCollection("subscriptions")
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("subscriptions")
     val results = coll.find(composeQuery(SimpleQuery(QueryComponent("user", user)))).toList
+    mongoClient.close()
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
     val subscriptionsJsResult = json.validate[Seq[Subscription]]
@@ -102,7 +104,9 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def saveNotifications(notification: Notification): Future[Either[Error, Success]] = {
-    val coll = getMongoCollection("notifications")
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("notifications")
     val obj = com.mongodb.util.JSON.parse(notificationToJson(notification).toString()).asInstanceOf[DBObject]
     val result = coll.insert(obj)
     val response = if(result.wasAcknowledged()){
@@ -117,7 +121,9 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def updateNotifications(notifications: Seq[Notification]): Future[Either[Error, Success]] = {
-    val coll = getMongoCollection("notifications")
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("notifications")
     val seqJson = notifications.map(n => (n.offset.get, n.user.get, notificationToJson(n)))
 
     val seqMongoObj = seqJson.map{ case (offset, user, json) =>
@@ -129,9 +135,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         (offset, user,
           coll.update(
             composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("offset", offset)))),
-        mongoObj)
-      )
+            mongoObj)
+        )
     }
+
+    mongoClient.close()
 
     mongoResults.foreach { case(offset, user, writeResultMongo) =>
       if (writeResultMongo.getN == 1) logger.debug(s"offset $offset updated for user $user")
@@ -147,13 +155,14 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def getAllNotifications(user: String, limit: Option[Int]): Future[Seq[Notification]] = {
-    logger.debug(s"get all notifications for user $user")
-
-    val results = getMongoCollection("notifications")
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val results = mongoDB("notifications")
       .find(composeQuery(SimpleQuery(QueryComponent("user", user))))
       .limit(limit.getOrElse(0))
       .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
       .toList
+    mongoClient.close()
     val notifications = validateSeqNotifications(results) match {
       case s: JsSuccess[Seq[Notification]] => s.get
       case _: JsError => Seq()
@@ -163,24 +172,25 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def checkNewNotifications(user: String): Future[Seq[Notification]] = {
-    logger.debug(s"check new notifications for user $user")
-
     val seqQueryConditions = Seq(QueryComponent("user", user), QueryComponent("status", 0))
-    val result = getMongoCollection("notifications")
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val result = mongoDB("notifications")
       .find(composeQuery(MultiQuery(seqQueryConditions)))
       .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
       .toList
+    mongoClient.close()
     val notifications = validateSeqNotifications(result) match {
       case s: JsSuccess[Seq[Notification]] => s.get
       case _: JsError => Seq()
     }
 
-    Logger.logger.debug(s"checkNewNotifications: find ${notifications.size} notifications")
-
     if(notifications.nonEmpty) {
+      Logger.logger.debug(s"checkNewNotifications: find ${notifications.size} notifications")
       Logger.logger.debug(s"calling updateNotifications for ${notifications.map(n => s"{offset: ${n.offset.get}, user: ${n.user.get}}").mkString(", ")}")
       updateNotifications(notifications.map(n => n.copy(status = Option(1))))
     }
+    else Logger.logger.debug(s"checkNewNotifications: no new notifications")
 
     Future.successful(notifications)
   }

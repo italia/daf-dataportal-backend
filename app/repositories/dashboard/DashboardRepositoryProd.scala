@@ -14,7 +14,7 @@ import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress
 import com.mongodb.casbah.{MongoClient, MongoCollection}
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
-import play.api.libs.ws.ahc.AhcWSClient
+//import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
 import scala.concurrent.Future
@@ -28,6 +28,7 @@ import com.sksamuel.elastic4s.searches.SearchDefinition
 import com.sksamuel.elastic4s.searches.queries._
 import org.elasticsearch.index.query.Operator
 import play.api.{Configuration, Environment, Logger}
+import play.api.libs.ws.WSClient
 
 /**
   * Created by ale on 14/04/17.
@@ -70,9 +71,9 @@ class DashboardRepositoryProd extends DashboardRepository {
 
 
 
-  private def  metabaseTableInfo(iframes :Seq[DashboardIframes]): Future[Seq[DashboardIframes]] = {
+  private def  metabaseTableInfo(iframes :Seq[DashboardIframes], wsClient: WSClient): Future[Seq[DashboardIframes]] = {
 
-    val wsClient = AhcWSClient()
+//    val wsClient = AhcWSClient()
     val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
       val tableId = iframe.table.getOrElse("0")
       val internalUrl = localUrl + s"/metabase/table/$tableId"
@@ -104,7 +105,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def save(upFile: File, tableName: String, fileType: String): Success = {
+  def save(upFile: File, tableName: String, fileType: String, wsClient: WSClient): Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
     val copyFile = new File(System.getProperty("user.home") + "/metabasefile/" + fileName + "_" + tableName)
@@ -188,20 +189,20 @@ class DashboardRepositoryProd extends DashboardRepository {
     catalogs
   }
 
-  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
+  def iframesByOrg(user: String,org: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
 
     val result = for {
-      tables <- getSupersetTablesByOrg(org)
-      a <- iFramesByTables(user,tables)
+      tables <- getSupersetTablesByOrg(org, wsClient)
+      a <- iFramesByTables(user,tables, wsClient)
     } yield a
 
     result
 
   }
 
-  private def getSupersetTablesByOrg(org: String): Future[Seq[String]] = {
+  private def getSupersetTablesByOrg(org: String, wsClient: WSClient): Future[Seq[String]] = {
 
-    val wsClient = AhcWSClient()
+//    val wsClient = AhcWSClient()
     //security-manager/v1/internal/superset/find_orgtables/default_org
 
     val internalUrl = securityManagerUrl + "/security-manager/v1/internal/superset/find_orgtables/"+org
@@ -214,18 +215,18 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   }
 
-  private def iFramesByTables(user: String, tables:Seq[String]): Future[Seq[DashboardIframes]]= {
-    iframes(user).map{ _.filter(dash => dash.table.nonEmpty && tables.contains(dash.table.get) ) }
+  private def iFramesByTables(user: String, tables:Seq[String], wsClient: WSClient): Future[Seq[DashboardIframes]]= {
+    iframes(user, wsClient).map{ _.filter(dash => dash.table.nonEmpty && tables.contains(dash.table.get) ) }
   }
 
-  def iframes(user: String): Future[Seq[DashboardIframes]] = {
+  def iframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
     println("-iframes-")
-    val wsClient = AhcWSClient()
+//    val wsClient = AhcWSClient()
 
     val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
-    val grafanaPublic = localUrl + "/grafana/snapshots/" + user
-    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
+//    val grafanaPublic = localUrl + "/grafana/snapshots/" + user
+//    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
 
     val request = wsClient.url(metabasePublic).get()
@@ -236,9 +237,9 @@ class DashboardRepositoryProd extends DashboardRepository {
     //  .andThen { case _ => wsClient.close() }
     //  .andThen { case _ => system.terminate() }
 
-    val requestSnapshots = wsClient.url(grafanaPublic).get()
-
-    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
+//    val requestSnapshots = wsClient.url(grafanaPublic).get()
+//
+//    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
@@ -296,7 +297,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
         iframes <- metabase
-        iframesWithTable <- metabaseTableInfo(iframes)
+        iframesWithTable <- metabaseTableInfo(iframes, wsClient)
     } yield iframesWithTable
 
 
@@ -474,6 +475,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val db = mongoClient(source)
     val coll = db("dashboards")
     val removed = coll.remove(query)
+    mongoClient.close()
     val response = Success(Some("Deleted"), Some("Deleted"))
     response
   }
@@ -615,6 +617,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val db = mongoClient(source)
     val coll = db("stories")
     val removed = coll.remove(query)
+    mongoClient.close()
     val response = Success(Some("Deleted"), Some("Deleted"))
     response
   }
@@ -760,6 +763,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => None
     }
 
+    client.close()
+
     val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
     val response = for{
@@ -773,7 +778,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   def searchTextPublic(filters: Filters): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
-    val client: HttpClient = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
+    val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "ckan"
     val fieldDatasetDcatName = "dcatapit.name"
     val fieldDatasetDcatTitle = "dcatapit.title"
@@ -859,6 +864,9 @@ class DashboardRepositoryProd extends DashboardRepository {
       case "ext_opendata" => Some(client.execute(queryAggregationNoCat).map(q => q.aggregations))
       case _ => None
     }
+
+    client.close()
+
     val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
     val response = for{
@@ -1207,6 +1215,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
     val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
+    client.close()
+
     val result = for{
       resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
       resFutureStories <- wrapResponseHome(resultFutureStories)
@@ -1241,6 +1251,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val resultFutureOpendata: Future[SearchResponse] = executeQueryHome(client, queryOpendata, fieldsOpenData)
     val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
     val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
+
+    client.close()
 
     val result: Future[List[SearchResult]] = for{
       resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
@@ -1300,10 +1312,9 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   private def extractLastDataset(seqDatasetDaf: Seq[SearchResult]) = {
-    val listDateDatasetDaf: List[(String, SearchResult)] = seqDatasetDaf.map(
+    seqDatasetDaf.map(
       d => (extractDate(d.`type`.get, d.source.get), d)
-    ).toList
-    listDateDatasetDaf.sortWith(_._1 > _._1).take(3)
+    ).toList.sortWith(_._1 > _._1).take(3)
   }
 
   private def extractAllLastDataset(seqDatasetDaf: Future[Seq[SearchResult]], seqDatasetOpen: Future[List[SearchResult]]) = {
