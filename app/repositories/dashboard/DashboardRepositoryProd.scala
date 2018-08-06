@@ -11,9 +11,7 @@ import akka.stream.ActorMaterializer
 import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
-import com.mongodb.casbah.query.Imports
-import com.mongodb.casbah.query.dsl.QueryExpressionObject
-import com.mongodb.casbah.{MongoClient, MongoCollection, query}
+import com.mongodb.casbah.{MongoClient, MongoCollection}
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
 //import play.api.libs.ws.ahc.AhcWSClient
@@ -710,7 +708,7 @@ class DashboardRepositoryProd extends DashboardRepository {
               createThemeFilter(filters.theme)
             ),
             should(
-              must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
+              must(termQuery("dcatapit.privatex", true), matchQuery("dcatapit.owner_org", groups.mkString(" ")).operator("OR")),
               termQuery("dcatapit.privatex", false),
               must(termQuery("status", 0), termQuery("user", username)),
               must(termQuery("published", 0), termQuery("user", username)),
@@ -1261,7 +1259,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       boolQuery()
         .must(
           should(
-            must(termQuery("dcatapit.privatex", "1"), matchQuery("operational.acl.groupName", groups.mkString(" "))),
+            must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
             termQuery("dcatapit.privatex", "0"),
             must(termQuery("status", "0"), termQuery("user", username)),
             must(termQuery("published", "0"), termQuery("user", username)),
