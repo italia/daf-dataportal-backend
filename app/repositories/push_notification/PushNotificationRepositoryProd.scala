@@ -190,7 +190,6 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       Logger.logger.debug(s"calling updateNotifications for ${notifications.map(n => s"{offset: ${n.offset.get}, user: ${n.user.get}}").mkString(", ")}")
       updateNotifications(notifications.map(n => n.copy(status = Option(1))))
     }
-    else Logger.logger.debug(s"checkNewNotifications: no new notifications")
 
     Future.successful(notifications)
   }
