@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                    
+                                                                                                                                                                                                                
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -228,14 +228,14 @@ package ftd_api.yaml {
         val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-      val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
+      val iframes = DashboardRegistry.dashboardService.iframes(credentials.username, ws)
       DashboardIframes200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
         }
         val iframesByTableName = iframesByTableNameAction { (tableName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-          val iframes = DashboardRegistry.dashboardService.iframes(credentials.username)
+          val iframes = DashboardRegistry.dashboardService.iframes(credentials.username, ws)
           val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
           IframesByTableName200(iframesByName)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
@@ -574,7 +574,7 @@ package ftd_api.yaml {
         val dashboardIframesbyorg = dashboardIframesbyorgAction { (orgName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-            val iframes = DashboardRegistry.dashboardService.iframesByOrg(credentials.username,orgName)
+            val iframes = DashboardRegistry.dashboardService.iframesByOrg(credentials.username,orgName, ws)
             DashboardIframesbyorg200(iframes)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
         }
@@ -787,7 +787,7 @@ package ftd_api.yaml {
         val createTable = createTableAction { input: (File, String, String, String) =>
             val (upfile, tableName, fileType, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.createTable
-            val success = DashboardRegistry.dashboardService.save(upfile, tableName, fileType)
+            val success = DashboardRegistry.dashboardService.save(upfile, tableName, fileType, ws)
       CreateTable200(success)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createTable
         }

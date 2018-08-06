@@ -26,9 +26,9 @@ class GrafanaController @Inject() (ws: WSClient,
 
   // Con apiKey statica
   def snapshots(grafanauser :String) = Action.async { implicit request =>
-    println("ALEOOOOOOOOO")
+//    println("ALEOOOOOOOOO")
     println(URL)
-    println(apiKey)
+//    println(apiKey)
     val responseWs: Future[WSResponse] = ws.url(URL + "/api/dashboard/snapshots")
           .withHeaders(("Authorization", "Bearer " + apiKey)).get
     responseWs.map { response =>

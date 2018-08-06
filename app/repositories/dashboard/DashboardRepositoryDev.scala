@@ -3,11 +3,12 @@ package repositories.dashboard
 import java.io.File
 import java.util.Date
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 import play.api.libs.json.{JsArray, JsObject, Json}
+import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 import scala.io.Source
@@ -20,7 +21,7 @@ class DashboardRepositoryDev extends DashboardRepository {
 
   import scala.concurrent.ExecutionContext.Implicits._
 
-  def save(upFile: File, tableName: String, fileType: String): Success = {
+  def save(upFile: File, tableName: String, fileType: String, wsClient: WSClient): Success = {
     val message = s"Table created  $tableName"
     val fileName = new Date().getTime() + ".txt"
     val currentPath = new java.io.File(".").getCanonicalPath
@@ -61,11 +62,11 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(Catalog(None), Catalog(None))
   }
 
-  def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
+  def iframesByOrg(user: String,org: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
     Future(Seq(DashboardIframes(None,None,None,None,None, None)))
   }
 
-  def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
+  def iframes(metaUser :String, wsClient: WSClient) :Future[Seq[DashboardIframes]] = {
     Future(Seq(DashboardIframes(None,None,None,None,None,None)))
   }
 

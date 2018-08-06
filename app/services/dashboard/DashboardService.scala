@@ -2,7 +2,8 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, Filters, SearchResult, Success, UserStory, DataApp}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
+import play.api.libs.ws.WSClient
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
 
@@ -18,8 +19,8 @@ trait DashboardServiceComponent {
   val dashboardService: DashboardService
 
   class DashboardService {
-    def save(upFile :File,tableName :String, fileType :String) :Success = {
-      val result = dashboardRepository.save(upFile,tableName, fileType)
+    def save(upFile :File,tableName :String, fileType :String, wsClient: WSClient) :Success = {
+      val result = dashboardRepository.save(upFile,tableName, fileType, wsClient)
       result
     }
 
@@ -32,12 +33,12 @@ trait DashboardServiceComponent {
        dashboardRepository.tables()
     }
 
-    def iframes(metaUser :String) :Future[Seq[DashboardIframes]] = {
-      dashboardRepository.iframes(metaUser)
+    def iframes(metaUser :String, wsClient: WSClient) :Future[Seq[DashboardIframes]] = {
+      dashboardRepository.iframes(metaUser, wsClient)
     }
 
-    def iframesByOrg(user: String,org: String): Future[Seq[DashboardIframes]] = {
-      dashboardRepository.iframesByOrg(user,org)
+    def iframesByOrg(user: String,org: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
+      dashboardRepository.iframesByOrg(user,org, wsClient)
     }
 
     def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
