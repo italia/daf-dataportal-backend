@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -87,9 +87,24 @@ package ftd_api.yaml {
           .withHeaders(inAuth)
           .get()
           .map{ resp =>
-          println("security-manager userbyname response: "+resp)
+          logger.debug("security-manager userbyname response: "+resp)
           (resp.json \ "organizations").as[Seq[String]]
         }
+      }
+      private def getUserOrgsWorkgroups(username: String) = {
+        val internalUrl = s"${ConfigReader.securityManHost}/security-manager/v1/ipa/userbyname/$username"
+
+        val inAuth=("authorization",currentRequest.headers.get("authorization").get)
+
+        logger.debug(s"internalUrl: $internalUrl")
+        ws.url(internalUrl)
+          .withHeaders(inAuth)
+          .get()
+          .map{ resp =>
+            logger.debug("security-manager userbyname response: "+resp)
+            println(resp.json)
+            (resp.json \ "organizations").as[Seq[String]] ++ (resp.json \ "workgroups").as[Seq[String]]
+          }
       }
         // ----- End of unmanaged code area for constructor Ftd_apiYaml
         val catalogDistributionLicense = catalogDistributionLicenseAction { input: (String, String) =>
@@ -195,14 +210,11 @@ package ftd_api.yaml {
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
 
           val result = for{
-            orgs <- getUserOrgs(credentials.username)
-            out <- Future.successful{DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgs.toList)}
+            orgsWorks <- getUserOrgsWorkgroups(credentials.username)
+            out <- Future.successful{DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgsWorks.toList)}
           } yield out
           result flatMap( SearchFullText200(_) )
 
-          /*
-            SearchFullText200(DashboardRegistry.dashboardService.searchText(filters, credentials.username,
-              credentials.groups.toList.filterNot(g => Role.roles.contains(g))))*/
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
         val stories = storiesAction { input: (NotificationOffset, NotificationOffset, PublicDashboardsGetLimit) =>
@@ -265,9 +277,9 @@ package ftd_api.yaml {
         val getAllNotifications = getAllNotificationsAction { input: (String, PublicDashboardsGetLimit) =>
             val (user, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllNotifications
-            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
-          if(credential.username.equals(user) || CredentialManager.isDafSysAdmin(currentRequest)
-            || CredentialManager.isOrgsAdmin(currentRequest, credential.groups))
+            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
+          if(credentials.username.equals(user) || CredentialManager.isDafSysAdmin(currentRequest)
+            || CredentialManager.isOrgsAdmin(currentRequest, credentials.groups))
             GetAllNotifications200(PushNotificationRegistry.pushNotificationService.getAllNotifications(user, limit))
           else
             GetAllNotifications401(Error(Some(401), Some(s"Unauthorized to read notifications for ${user}"), None))
@@ -424,8 +436,8 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLast
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
           val result = for{
-            orgs <- getUserOrgs(credentials.username)
-            out <- Future.successful{DashboardRegistry.dashboardService.searchLast(credentials.username, orgs.toList)}
+            orgsWorks <- getUserOrgsWorkgroups(credentials.username)
+            out <- Future.successful{DashboardRegistry.dashboardService.searchLast(credentials.username, orgsWorks.toList)}
           } yield out
           result flatMap( SearchLast200(_) )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLast
