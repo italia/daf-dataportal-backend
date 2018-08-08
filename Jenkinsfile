@@ -7,7 +7,7 @@ pipeline{
              if(env.BRANCH_NAME=='testci2'|| env.BRANCH_NAME=='security-enhancements'){
                 sh '''
                 STAGING=true;
-                sbt " -DSTAGING=$STAGING; reload ; compile;  docker:publish"
+                sbt " -DSTAGING=$STAGING; reload; clean; compile;  docker:publish"
                 '''
                 }
             }
