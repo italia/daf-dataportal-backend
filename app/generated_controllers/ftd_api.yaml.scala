@@ -88,7 +88,6 @@ package ftd_api.yaml {
           .get()
           .map{ resp =>
           logger.debug("security-manager userbyname response: "+resp)
-            println(resp.json)
           (resp.json \ "organizations").as[Seq[String]]
         }
       }
