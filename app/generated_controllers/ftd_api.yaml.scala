@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                        
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -82,7 +82,11 @@ package ftd_api.yaml {
 
         val inAuth=("authorization",currentRequest.headers.get("authorization").get)
 
-        ws.url(internalUrl).withHeaders(inAuth).get().map{ resp =>
+        logger.debug(s"internalUrl: $internalUrl")
+        ws.url(internalUrl)
+          .withHeaders(inAuth)
+          .get()
+          .map{ resp =>
           println("security-manager userbyname response: "+resp)
           (resp.json \ "organizations").as[Seq[String]]
         }
@@ -419,7 +423,11 @@ package ftd_api.yaml {
         val searchLast = searchLastAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLast
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-          SearchLast200(DashboardRegistry.dashboardService.searchLast(credentials.username, credentials.groups.toList))
+          val result = for{
+            orgs <- getUserOrgs(credentials.username)
+            out <- Future.successful{DashboardRegistry.dashboardService.searchLast(credentials.username, orgs.toList)}
+          } yield out
+          result flatMap( SearchLast200(_) )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLast
         }
         val inferschema = inferschemaAction { input: (File, String) =>

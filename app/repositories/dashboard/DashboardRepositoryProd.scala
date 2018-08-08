@@ -1260,9 +1260,9 @@ class DashboardRepositoryProd extends DashboardRepository {
       boolQuery()
         .must(
           should(
-            must(termQuery("dcatapit.privatex", "1"), matchQuery("operational.acl.groupName", groups.mkString(" "))),
+            must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" "))),
             must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username)),
-            termQuery("dcatapit.privatex", "0"),
+            termQuery("dcatapit.privatex", false),
             must(termQuery("status", "0"), termQuery("user", username)),
             must(termQuery("published", "0"), termQuery("user", username)),
             must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
