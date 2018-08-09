@@ -7,6 +7,7 @@ import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
 import play.api.mvc._
 import play.api.libs.ws._
+import utils.ConfigReader
 
 import scala.concurrent.Future
 import play.api.libs.json._
@@ -19,11 +20,13 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val conf = Configuration.load(Environment.simple())
-  val URL : String = conf.getString("superset.url").get
-  val user = conf.getString("superset.user").get
-  val pass = conf.getString("superset.pass").get
+  val URL : String = ConfigReader.getSupersetUrl
+  val user = ConfigReader.getSupersetUser
+  val pass = ConfigReader.getSupersetPass
+  val openUrl = ConfigReader.getSupersetOpenUrl
+  val openDataUser = ConfigReader.getSupersetOpenDataUser
 
-  val local = conf.getString("app.local.url").get
+  val local = ConfigReader.getLocalUrl
 
   def getIframes() = Action.async { implicit request =>
     val iframeJson = ws.url("http://localhost:8088/slicemodelview/api/read")
@@ -64,9 +67,10 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
 
   def publicSlice(user :String) = Action.async { implicit request =>
 
+    val supersetUrl = if(user == openDataUser) openUrl else URL
 
     def callPublicSlice(cookie:String, wsClient:WSClient)=
-      wsClient.url(URL + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
+      wsClient.url(supersetUrl + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
 
     sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json.json \ "result").get)}
 
