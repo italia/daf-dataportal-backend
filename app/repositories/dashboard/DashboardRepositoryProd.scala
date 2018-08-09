@@ -14,7 +14,7 @@ import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress
 import com.mongodb.casbah.{MongoClient, MongoCollection}
 import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
 import play.api.libs.json._
-import play.api.libs.ws.ahc.AhcWSClient
+//import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
 
 import scala.concurrent.Future
@@ -263,7 +263,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             val table = (x \ "datasource_link").get.asOpt[String].getOrElse("").split(">").last.split("<").head
             DashboardIframes( Some("superset_" + slice_id.toString), Some(url),Some(vizType), Some("superset"), Some(title), Some(table) )
           } catch {
-            case e: Exception => e.printStackTrace(); /*println(x);println("ERROR"); */ DashboardIframes(None, None, None, None, None, None)
+            case e: Exception => /*e.printStackTrace(); println(x);println("ERROR"); */ DashboardIframes(None, None, None, None, None, None)
           }
         }
       })
@@ -295,7 +295,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
 
 
-    val test: Future[Seq[DashboardIframes]] = for {
+    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
         iframes <- metabase
         iframesWithTable <- metabaseTableInfo(iframes, wsClient)
     } yield iframesWithTable
@@ -330,7 +330,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 */
 
-    val services  = List(test, superset) //, grafana, tdMetabase)
+    val services  = List(superset, metabaseWithTables) //, grafana, tdMetabase)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
