@@ -616,6 +616,25 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/dashboard/open-iframes":
+    get:
+      tags:
+      - Dashboard
+      summary: List of iframes for dashboard visualization
+      operationId: dashboardOpenIframes
+      produces:
+      - application/json
+      responses:
+        200:
+          description: An array of iFrames
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DashboardIframes'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/dashboard/iframesByName/{tableName}":
         get:
           tags:

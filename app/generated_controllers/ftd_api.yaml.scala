@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                        
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -731,6 +731,14 @@ package ftd_api.yaml {
             Deletedashboard200(DashboardRegistry.dashboardService.deleteDashboard(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletedashboard
         }
+        val dashboardOpenIframes = dashboardOpenIframesAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardOpenIframes
+            val openDataUser = ConfigReader.getSupersetOpenDataUser
+          val openIframes = DashboardRegistry.dashboardService.iframes(openDataUser, ws)
+          DashboardOpenIframes200(openIframes)
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardOpenIframes
+        }
         val kyloInferschema = kyloInferschemaAction { input: (File, String) =>
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
@@ -829,12 +837,6 @@ package ftd_api.yaml {
                 orgs.toList, CredentialManager.isDafSysAdmin(currentRequest)) }
             } yield out
             result flatMap( GetDomains200(_) )
-
-          /*
-      val response: Seq[String] = SettingsRegistry.settingsRepository.getDomain(
-        credentials.groups.toList.filterNot(g => Role.roles.contains(g)), CredentialManager.isDafAdmin(currentRequest)
-      )
-      GetDomains200(response)*/
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getDomains
         }
     
