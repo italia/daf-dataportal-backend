@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                    
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -102,7 +102,6 @@ package ftd_api.yaml {
           .get()
           .map{ resp =>
             logger.debug("security-manager userbyname response: "+resp)
-            println(resp.json)
             (resp.json \ "organizations").as[Seq[String]] ++ (resp.json \ "workgroups").as[Seq[String]]
           }
       }
@@ -214,7 +213,6 @@ package ftd_api.yaml {
             out <- Future.successful{DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgsWorks.toList)}
           } yield out
           result flatMap( SearchFullText200(_) )
-
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
         val stories = storiesAction { input: (NotificationOffset, NotificationOffset, PublicDashboardsGetLimit) =>
