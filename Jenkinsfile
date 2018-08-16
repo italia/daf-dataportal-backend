@@ -16,7 +16,7 @@ pipeline{
             steps{
             script{
                 if(env.BRANCH_NAME=='testci2'|| env.BRANCH_NAME== 'security-enhancements'){
-                    kubectl delete -f  daf_datipubblici_test.yaml
+                    //kubectl delete -f  daf_datipubblici_test.yaml
                     sh '''
                     cd kubernetes
                     ./config-map-test.sh                    
