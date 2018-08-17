@@ -109,5 +109,11 @@ spec:
 #      - name: hadoopconf
 #        hostPath:
 #          path: /etc/hadoop/conf
-      nodeSelector:
-        nifi: "false"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: "nifi"
+                  operator: NotIn
+                  values: ["true"]
