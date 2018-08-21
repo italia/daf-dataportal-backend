@@ -4,6 +4,9 @@
 <img title="Build Status Images" src="https://api.travis-ci.com/italia/dati-frontendserver.svg?token=sdc8mJz3EyP3LyxtXjxQ">
 </a>
 
+## status
+[Build Status](http://131.1.252.41/job/CI-Dataportal_Backend/job/security-enhancements/badge/icon)
+
 **FRONT END SERVER** 
 
 Il front end server è un componente della architettura di 
