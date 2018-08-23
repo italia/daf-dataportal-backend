@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-kubectl delete configmap datipubblici-conf || true
-kubectl create configmap datipubblici-conf --from-file=../conf/test/prodBase.conf
+kubectl --kubeconfig=../../../.kube/config.teamdigitale-staging delete configmap datipubblici-conf || true
+kubectl --kubeconfig=../../../.kube/config.teamdigitale-staging create configmap datipubblici-conf --from-file=../conf/test/prodBase.conf
