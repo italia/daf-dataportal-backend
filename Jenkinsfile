@@ -4,7 +4,7 @@ pipeline{
         stage('Build') {
          steps {
              script{
-             if(env.BRANCH_NAME=='testci2'|| env.BRANCH_NAME=='security-enhancements'){
+             if(env.BRANCH_NAME=='nuovokubeconfig'|| env.BRANCH_NAME=='security-enhancements'){
                 slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-Dataportal_Backend/activity")
                 sh '''
                 sbt " -DSTAGING=true; reload; clean; compile;  docker:publish"
@@ -16,12 +16,12 @@ pipeline{
         stage('Staging'){
             steps{
             script{
-                if(env.BRANCH_NAME=='testci2'|| env.BRANCH_NAME== 'security-enhancements'){
+                if(env.BRANCH_NAME=='nuovokubeconfig'|| env.BRANCH_NAME== 'security-enhancements'){
                     //kubectl delete -f  daf_datipubblici_test.yaml
                     sh '''
                     cd kubernetes
                     ./config-map-test.sh                    
-                    kubectl apply -f  daf_datipubblici_test.yaml --force
+                    kubectl --kubeconfig=../../../.kube/config.teamdigitale-staging apply -f  daf_datipubblici_test.yaml --force --namespace=testci
                     '''
                     slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-Dataportal_Backend/activity")
             }
