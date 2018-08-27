@@ -11,6 +11,7 @@ trait PushNotificationRepository {
   def updateNotifications(notifications: Seq[Notification]): Future[Either[Error, Success]]
   def getAllNotifications(user: String, limit: Option[Int]): Future[Seq[Notification]]
   def checkNewNotifications(user: String): Future[Seq[Notification]]
+  def getLastOffset: Future[Int]
 
 }
 

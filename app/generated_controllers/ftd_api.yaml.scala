@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -215,7 +215,7 @@ package ftd_api.yaml {
           result flatMap( SearchFullText200(_) )
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
-        val stories = storiesAction { input: (NotificationOffset, NotificationOffset, PublicDashboardsGetLimit) =>
+        val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
@@ -301,6 +301,12 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetsCount()
       AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
+        }
+        val getLastOffset = getLastOffsetAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
+            GetLastOffset200(PushNotificationRegistry.pushNotificationService.getLastOffset)
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
         }
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
@@ -413,7 +419,7 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
         }
-        val dashboards = dashboardsAction { input: (NotificationOffset, NotificationOffset, PublicDashboardsGetLimit) =>
+        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
@@ -626,7 +632,7 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }
-        val publicStories = publicStoriesAction { input: (DistributionLabel, NotificationOffset, PublicDashboardsGetLimit) =>
+        val publicStories = publicStoriesAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
             PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(org))
@@ -647,7 +653,7 @@ package ftd_api.yaml {
       Savedashboard200(save)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, NotificationOffset, PublicDashboardsGetLimit) =>
+        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
             PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(org))
