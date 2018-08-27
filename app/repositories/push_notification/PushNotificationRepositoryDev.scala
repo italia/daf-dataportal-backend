@@ -29,4 +29,8 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
   override def checkNewNotifications(user: String): Future[Seq[Notification]] = {
     Future.successful(Seq[Notification]())
   }
+
+  override def getLastOffset: Future[Int] = {
+    Future.successful(0)
+  }
 }
