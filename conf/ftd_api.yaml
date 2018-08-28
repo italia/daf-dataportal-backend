@@ -1636,7 +1636,7 @@ paths:
         200:
           description: the last offset
           schema:
-            $ref: '#/definitions/Offset'
+            $ref: '#/definitions/LastOffset'
         default:
           description: Unexpected error
           schema:
@@ -1721,14 +1721,19 @@ definitions:
         type: integer
         format: int32
       offset:
-        type: object
-        $ref: '#/definitions/Offset'
+        type: integer
+        format: int32
       info:
         type: object
         $ref: '#/definitions/InfoNotification'
-  Offset:
-    type: integer
-    format: int32
+  LastOffset:
+    type: object
+    required:
+      - offset
+    properties:
+      offset:
+        type: integer
+        format: int32
   InfoNotification:
     type: object
     properties:
