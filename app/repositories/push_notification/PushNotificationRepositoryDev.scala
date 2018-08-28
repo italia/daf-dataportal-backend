@@ -1,6 +1,6 @@
 package repositories.push_notification
 
-import ftd_api.yaml.{Error, Notification, Subscription, Success}
+import ftd_api.yaml.{Error, LastOffset, Notification, Subscription, Success}
 
 import scala.concurrent.Future
 
@@ -30,7 +30,7 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
     Future.successful(Seq[Notification]())
   }
 
-  override def getLastOffset: Future[Int] = {
-    Future.successful(0)
+  override def getLastOffset: Future[LastOffset] = {
+    Future.successful(LastOffset(0))
   }
 }

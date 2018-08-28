@@ -5,7 +5,7 @@ import com.mongodb.casbah
 import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
 import com.mongodb.casbah.MongoClient
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{Error, Notification, Subscription, Success}
+import ftd_api.yaml.{Error, LastOffset, Notification, Subscription, Success}
 import play.api.Logger
 import utils.ConfigReader
 import play.api.libs.json._
@@ -194,7 +194,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     Future.successful(notifications)
   }
 
-  override def getLastOffset: Future[Int] = {
+  override def getLastOffset: Future[LastOffset] = {
     import ftd_api.yaml.BodyReads.NotificationReads
 
     val mongoClient = MongoClient(server, List(credentials))
@@ -208,12 +208,12 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
     val notificationJsResult = json.validate[Notification]
-    val offset: Int = notificationJsResult match {
+    val offset = notificationJsResult match {
       case s: JsSuccess[Notification] => s.get.offset
       case _: JsError => 0
     }
     logger.debug(s"getLastOffset: $offset")
-    Future.successful(offset)
+    Future.successful(LastOffset(offset))
   }
 }
 
