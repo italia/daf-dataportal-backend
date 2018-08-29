@@ -39,8 +39,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   import ftd_api.yaml.BodyReads._
   import scala.concurrent.ExecutionContext.Implicits._
 
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+//  implicit val system = ActorSystem()
+//  implicit val materializer = ActorMaterializer()
 
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
@@ -359,77 +359,64 @@ class DashboardRepositoryProd extends DashboardRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    val query = status match {
-      case Some(x) => MongoDBObject("published" -> x)
-      case None => MongoDBObject()
-    }
-    val results = coll.find(query).sort(MongoDBObject("timestamp" -> -1)).toList
+    val results = coll.find(privateQueryToMongo("status", username, groups, status))
+      .sort(MongoDBObject("timestamp" -> -1))
+      .toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-//    println(json)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
-    val dashboards = dashboardsJsResult match {
+    dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case _: JsError => Seq()
     }
-    dashboards.filter(dash => checkDashboardResponse(dash, username, groups))
   }
 
   def dashboardsPublic(org: Option[String]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    val results = publicQueryToMongo(coll, org, "published")
+    val results = coll.find(publicQueryToMongo("status", org))
+      .sort(MongoDBObject("timestamp" -> -1))
+      .toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
     val dashboardsJsResult = json.validate[Seq[Dashboard]]
-    val dashboards = dashboardsJsResult match {
+    dashboardsJsResult match {
       case s: JsSuccess[Seq[Dashboard]] => s.get
       case e: JsError => Seq()
     }
-    dashboards
   }
 
   def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    //  val objectId = new org.bson.types.ObjectId(id)
-    val query = MongoDBObject("id" -> id)
-    // val query = MongoDBObject("title" -> id)
-    val result = coll.findOne(query)
+    val result = coll.findOne(privateQueryById(id, "status", username, groups))
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(result)
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
-    val dashboard: Dashboard = dashboardJsResult match {
+    dashboardJsResult match {
       case s: JsSuccess[Dashboard] => s.get
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    if(checkDashboardResponse(dashboard, username, groups)) dashboard
-    else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
   def publicDashboardById(id: String): Dashboard = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
-    //  val objectId = new org.bson.types.ObjectId(id)
-    val query = MongoDBObject("id" -> id)
-    // val query = MongoDBObject("title" -> id)
-    val result = coll.findOne(query)
+    val result = coll.findOne(publicQueryById(id, "status"))
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(result)
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
-    val dashboard: Dashboard = dashboardJsResult match {
+    dashboardJsResult match {
       case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
       case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
     }
-    if(checkOpenDashboardResponse(dashboard)) dashboard
-    else Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveDashboard(dashboard: Dashboard, user: String): Success = {
@@ -483,94 +470,118 @@ class DashboardRepositoryProd extends DashboardRepository {
   def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
-    val query = status match {
-      case Some(x) => MongoDBObject("published" -> x)
-      case None => MongoDBObject()
-    }
     val coll = db("stories")
-    val results = coll.find(query)
+    val results = coll.find(privateQueryToMongo("published", username, groups, status))
       .sort(MongoDBObject("timestamp" -> -1))
       .skip(page.getOrElse(0))
       .limit(limit.getOrElse(100)).toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-//    println(json)
     val storiesJsResult = json.validate[Seq[UserStory]]
-    val stories = storiesJsResult match {
+    storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories.filter(story => checkStoryResponse(story, username, groups))
   }
 
   def storiesPublic(org: Option[String]): Seq[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    val results = publicQueryToMongo(coll, org, "published")
+    val results = coll.find(publicQueryToMongo("published", org))
+      .sort(MongoDBObject("timestamp" -> -1))
+      .toList
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
     val storiesJsResult = json.validate[Seq[UserStory]]
-    val stories = storiesJsResult match {
+    storiesJsResult match {
       case s: JsSuccess[Seq[UserStory]] => s.get
       case e: JsError => Seq()
     }
-    stories
   }
 
-  private def publicQueryToMongo(coll: MongoCollection, org: Option[String], nameStatus: String): List[DBObject] = {
+  private def publicQueryToMongo(nameFieldStatus: String, org: Option[String] = None) = {
     import mongodb.casbah.query.Imports._
 
     val orgQuery = org match {
       case Some(x) => mongodb.casbah.Imports.MongoDBObject("org" -> x)
       case None => mongodb.casbah.Imports.MongoDBObject()
     }
-    val statusQuery = mongodb.casbah.Imports.MongoDBObject(nameStatus -> 2)
-    val sortQuery = mongodb.casbah.Imports.MongoDBObject("timestamp" -> -1)
+    val statusQuery = mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 2)
 
-    coll.find($and(orgQuery, statusQuery)).sort(sortQuery).toList
+    $and(orgQuery, statusQuery)
+  }
+
+  private def publicQueryById(id: String, nameFieldStatus: String) = {
+    import mongodb.casbah.query.Imports._
+
+    $and(mongodb.casbah.Imports.MongoDBObject("id" -> id), publicQueryToMongo(nameFieldStatus))
+  }
+
+  private def privateQueryById(id: String, nameFieldStatus: String, user: String, groups: List[String]) = {
+    import mongodb.casbah.query.Imports._
+
+    $and(mongodb.casbah.Imports.MongoDBObject("id" -> id), privateQueryToMongo(nameFieldStatus, user, groups))
+  }
+
+
+  private def privateQueryToMongo(nameFieldStatus: String, user: String, groups: List[String], status: Option[Int] = None) = {
+    import mongodb.casbah.query.Imports._
+
+    status match {
+      case Some(0) => queryToMongoStatus0(user, nameFieldStatus)
+      case Some(1) => queryToMongoStatus1(groups, nameFieldStatus)
+      case Some(2) => queryToMongoStatus2(nameFieldStatus)
+      case None =>  $or(queryToMongoStatus0(user, nameFieldStatus), queryToMongoStatus1(groups, nameFieldStatus), queryToMongoStatus2(nameFieldStatus))
+    }
+  }
+
+  private def queryToMongoStatus0(user: String, nameFieldStatus: String) = {
+    import mongodb.casbah.query.Imports._
+
+    $and(mongodb.casbah.Imports.MongoDBObject("user" -> user), mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 0))
+  }
+
+  private def queryToMongoStatus1(groups: List[String], nameFieldStatus: String) = {
+    import mongodb.casbah.query.Imports._
+
+    $and("org" $in groups, mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 1))
+  }
+
+  private def queryToMongoStatus2(nameFieldStatus: String) = {
+    mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 2)
   }
 
   def storyById(username: String, groups: List[String], id: String): UserStory = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    //  val objectId = new org.bson.types.ObjectId(id)
-    val query = MongoDBObject("id" -> id)
-    // val query = MongoDBObject("title" -> id)
-    val result = coll.findOne(query)
+    val result = coll.findOne(privateQueryById(id, "published", username, groups))
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(result)
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
-    val story: UserStory = storyJsResult match {
+    storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
       case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
-    if(checkStoryResponse(story, username, groups)) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def publicStoryById(id: String): UserStory = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
-    //  val objectId = new org.bson.types.ObjectId(id)
-    val query = MongoDBObject("id" -> id)
-    // val query = MongoDBObject("title" -> id)
-    val result = coll.findOne(query)
+    val result = coll.findOne(publicQueryById(id, "published"))
     mongoClient.close
     val jsonString = com.mongodb.util.JSON.serialize(result)
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
-    val story: UserStory = storyJsResult match {
+    storyJsResult match {
       case s: JsSuccess[UserStory] => s.get
       case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
     }
-    if(checkOpenStoryResponse(story)) story
-    else UserStory(None, None, None, None, None, None, None, None, None, None)
   }
 
   def saveStory(story: UserStory, user: String): Success = {
@@ -620,28 +631,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close()
     val response = Success(Some("Deleted"), Some("Deleted"))
     response
-  }
-
-  private def checkStoryResponse(story: UserStory, username: String, groups: List[String]): Boolean = {
-    if((story.user.getOrElse("no_user").equals(username) && story.published.getOrElse(0) == 0) ||
-      (groups.contains(story.org.getOrElse("no_org")) && story.published.getOrElse(0) == 1) ||
-      checkOpenStoryResponse(story)) true
-    else false
-  }
-
-  private def checkOpenStoryResponse(story: UserStory): Boolean = {
-    story.published.getOrElse(-1) == 2
-  }
-
-  private def checkDashboardResponse(dash: Dashboard, username: String, groups: List[String]): Boolean = {
-    if((dash.user.getOrElse("no_user").equals(username) && dash.status.getOrElse(0) == 0) ||
-      (groups.contains(dash.org.getOrElse("no_org")) && dash.status.getOrElse(0) == 1) ||
-      checkOpenDashboardResponse(dash)) true
-    else false
-  }
-
-  private def checkOpenDashboardResponse(dash: Dashboard): Boolean = {
-    dash.status.getOrElse(-1) == 2
   }
 
   def getAllDataApp: Seq[DataApp] = {
@@ -1151,7 +1140,11 @@ class DashboardRepositoryProd extends DashboardRepository {
       case "ext_opendata" => Json.parse(source.replace("\\", "\\\"")) \ "modified"
       case _ => Json.parse(source) \ "timestamp"
     }
-    parseDate(result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", ""))
+    val date = result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", "") match {
+      case "" => "23/07/2017"
+      case x: String => x
+    }
+    parseDate(date)
   }
 
   private def parseDate(date: String): String = {
@@ -1318,7 +1311,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val listDaf: Future[List[(String, SearchResult)]] = seqDatasetDaf map (daf => extractLastDataset(daf))
     val listOpen: Future[List[(String, SearchResult)]] = seqDatasetOpen map (open => extractLastDataset(open))
     val listDataset: Future[List[(String, SearchResult)]] = mergeListFuture(listDaf, listOpen)
-    val result: Future[List[SearchResult]] = listDataset map (l => l.sortBy(_._1).take(3).map(elem => elem._2))
+    val result: Future[List[SearchResult]] = listDataset map (l => l.sortWith(_._1 > _._1).take(3).map(elem => elem._2))
     result
   }
 

@@ -1,7 +1,7 @@
 package services.push_notification
 
 import play.api.{Configuration, Environment}
-import ftd_api.yaml.{Error, Notification, Subscription, Success}
+import ftd_api.yaml.{Error, Notification, LastOffset, Subscription, Success}
 import repositories.push_notification.{PushNotificationRepository, PushNotificationRepositoryComponent}
 
 import scala.concurrent.Future
@@ -32,6 +32,10 @@ trait PushNotificationServiceComponent {
 
     def checkNewNotifications(user: String): Future[Seq[Notification]] = {
       pushNotificationRepository.checkNewNotifications(user)
+    }
+
+    def getLastOffset: Future[LastOffset] = {
+      pushNotificationRepository.getLastOffset
     }
 
   }
