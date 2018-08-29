@@ -3,9 +3,9 @@ package repositories.push_notification
 import com.mongodb
 import com.mongodb.casbah
 import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
-import com.mongodb.casbah.{MongoClient, commons}
+import com.mongodb.casbah.MongoClient
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{Error, Notification, Subscription, Success}
+import ftd_api.yaml.{Error, LastOffset, Notification, Subscription, Success}
 import play.api.Logger
 import utils.ConfigReader
 import play.api.libs.json._
@@ -124,7 +124,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val coll = mongoDB("notifications")
-    val seqJson = notifications.map(n => (n.offset.get, n.user.get, notificationToJson(n)))
+    val seqJson = notifications.map(n => (n.offset, n.user, notificationToJson(n)))
 
     val seqMongoObj = seqJson.map{ case (offset, user, json) =>
       (offset, user, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
@@ -187,11 +187,33 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     if(notifications.nonEmpty) {
       Logger.logger.debug(s"checkNewNotifications: find ${notifications.size} notifications")
-      Logger.logger.debug(s"calling updateNotifications for ${notifications.map(n => s"{offset: ${n.offset.get}, user: ${n.user.get}}").mkString(", ")}")
-      updateNotifications(notifications.map(n => n.copy(status = Option(1))))
+      Logger.logger.debug(s"calling updateNotifications for ${notifications.map(n => s"{offset: ${n.offset}, user: ${n.user}}").mkString(", ")}")
+      updateNotifications(notifications.map(n => n.copy(status = 1)))
     }
 
     Future.successful(notifications)
+  }
+
+  override def getLastOffset: Future[LastOffset] = {
+    import ftd_api.yaml.BodyReads.NotificationReads
+
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val results = mongoDB("notifications")
+      .find()
+      .sort(composeQuery(SimpleQuery(QueryComponent("offset",-1))))
+      .limit(1)
+      .one()
+    mongoClient.close()
+    val jsonString = com.mongodb.util.JSON.serialize(results)
+    val json = Json.parse(jsonString)
+    val notificationJsResult = json.validate[Notification]
+    val offset = notificationJsResult match {
+      case s: JsSuccess[Notification] => s.get.offset
+      case _: JsError => 0
+    }
+    logger.debug(s"getLastOffset: $offset")
+    Future.successful(LastOffset(offset))
   }
 }
 

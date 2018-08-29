@@ -1605,6 +1605,23 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/notifications/offset/last":
+    get:
+      tags:
+      - PushNotification
+      summary: get the offset of the last notification sended
+      operationId: getLastOffset
+      produces:
+      - application/json
+      responses:
+        200:
+          description: the last offset
+          schema:
+            $ref: '#/definitions/LastOffset'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -1669,6 +1686,11 @@ definitions:
         type: string
   Notification:
     type: object
+    required:
+      - user
+      - timestamp
+      - status
+      - offset
     properties:
       notificationtype:
         type: string
@@ -1685,6 +1707,14 @@ definitions:
       info:
         type: object
         $ref: '#/definitions/InfoNotification'
+  LastOffset:
+    type: object
+    required:
+      - offset
+    properties:
+      offset:
+        type: integer
+        format: int32
   InfoNotification:
     type: object
     properties:
