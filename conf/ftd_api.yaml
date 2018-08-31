@@ -1766,6 +1766,8 @@ definitions:
         type: array
         items:
           type: string
+      owner:
+        type: string
       order:
         type: string
   Error:

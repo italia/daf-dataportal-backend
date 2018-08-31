@@ -705,7 +705,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-              createThemeFilter(filters.theme)
+              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner)
             ),
             should(
               must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
@@ -1037,6 +1037,21 @@ class DashboardRepositoryProd extends DashboardRepository {
         )
       }
       case _ => List()
+    }
+  }
+
+
+  private def ownerQueryString(owner: Option[String]): List[BoolQueryDefinition] = {
+    owner match {
+      case Some("") => List()
+      case Some(ownerName) => {
+        List(should(
+          must(termQuery("dcatapit.author", ownerName)),
+          must(termQuery("user", ownerName))
+        ))
+      }
+      case None => List()
+
     }
   }
 
