@@ -705,12 +705,13 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-              createThemeFilter(filters.theme)
+              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner)
             ),
             should(
               must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
               must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username)),
               termQuery("dcatapit.privatex", false),
+              must(termQuery("dcatapit.owner", "luca_test")),
               must(termQuery("status", 0), termQuery("user", username)),
               must(termQuery("published", 0), termQuery("user", username)),
               must(termQuery("status", 1), matchQuery("org", groups.mkString(" ")).operator("OR")),
@@ -1037,6 +1038,21 @@ class DashboardRepositoryProd extends DashboardRepository {
         )
       }
       case _ => List()
+    }
+  }
+
+
+  private def ownerQueryString(owner: Option[String]): List[BoolQueryDefinition] = {
+    owner match {
+      case Some("") => List()
+      case Some(ownerName) => {
+        List(should(
+          must(termQuery("dcatapit.author", ownerName)),
+          must(termQuery("user", ownerName))
+        ))
+      }
+      case None => List()
+
     }
   }
 
