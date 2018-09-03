@@ -56,7 +56,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -310,12 +310,6 @@ package ftd_api.yaml {
             val distributions: Seq[Distribution] = ComponentRegistry.monitorService.datasetsCount()
       AllDatasets200(distributions)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDatasets
-        }
-        val getLastOffset = getLastOffsetAction {  _ =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
-            GetLastOffset200(PushNotificationRegistry.pushNotificationService.getLastOffset)
-//          NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
         }
         val storiesbyid = storiesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.storiesbyid
@@ -699,6 +693,12 @@ package ftd_api.yaml {
             val allBrokenLinks = ComponentRegistry.monitorService.allBrokenLinks()
       AllBrokenLinks200(allBrokenLinks)
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
+        }
+        val getLastOffset = getLastOffsetAction { (notification_type: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
+            GetLastOffset200(PushNotificationRegistry.pushNotificationService.getLastOffset(notification_type))
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
         }
         val publicStoriesbyid = publicStoriesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid

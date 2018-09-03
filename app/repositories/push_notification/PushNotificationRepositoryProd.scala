@@ -223,13 +223,13 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     Future.successful(notifications)
   }
 
-  override def getLastOffset: Future[LastOffset] = {
+  override def getLastOffset(notificationType: String): Future[LastOffset] = {
     import ftd_api.yaml.BodyReads.NotificationReads
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val results = mongoDB("notifications")
-      .find()
+      .find(composeQuery(SimpleQuery(QueryComponent("notificationtype", notificationType))))
       .sort(composeQuery(SimpleQuery(QueryComponent("offset",-1))))
       .limit(1)
       .one()
@@ -241,7 +241,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       case s: JsSuccess[Notification] => s.get.offset
       case _: JsError => 0
     }
-    logger.debug(s"getLastOffset: $offset")
+    logger.debug(s"getLastOffset for $notificationType: $offset")
     Future.successful(LastOffset(offset))
   }
 }

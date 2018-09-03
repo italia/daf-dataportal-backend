@@ -42,8 +42,8 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.checkNewNotifications(user)
     }
 
-    def getLastOffset: Future[LastOffset] = {
-      pushNotificationRepository.getLastOffset
+    def getLastOffset(notificationType: String): Future[LastOffset] = {
+      pushNotificationRepository.getLastOffset(notificationType)
     }
 
   }
