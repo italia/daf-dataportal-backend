@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
       - name: datipubblici
-        image: nexus.teamdigitale.test/daf-datipubblici:1.0.4-SNAPSHOT
+        image: nexus.teamdigitale.test/daf-datipubblici:2.0.0-SNAPSHOT
         imagePullPolicy: Always
         env:
         - name: JAVA_OPTS
