@@ -4,7 +4,6 @@ import com.mongodb
 import com.mongodb.casbah
 import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
 import com.mongodb.casbah.MongoClient
-import com.mongodb.casbah.commons.TypeImports
 import com.mongodb.casbah.query.Imports.DBObject
 import ftd_api.yaml.{Error, LastOffset, Notification, Subscription, Success}
 import play.api.Logger

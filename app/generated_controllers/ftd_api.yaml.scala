@@ -48,7 +48,6 @@ import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 import it.gov.daf.common.sso.common.CredentialManager
 import java.net.URLEncoder
-import akka.actor.Status
 
 /**
  * This controller is re-generated after each change in the specification.
