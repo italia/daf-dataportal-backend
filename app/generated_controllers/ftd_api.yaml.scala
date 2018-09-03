@@ -48,6 +48,7 @@ import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 import it.gov.daf.common.sso.common.CredentialManager
 import java.net.URLEncoder
+import akka.actor.Status
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -56,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -106,6 +107,15 @@ package ftd_api.yaml {
           }
       }
         // ----- End of unmanaged code area for constructor Ftd_apiYaml
+        val deleteAllSubscription = deleteAllSubscriptionAction { (user: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteAllSubscription
+            val username = CredentialManager.readCredentialFromRequest(currentRequest).username
+          if(username.equals(user)) DeleteAllSubscription200(PushNotificationRegistry.pushNotificationService.deleteAllSubscription(user))
+          else DeleteAllSubscription401(Error(None, Some(s"Unauthorized to delete subscriptions for user $user"), None))
+
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllSubscription
+        }
         val catalogDistributionLicense = catalogDistributionLicenseAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistributionLicense
@@ -408,11 +418,6 @@ package ftd_api.yaml {
             }
 //          NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSubscription
-        }
-        val deleteSubscription = deleteSubscriptionAction { (pushNotification: Subscription) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
         }
         val deleteDataApplication = deleteDataApplicationAction { (data_app: DataApp) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
@@ -736,6 +741,17 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deletedashboard
             Deletedashboard200(DashboardRegistry.dashboardService.deleteDashboard(dashboard_id))
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletedashboard
+        }
+        val deleteSubscription = deleteSubscriptionAction { (subscription: Subscription) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
+            val username = CredentialManager.readCredentialFromRequest(currentRequest).username
+          val result = PushNotificationRegistry.pushNotificationService.deleteSubscription(username, subscription)
+          result.flatMap{
+            case Right(r) => DeleteSubscription200(r)
+            case Left(l) => DeleteSubscription404(l)
+          }
+//            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSubscription
         }
         val dashboardOpenIframes = dashboardOpenIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardOpenIframes
