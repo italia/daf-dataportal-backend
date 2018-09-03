@@ -18,6 +18,14 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
     Future.successful(Right(Success(None, None)))
   }
 
+  override def deleteSubscription(user: String, subscription: Subscription): Future[Either[Error, Success]] = {
+    Future.successful(Right(Success(None, None)))
+  }
+
+  override def deleteAllSubscription(user: String): Future[Success] = {
+    Future.successful(Success(None, None))
+  }
+
   override def updateNotifications(notification: Seq[Notification]): Future[Either[Error, Success]] = {
     Future.successful(Right(Success(None, None)))
   }

@@ -84,6 +84,35 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
   }
 
+  override def deleteSubscription(user: String, subscription: Subscription): Future[Either[Error, Success]] = {
+    import ftd_api.yaml.ResponseWrites.SubscriptionWrites.writes
+
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("subscriptions")
+    val json = writes(subscription)
+    val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+    obj.put("user", user)
+    val resultRemove = coll.remove(obj)
+    if(resultRemove.getN > 0) {
+      logger.debug(s"$user deleted $subscription")
+      Future.successful(Right(Success(Some(s"$user deleted $subscription"), None)))
+    } else {
+      logger.debug(s"delete subscription $user: $subscription")
+      Future.successful(Left(Error(Some(404), Some("subscription not found"), None)))
+    }
+  }
+
+  override def deleteAllSubscription(user: String): Future[Success] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("subscriptions")
+    val obj = DBObject("user" -> user)
+    val response = coll.remove(obj)
+    logger.debug(s"delete ${response.getN} subscriptions for user $user")
+    Future.successful(Success(Some(s"delete all subscriptions for user $user"), None))
+  }
+
   override def getSubscriptions(user: String): Future[Seq[Subscription]] = {
     import ftd_api.yaml.BodyReads.SubscriptionReads
 
