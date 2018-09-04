@@ -48,6 +48,7 @@ import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 import it.gov.daf.common.sso.common.CredentialManager
 import java.net.URLEncoder
+import play.api.mvc.Headers
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -56,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -75,6 +76,15 @@ package ftd_api.yaml {
 
     Authentication(configuration, playSessionStore)
     val GENERIC_ERROR = Error(None, Some("An Error occurred"), None)
+
+      private def readTokenFromRequest(requestHeader: Headers): Option[String] = {
+        val authHeader = requestHeader.get("authorization").get.split(" ")
+        val authType = authHeader(0)
+        val authCredentials = authHeader(1)
+
+        if( authType.equalsIgnoreCase("bearer")) Some(authCredentials)
+        else None
+      }
 
       private def getUserOrgs(username:String)={
         //val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
@@ -202,8 +212,12 @@ package ftd_api.yaml {
         }
         val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
-            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-      Savestories200(DashboardRegistry.dashboardService.saveStory(story, credentials.username))
+            val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+          val token = readTokenFromRequest(currentRequest.headers)
+          token match {
+            case Some(t) => Savestories200(DashboardRegistry.dashboardService.saveStory(story, user, t, ws))
+            case None => Savestories401("No token found")
+          }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
         val createSnapshot = createSnapshotAction { input: (File, String, String) =>
@@ -647,8 +661,11 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
       val user = credentials.username
-      val save = DashboardRegistry.dashboardService.saveDashboard(dashboard, user)
-      Savedashboard200(save)
+          val token = readTokenFromRequest(currentRequest.headers)
+          token match {
+            case Some(t) => Savedashboard200(DashboardRegistry.dashboardService.saveDashboard(dashboard, user, t, ws))
+            case None => Savedashboard401("No token found")
+          }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
         val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>

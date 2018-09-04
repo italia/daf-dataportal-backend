@@ -153,17 +153,17 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val coll = mongoDB("notifications")
-    val seqJson = notifications.map(n => (n.offset, n.user, notificationToJson(n)))
+    val seqJson = notifications.map(n => (n.offset, n.user, n.notificationtype, notificationToJson(n)))
 
-    val seqMongoObj = seqJson.map{ case (offset, user, json) =>
-      (offset, user, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
+    val seqMongoObj = seqJson.map{ case (offset, user, notificationType, json) =>
+      (offset, user, notificationType, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
     }
 
     val mongoResults = seqMongoObj.map{
-      case (offset, user, mongoObj) =>
+      case (offset, user, notificationType, mongoObj) =>
         (offset, user,
           coll.update(
-            composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("offset", offset)))),
+            composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("notificationtype", notificationType), QueryComponent("offset", offset)))),
             mongoObj)
         )
     }

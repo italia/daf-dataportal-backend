@@ -47,6 +47,8 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val elasticsearchUrl = playConfig.getString("elasticsearch.url")
   val elasticsearchPort = playConfig.getInt("elasticsearch.port")
 
+  val kafkaProxy: Option[String] = playConfig.getString("kafka-proxy.url")
+
 }
 
 object ConfigReader {
@@ -91,5 +93,7 @@ object ConfigReader {
 
   def getElasticsearchUrl = config.elasticsearchUrl.get
   def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
+
+  def getKafkaProxy = config.kafkaProxy.getOrElse("localhost:8085")
 
 }

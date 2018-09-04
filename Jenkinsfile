@@ -21,7 +21,7 @@ pipeline{
                     sh '''
                     cd kubernetes
                     ./config-map-test.sh                    
-                    kubectl --kubeconfig=${JENKINS_HOME}/.kube/config.teamdigitale-staging replace -f daf_datipubblici_test.yaml --force
+                    kubectl --kubeconfig=${JENKINS_HOME}/.kube/config.teamdigitale-staging apply -f daf_datipubblici_test.yaml --force
                     '''
                     slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-Dataportal_Backend/activity")
             }
