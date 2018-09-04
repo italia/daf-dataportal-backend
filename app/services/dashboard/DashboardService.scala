@@ -69,8 +69,8 @@ trait DashboardServiceComponent {
       dashboardRepository.publicStoryById(id)
     }
 
-    def saveStory(story: UserStory, user :String): Success = {
-      dashboardRepository.saveStory(story, user)
+    def saveStory(story: UserStory, user :String, token :String, wsClient: WSClient): Success = {
+      dashboardRepository.saveStory(story, user, token, wsClient)
     }
 
     def deleteStory(storyId :String): Success = {

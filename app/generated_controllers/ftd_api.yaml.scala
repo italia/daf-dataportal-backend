@@ -48,6 +48,7 @@ import java.nio.charset.CodingErrorAction
 import scala.io.Codec
 import it.gov.daf.common.sso.common.CredentialManager
 import java.net.URLEncoder
+import play.api.mvc.Headers
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -56,7 +57,7 @@ import java.net.URLEncoder
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -75,6 +76,15 @@ package ftd_api.yaml {
 
     Authentication(configuration, playSessionStore)
     val GENERIC_ERROR = Error(None, Some("An Error occurred"), None)
+
+      private def readTokenFromRequest(requestHeader: Headers): Option[String] = {
+        val authHeader = requestHeader.get("authorization").get.split(" ")
+        val authType = authHeader(0)
+        val authCredentials = authHeader(1)
+
+        if( authType.equalsIgnoreCase("bearer")) Some(authCredentials)
+        else None
+      }
 
       private def getUserOrgs(username:String)={
         //val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
@@ -202,8 +212,13 @@ package ftd_api.yaml {
         }
         val savestories = savestoriesAction { (story: UserStory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
-            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-      Savestories200(DashboardRegistry.dashboardService.saveStory(story, credentials.username))
+            val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+//          val token = readTokenFromRequest(currentRequest.headers)
+          val token: Option[String] = Some("eyJhbGciOiJIUzI1NiJ9.eyIkaW50X3Blcm1zIjpbXSwic3ViIjoib3JnLnBhYzRqLmxkYXAucHJvZmlsZS5MZGFwUHJvZmlsZSNuZXdfYW5kcmVhIiwiJGludF9yb2xlcyI6W10sIm1lbWJlck9mIjpbImNuPXRlc3RhbmRyZWEsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1kYWZfYWRtX25ld19vcmcyLGNuPWdyb3Vwcyxjbj1hY2NvdW50cyxkYz1kYWYsZGM9Z292LGRjPWl0IiwiY249b3Blbl9kYXRhX2dyb3VwLGNuPWdyb3Vwcyxjbj1hY2NvdW50cyxkYz1kYWYsZGM9Z292LGRjPWl0IiwiaXBhVW5pcXVlSUQ9YmRmMzIyZDgtMzhiMy0xMWU4LWI0MjQtZmExNjNlOTIzNTBhLGNuPXN1ZG9ydWxlcyxjbj1zdWRvLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1kYWZfc3lzX2FkbWluLGNuPWdyb3Vwcyxjbj1hY2NvdW50cyxkYz1kYWYsZGM9Z292LGRjPWl0IiwiY249bmV3X3Byb3Zhd29yazIsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1kYWZfcm9sZXMsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1kYWZfd29ya2dyb3Vwcyxjbj1ncm91cHMsY249YWNjb3VudHMsZGM9ZGFmLGRjPWdvdixkYz1pdCIsImNuPWRhZl92d3JfbmV3X29yZyxjbj1ncm91cHMsY249YWNjb3VudHMsZGM9ZGFmLGRjPWdvdixkYz1pdCIsImNuPW5ld19vcmdfMTMsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1wcmltb193b3JrZ3JvdXAsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1kYWZfdndyX25ld19vcmdfMTMsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1uZXdfb3JnMixjbj1ncm91cHMsY249YWNjb3VudHMsZGM9ZGFmLGRjPWdvdixkYz1pdCIsImlwYVVuaXF1ZUlEPTczMTMwN2VlLTM4YjEtMTFlOC1hNTE3LWZhMTYzZTkyMzUwYSxjbj1oYmFjLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1pcGF1c2Vycyxjbj1ncm91cHMsY249YWNjb3VudHMsZGM9ZGFmLGRjPWdvdixkYz1pdCIsImNuPWRhZl9zdGFmZixjbj1ncm91cHMsY249YWNjb3VudHMsZGM9ZGFmLGRjPWdvdixkYz1pdCIsImNuPXNmdHBvbmx5LGNuPWdyb3Vwcyxjbj1hY2NvdW50cyxkYz1kYWYsZGM9Z292LGRjPWl0IiwiY249ZGFmX3Z3cl90ZXN0YW5kcmVhLGNuPWdyb3Vwcyxjbj1hY2NvdW50cyxkYz1kYWYsZGM9Z292LGRjPWl0IiwiaXBhVW5pcXVlSUQ9MTgyMTU3ODYtNmZiNy0xMWU4LTgyNDctZmExNjNlOTIzNTBhLGNuPWhiYWMsZGM9ZGFmLGRjPWdvdixkYz1pdCIsImNuPW5ld19vcmcsY249Z3JvdXBzLGNuPWFjY291bnRzLGRjPWRhZixkYz1nb3YsZGM9aXQiLCJjbj1kYWZfb3JnYW5pemF0aW9ucyxjbj1ncm91cHMsY249YWNjb3VudHMsZGM9ZGFmLGRjPWdvdixkYz1pdCJdLCJleHAiOjE1MzYxMDMzNjB9.MpCG7qLYLSwNR9wJF-8iJABikztGiRFwyIbqk5CjWTk")
+          token match {
+            case Some(t) => Savestories200(DashboardRegistry.dashboardService.saveStory(story, user, t, ws))
+            case None => Savestories401("No token found")
+          }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savestories
         }
         val createSnapshot = createSnapshotAction { input: (File, String, String) =>

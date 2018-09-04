@@ -23,7 +23,7 @@ trait DashboardRepository {
   def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory]
   def storyById(username:String, groups: List[String], id: String): UserStory
   def publicStoryById(id: String): UserStory
-  def saveStory(story: UserStory, user: String): Success
+  def saveStory(story: UserStory, user: String, token: String, wsClient: WSClient): Success
   def deleteStory(storyId: String): Success
   def storiesPublic(org: Option[String]): Seq[UserStory]
   def dashboardsPublic(org: Option[String]): Seq[Dashboard]
