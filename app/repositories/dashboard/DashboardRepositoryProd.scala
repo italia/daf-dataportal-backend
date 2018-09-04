@@ -421,7 +421,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def saveDashboard(dashboard: Dashboard, user: String): Success = {
+  def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -436,6 +436,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
+        sendMessageToKafka(user, token, s"$operation dashboards", s"Dashboard $x is updated to status ${dashboard.status.get}", "/home", wsClient, "generic")
         val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
       }
       case None => {
@@ -586,7 +587,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  private def sendMessageToKafka(user: String, token: String, title: String, description: String, link: String, ws: WSClient) = {
+  private def sendMessageToKafka(user: String, token: String, title: String, description: String, link: String, ws: WSClient, notificationtype: String) = {
     Logger.logger.debug(s"kafka proxy $KAFKAPROXY")
     val message = s"""{
                      |"records":[{"value":{"user":"$user","token":"$token","notification":{
@@ -623,7 +624,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        sendMessageToKafka(user, token, s"$operation stories", s"User Story $id is updated to status ${story.published.get}", "/home", wsClient)
+        sendMessageToKafka(user, token, s"$operation stories", s"User Story $id is updated to status ${story.published.get}", "/home", wsClient, "generic")
         coll.update(query, obj)
       }
       case None => {

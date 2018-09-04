@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
@@ -661,8 +661,11 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
       val user = credentials.username
-      val save = DashboardRegistry.dashboardService.saveDashboard(dashboard, user)
-      Savedashboard200(save)
+          val token = readTokenFromRequest(currentRequest.headers)
+          token match {
+            case Some(t) => Savedashboard200(DashboardRegistry.dashboardService.saveDashboard(dashboard, user, t, ws))
+            case None => Savedashboard401("No token found")
+          }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
         val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>

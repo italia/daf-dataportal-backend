@@ -49,8 +49,8 @@ trait DashboardServiceComponent {
       dashboardRepository.dashboardById(username, group, id)
     }
 
-    def saveDashboard(dashboard: Dashboard, user :String): Success = {
-        dashboardRepository.saveDashboard(dashboard, user)
+    def saveDashboard(dashboard: Dashboard, user :String, token: String, wsClient: WSClient): Success = {
+        dashboardRepository.saveDashboard(dashboard, user, token, wsClient)
     }
 
     def deleteDashboard(dashboardId :String): Success = {

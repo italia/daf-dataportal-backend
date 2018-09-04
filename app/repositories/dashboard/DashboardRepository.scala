@@ -18,7 +18,7 @@ trait DashboardRepository {
   def iframesByOrg(user: String,org: String, wsClient: WSClient): Future[Seq[DashboardIframes]]
   def dashboards(username:String, groups: List[String], status: Option[Int]): Seq[Dashboard]
   def dashboardById(username: String, groups: List[String], id: String): Dashboard
-  def saveDashboard(dashboard: Dashboard, user: String): Success
+  def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success
   def deleteDashboard(dashboardId: String): Success
   def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory]
   def storyById(username:String, groups: List[String], id: String): UserStory

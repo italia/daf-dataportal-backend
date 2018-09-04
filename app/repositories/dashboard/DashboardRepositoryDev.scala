@@ -78,7 +78,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Dashboard(None, None, None, None, None, None, None, None, None, None)
   }
 
-  def saveDashboard(dashboard: Dashboard, user: String): Success = {
+  def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success = {
     Success(None, None)
   }
 
