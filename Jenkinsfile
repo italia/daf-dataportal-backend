@@ -21,8 +21,8 @@ pipeline{
                     sh '''
                     cd kubernetes
                     ./config-map-test.sh                    
-                    kubectl --kubeconfig=${JENKINS_HOME}/.kube/config.teamdigitale-staging delete -f daf_datipubblici_test.yaml --force || true;
-                    kubectl --kubeconfig=${JENKINS_HOME}/.kube/config.teamdigitale-staging create -f daf_datipubblici_test.yaml --force
+                    kubectl --kubeconfig=${JENKINS_HOME}/.kube/config.teamdigitale-staging delete -f daf_datipubblici_test.yaml || true;
+                    kubectl --kubeconfig=${JENKINS_HOME}/.kube/config.teamdigitale-staging create -f daf_datipubblici_test.yaml 
                     '''
                     slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-Dataportal_Backend/activity")
             }
