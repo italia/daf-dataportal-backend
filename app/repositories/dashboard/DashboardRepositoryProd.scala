@@ -595,7 +595,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val jsonBody = Json.parse(message)
 
-    val responseWs = ws.url(KAFKAPROXY + "topics/notification")
+    val responseWs = ws.url(KAFKAPROXY + "/topics/notification")
       .withHeaders(("Content-Type", "application/vnd.kafka.v2+json"))
       .post(jsonBody)
 
