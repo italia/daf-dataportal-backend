@@ -7,7 +7,7 @@ pipeline{
              if(env.BRANCH_NAME=='citest'|| env.BRANCH_NAME=='security-enhancements'){
                 slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-Dataportal_Backend/activity")
                 sh '''
-                sbt ;eval System.setProperty("STAGING", "true"); reload; clean; compile; docker:publish;               
+                sbt ';eval System.setProperty("STAGING", "true"); reload; clean; compile; docker:publish'      
                 '''
                 }
             }
