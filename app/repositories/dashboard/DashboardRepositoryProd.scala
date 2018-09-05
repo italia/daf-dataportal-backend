@@ -436,7 +436,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        sendMessageToKafka(user, token, s"$operation dashboards", s"Dashboard $x is updated to status ${dashboard.status.get}", "/home", wsClient, "generic")
+        sendMessageToKafka(user, dashboard.org.get, token, s"$operation dashboards", s"Dashboard $x is updated to status ${dashboard.status.get}", "/home", wsClient, "generic")
         val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
       }
       case None => {
@@ -587,10 +587,10 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  private def sendMessageToKafka(user: String, token: String, title: String, description: String, link: String, ws: WSClient, notificationtype: String) = {
+  private def sendMessageToKafka(user: String, group: String, token: String, title: String, description: String, link: String, ws: WSClient, notificationtype: String) = {
     Logger.logger.debug(s"kafka proxy $KAFKAPROXY")
     val message = s"""{
-                     |"records":[{"value":{"user":"$user","token":"$token","notification":{
+                     |"records":[{"value":{"group":"$group","token":"$token","notification":{
                      |"title":"$title","description":"$description","link":"$link"}}}]}""".stripMargin
 
     val jsonBody = Json.parse(message)
@@ -624,7 +624,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        sendMessageToKafka(user, token, s"$operation stories", s"User Story $id is updated to status ${story.published.get}", "/home", wsClient, "generic")
+        sendMessageToKafka(user, story.org.get, token, s"$operation stories", s"User Story $id is updated to status ${story.published.get}", "/home", wsClient, "generic")
         coll.update(query, obj)
       }
       case None => {
