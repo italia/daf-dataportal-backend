@@ -8,10 +8,10 @@ pipeline{
                 slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-Dataportal_Backend/activity")
                 sh '''
                 sbt 'eval System.setProperty("STAGING", "true")';
-                sbt " reload "
-                sbt " clean ":
-                sbt " compile ";
-                sbt " docker:publish "
+                sbt reload;
+                sbt clean;
+                sbt compile;
+                sbt docker:publish
                 '''
                 }
             }
