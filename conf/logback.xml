@@ -4,15 +4,30 @@
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%coloredLevel - %logger - %message%n%xException</pattern>
+      <pattern>%d{HH:mm:ss.SSS} %mdc{user-id:--} %mdc{request-init-time:--} %mdc{context-name:--} %coloredLevel - %logger - %message%n%xException</pattern>
     </encoder>
+  </appender>
+
+  <appender name="TIME_BASED_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender" >
+    <file>.logs/datipubblici.log</file>
+
+    <rollingPolicy>
+      <fileNamePattern>./logs/datipubblici.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>2</maxHistory>
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %mdc{user-id:--} %mdc{request-init-time:--} %mdc{context-name:--} %coloredLevel - %logger - %message%n%xException</pattern>
+    </encoder>
+
   </appender>
 
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
 
-  <root level="ERROR">
+  <root level="WARN">
     <appender-ref ref="STDOUT" />
+    <appender-ref ref="TIME_BASED_FILE" />
   </root>
 
 </configuration>

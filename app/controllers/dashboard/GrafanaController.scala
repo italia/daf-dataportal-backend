@@ -32,7 +32,7 @@ class GrafanaController @Inject() (ws: WSClient,
     val responseWs: Future[WSResponse] = ws.url(URL + "/api/dashboard/snapshots")
           .withHeaders(("Authorization", "Bearer " + apiKey)).get
     responseWs.map { response =>
-      println(response.json)
+//      println(response.json)
       Ok(response.json)
     }
   }
