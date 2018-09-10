@@ -436,7 +436,16 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        sendMessageToKafka(user, dashboard.org.get, token, s"Condivisione Dashboard", s"La Dashboard ${dashboard.title.getOrElse("")} è stata condivisa", s"/private/dashboard/list/$x", wsClient, "generic")
+        if(dashboard.status.get != 0)
+          sendMessageToKafka(
+            user,
+            dashboard.org.get,
+            token,
+            s"Pubblicazione Dashboard",
+            buildMessaggeToKafka(dashboard.status.get, "Dashboard", dashboard.title.getOrElse(""), dashboard.org.get),
+            s"/private/dashboard/list/$x",
+            wsClient,
+            "generic")
         val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
       }
       case None => {
@@ -456,7 +465,21 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close()
     val response = Success(Some(saved), Some(operation))
     response
+  }
 
+  /**
+    *
+    * @param status new status
+    * @param objString the name of the object to update {Storia || Dashboard}
+    * @param title the title of the object
+    * @param org the organization of the object
+    * @return the message to send to kafka
+    */
+  private def buildMessaggeToKafka(status: Int, objString: String, title: String, org: String): String = {
+    status match {
+      case 1 => s"La $objString $title è stata pubblicata per l'organizzazione $org"
+      case 2 => s"E' stata publicata la $objString $title"
+    }
   }
 
   def deleteDashboard(dashboardId: String): Success = {
@@ -624,7 +647,17 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        sendMessageToKafka(user, story.org.get, token, s"Condivisione Storia", s"La Storia ${story.title.getOrElse("")} è stata condivisa", s"/private/userstory/list/$x", wsClient, "generic")
+        if(story.published.get != 0)
+          sendMessageToKafka(
+            user,
+            story.org.get,
+            token,
+            s"Pubblicazione Storia",
+            buildMessaggeToKafka(story.published.get, "Storia", story.title.getOrElse(""), story.org.get),
+            s"/private/userstory/list/$x",
+            wsClient,
+            "generic"
+          )
         coll.update(query, obj)
       }
       case None => {
