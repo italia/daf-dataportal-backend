@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                
+                            
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -115,6 +115,14 @@ package ftd_api.yaml {
           }
       }
         // ----- End of unmanaged code area for constructor Ftd_apiYaml
+        val openIframesByTableName = openIframesByTableNameAction { (tableName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.openIframesByTableName
+            val openDataUser = ConfigReader.getSupersetOpenDataUser
+            val iframes = DashboardRegistry.dashboardService.iframes(openDataUser, ws)
+            val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
+            OpenIframesByTableName200(iframesByName)
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.openIframesByTableName
+        }
         val deleteAllSubscription = deleteAllSubscriptionAction { (user: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteAllSubscription
             val username = CredentialManager.readCredentialFromRequest(currentRequest).username
