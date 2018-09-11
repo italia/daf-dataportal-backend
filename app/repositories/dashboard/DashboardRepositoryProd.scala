@@ -1060,16 +1060,18 @@ class DashboardRepositoryProd extends DashboardRepository {
       List()
   }
 
-  private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
+  private def createFilterStatus(status: Option[Seq[String]]): List[BoolQueryDefinition] = {
     status match {
       case Some(List()) => List()
       case Some(x) => {
         val statusDataset = x.map {
-          case "2" => "0"
-          case _ => "1"
+          case "2" => false
+          case _ => true
         }
-        List(should(termsQuery("dcatapit.privatex", statusDataset), termsQuery("status", status.get),
-          termsQuery("published", status.get), termQuery("private", statusDataset)))
+        List(should(statusDataset.map(s =>
+          List(termsQuery("dcatapit.privatex", s), termsQuery("status", status.get),
+            termsQuery("published", status.get), termQuery("private", s))
+        ).toList.flatten))
       }
       case _ => List()
     }
