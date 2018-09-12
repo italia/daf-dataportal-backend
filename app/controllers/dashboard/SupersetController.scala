@@ -12,6 +12,7 @@ import utils.ConfigReader
 import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
+import play.api.Logger
 
 
 @Singleton
@@ -68,6 +69,8 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   def publicSlice(user :String) = Action.async { implicit request =>
 
     val supersetUrl = if(user == openDataUser) openUrl else URL
+
+    Logger.logger.debug(s"supersetUrl $supersetUrl for user $user")
 
     def callPublicSlice(cookie:String, wsClient:WSClient)=
       wsClient.url(supersetUrl + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()

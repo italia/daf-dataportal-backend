@@ -222,7 +222,7 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   def iframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
-    println("-iframes-")
+//    println("-iframes-")
 //    val wsClient = AhcWSClient()
 
     val metabasePublic = localUrl + "/metabase/public_card/" + user
@@ -245,6 +245,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
+      Logger.logger.debug(s"iframes for $user response status from superset ${response.status}")
       val json = response.json.as[Seq[JsValue]]
       val iframes = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
@@ -281,6 +282,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
     val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
+      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
       val json = response.json.as[Seq[JsValue]]
 
       Logger.debug(s"Metabase iframe response: $json")
@@ -709,7 +711,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _: JsError => Seq()
     }
 
-    Logger.logger.debug(s"find ${dataApp.size} results")
+    Logger.logger.debug(s"found ${dataApp.size} results")
 
     dataApp
   }
@@ -1068,10 +1070,10 @@ class DashboardRepositoryProd extends DashboardRepository {
           case "2" => false
           case _ => true
         }
-        List(should(statusDataset.map(s =>
-          List(termsQuery("dcatapit.privatex", s), termsQuery("status", status.get),
-            termsQuery("published", status.get), termQuery("private", s))
-        ).toList.flatten))
+        List(should(
+          statusDataset.flatMap(s => List(termsQuery("dcatapit.privatex", s), termQuery("private", s))).toList :::
+          x.flatMap(s => List(termsQuery("published", s), termsQuery("status", s))).toList)
+        )
       }
       case _ => List()
     }
@@ -1207,7 +1209,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 
     val toReturn = result.map(r => r.map(elem => elem._2))
-    toReturn onComplete (r => Logger.logger.debug(s"find ${r.getOrElse(List()).size}"))
+    toReturn onComplete (r => Logger.logger.debug(s"found ${r.getOrElse(List()).size}"))
     toReturn
   }
 
@@ -1293,7 +1295,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
     } yield resFutureDataset ::: resFutureStories ::: resFutureDash ::: resFutureAggr
 
-    result onComplete{r => client.close(); Logger.logger.debug(s"find ${r.getOrElse(List()).size} results")}
+    result onComplete{r => client.close(); Logger.logger.debug(s"found ${r.getOrElse(List()).size} results")}
 
     result
   }
@@ -1327,7 +1329,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
     }yield resFutureDataset ::: resFutureStories ::: resFutureAggr
 
-    result onComplete {r => client.close(); Logger.logger.debug(s"find ${r.getOrElse(List()).size} results")}
+    result onComplete {r => client.close(); Logger.logger.debug(s"found ${r.getOrElse(List()).size} results")}
     result
   }
 
