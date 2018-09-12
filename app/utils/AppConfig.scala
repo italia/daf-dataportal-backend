@@ -22,7 +22,7 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val supersetOpenUrl = playConfig.getString("superset.openUrl")
   val supersetUser = playConfig.getString("superset.user")
   val supersetPass = playConfig.getString("superset.pass")
-  val supersetOpenDataUser = playConfig.getString("superset.open_data_user")
+  val supersetOpenDataUser = playConfig.getString("superset.openDataUser")
 
   val grafanaURL= playConfig.getString("grafana.url")
 
