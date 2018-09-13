@@ -160,6 +160,9 @@ package ftd_api.yaml {
 
                   val stringified = Json.stringify(singleObj).replaceAll("\n", "").replace("\r", "")
 
+                  println("*****==============******")
+                  println(stringified)
+
                   val tempFile = TemporaryFile(prefix = "uploaded").file
                   val pw = new PrintWriter(tempFile)
                   pw.write(stringified)
