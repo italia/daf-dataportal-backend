@@ -59,6 +59,11 @@ spec:
             secretKeyRef:
               name: daf-secret
               key: kylo_user_pwd
+        - name: SUPERSET_OPEN_DATA_PWD
+          valueFrom:
+            secretKeyRef:
+              name: daf-secret
+              key: superset_open_data_pwd
         ports:
         - name: client
           containerPort: 9000

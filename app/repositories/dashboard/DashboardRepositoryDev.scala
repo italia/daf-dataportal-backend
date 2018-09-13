@@ -70,6 +70,10 @@ class DashboardRepositoryDev extends DashboardRepository {
     Future(Seq(DashboardIframes(None,None,None,None,None,None)))
   }
 
+  def privateIframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
+    Future(Seq(DashboardIframes(None,None,None,None,None,None)))
+  }
+
   def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
     Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
