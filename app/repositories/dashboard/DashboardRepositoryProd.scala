@@ -224,14 +224,15 @@ class DashboardRepositoryProd extends DashboardRepository {
   def iframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
 //    println("-iframes-")
 //    val wsClient = AhcWSClient()
+    val openDataUser = ConfigReader.getSupersetOpenDataUser
 
-    val metabasePublic = localUrl + "/metabase/public_card/" + user
+//    val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
 //    val grafanaPublic = localUrl + "/grafana/snapshots/" + user
 //    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
 
-    val request = wsClient.url(metabasePublic).get()
+//    val request = wsClient.url(metabasePublic).get()
     // .andThen { case _ => wsClient.close() }
     // .andThen { case _ => system.terminate() }
 
@@ -243,6 +244,10 @@ class DashboardRepositoryProd extends DashboardRepository {
 //
 //    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
+//    request.onComplete{ r => Logger.logger.debug(s"$user: response status metabase ${r.get.status}, text ${r.get.statusText}")}
+
+    requestIframes.onComplete{ r => Logger.logger.debug(s"$user: response status superset ${r.get.status}, text ${r.get.statusText}")}
+
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
       Logger.logger.debug(s"iframes for $user response status from superset ${response.status}")
@@ -252,7 +257,8 @@ class DashboardRepositoryProd extends DashboardRepository {
         val vizType = (x \ "viz_type").get.as[String]
         val title = slice_link.slice(slice_link.indexOf(">") + 1, slice_link.lastIndexOf("</a>")).trim
         val src = slice_link.slice(slice_link.indexOf("\"") + 1, slice_link.lastIndexOf("\"")) + "&standalone=true"
-        val url = ConfigReader.getSupersetUrl + src
+        val url = if(user == ConfigReader.getSupersetOpenDataUser) ConfigReader.getSupersetOpenDataUrl + src else ConfigReader.getSupersetUrl + src
+//        val url = ConfigReader.getSupersetUrl + src
         val decodeSuperst = java.net.URLDecoder.decode(url, "UTF-8");
         val uri = new URL(decodeSuperst)
         val queryString = uri.getQuery.split("&", 2)(0)
@@ -281,29 +287,30 @@ class DashboardRepositoryProd extends DashboardRepository {
       res
     }
 
-    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
-      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
-      val json = response.json.as[Seq[JsValue]]
+//    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
+//      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
+//      val json = response.json.as[Seq[JsValue]]
+//
+//      Logger.debug(s"Metabase iframe response: $json")
+//      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
+//        .map(x => {
+//         val uuid = (x \ "public_uuid").get.as[String]
+//         val title = (x \ "name").get.as[String]
+//      //  val id = (x \ "id").get.as[String]
+//         val tableId =   (x \ "table_id").get.as[Int]
+//         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+//         DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
+//      })
+//    }
 
-      Logger.debug(s"Metabase iframe response: $json")
-      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
-        .map(x => {
-         val uuid = (x \ "public_uuid").get.as[String]
-         val title = (x \ "name").get.as[String]
-      //  val id = (x \ "id").get.as[String]
-         val tableId =   (x \ "table_id").get.as[Int]
-         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-         DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
-      })
-    }
 
 
+//    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
+//        iframes <- metabase
+//        iframesWithTable <- metabaseTableInfo(iframes, wsClient)
+//    } yield iframesWithTable
 
-    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
-        iframes <- metabase
-        iframesWithTable <- metabaseTableInfo(iframes, wsClient)
-    } yield iframesWithTable
-
+//    val metabaseWithTables = getMetabaseIframes(user, wsClient)
 
 
   /*   val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
@@ -334,7 +341,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 */
 
-    val services  = List(superset, metabaseWithTables) //, grafana, tdMetabase)
+//    val services = List(superset, metabaseWithTables) //, grafana, tdMetabase)
+    val services = if(user == openDataUser) List(superset, getMetabaseIframes(user, wsClient)) else List(superset)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
@@ -357,6 +365,37 @@ class DashboardRepositoryProd extends DashboardRepository {
     val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
 
     results
+  }
+
+  private def getMetabaseIframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
+    val metabasePublic = localUrl + "/metabase/public_card/" + user
+
+    val request = wsClient.url(metabasePublic).get()
+
+    request.onComplete{ r => Logger.logger.debug(s"$user: response status metabase ${r.get.status}")}
+
+    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
+      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
+      val json = response.json.as[Seq[JsValue]]
+
+      Logger.debug(s"Metabase iframe response: $json")
+      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
+        .map(x => {
+          val uuid = (x \ "public_uuid").get.as[String]
+          val title = (x \ "name").get.as[String]
+          //  val id = (x \ "id").get.as[String]
+          val tableId =   (x \ "table_id").get.as[Int]
+          val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+          DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
+        })
+    }
+
+    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
+      iframes <- metabase
+      iframesWithTable <- metabaseTableInfo(iframes, wsClient)
+    } yield iframesWithTable
+
+    metabaseWithTables
   }
 
   def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {

@@ -19,10 +19,11 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val metapass = playConfig.getString("metabase.pass")
 
   val supersetURL= playConfig.getString("superset.url")
-  val supersetOpenUrl = playConfig.getString("superset.openUrl")
+  val supersetOpenDataUrl = playConfig.getString("superset.openDataUrl")
   val supersetUser = playConfig.getString("superset.user")
   val supersetPass = playConfig.getString("superset.pass")
   val supersetOpenDataUser = playConfig.getString("superset.openDataUser")
+  val supersetOpenDataPwd = playConfig.getString("superset.openDataPwd")
 
   val grafanaURL= playConfig.getString("grafana.url")
 
@@ -67,10 +68,11 @@ object ConfigReader {
   def getMetaPass = config.metapass.getOrElse("password")
 
   def getSupersetUrl = config.supersetURL.getOrElse("http://localhost:8088")
-  def getSupersetOpenUrl = config.supersetOpenUrl.getOrElse("")
+  def getSupersetOpenDataUrl = config.supersetOpenDataUrl.getOrElse("")
   def getSupersetUser = config.supersetUser.getOrElse("alessandro")
   def getSupersetPass = config.supersetPass.getOrElse("password")
   def getSupersetOpenDataUser = config.supersetOpenDataUser.getOrElse("")
+  def getSupersetOpenDataPwd = config.supersetOpenDataPwd.getOrElse("")
 
   def getGrafanaUrl = config.grafanaURL.getOrElse("TO DO")
 

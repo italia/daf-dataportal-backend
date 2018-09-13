@@ -24,8 +24,9 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   val URL : String = ConfigReader.getSupersetUrl
   val user = ConfigReader.getSupersetUser
   val pass = ConfigReader.getSupersetPass
-  val openUrl = ConfigReader.getSupersetOpenUrl
+  val openDataUrl = ConfigReader.getSupersetOpenDataUrl
   val openDataUser = ConfigReader.getSupersetOpenDataUser
+  val openDataPwd = ConfigReader.getSupersetOpenDataPwd
 
   val local = ConfigReader.getLocalUrl
 
@@ -68,14 +69,19 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
 
   def publicSlice(user :String) = Action.async { implicit request =>
 
-    val supersetUrl = if(user == openDataUser) openUrl else URL
+    val userPwd = if(user == openDataUser)  openDataPwd else null
+    val url = if(user == openDataUser) openDataUrl else URL
 
-    Logger.logger.debug(s"supersetUrl $supersetUrl for user $user")
+    Logger.logger.debug(s"call publicSlice for $user")
 
-    def callPublicSlice(cookie:String, wsClient:WSClient)=
-      wsClient.url(supersetUrl + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
-
-    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callPublicSlice ).map{json => Ok((json.json \ "result").get)}
+    def callPublicSlice(cookie:String, wsClient:WSClient)= {
+      Logger.logger.debug(s"call $url for user $user")
+      wsClient.url(url + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
+    }
+    sim.manageServiceCall( new LoginInfo(user,userPwd,"superset"),callPublicSlice ).map{json =>
+      Logger.logger.debug(s"resp superset $user: ${json.json \ "result"}")
+      Ok((json.json \ "result").get)
+    }
 
   }
 
