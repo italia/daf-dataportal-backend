@@ -355,10 +355,13 @@ package ftd_api.yaml {
         val kyloFeedByName = kyloFeedByNameAction { (feed_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
             val kyloUrl = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
+          logger.debug("HERE WE ARE")
+          logger.debug(kyloUrl)
           val feed = ws.url(kyloUrl)
             .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
             .get().map{ resp =>
-               println(resp.body)
+               logger.debug("HERE WE ARE")
+               logger.debug(resp.body)
                val name = (resp.json \ "feedName").as[String]
                val active = (resp.json \ "active").as[Boolean]
                val state = (resp.json \ "state").as[String]
