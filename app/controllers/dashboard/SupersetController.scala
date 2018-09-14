@@ -69,17 +69,16 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
 
   def publicSlice(user :String) = Action.async { implicit request =>
 
-    val userPwd = if(user == openDataUser)  openDataPwd else null
-    val url = if(user == openDataUser) openDataUrl else URL
+    case class AppInfo(appName: String, url: String, userPwd: String)
+    val info = if(user == openDataUser) AppInfo("superset_open", openDataUrl, openDataPwd) else AppInfo("superset", URL, null)
 
     Logger.logger.debug(s"call publicSlice for $user")
 
     def callPublicSlice(cookie:String, wsClient:WSClient)= {
-      Logger.logger.debug(s"call $url for user $user")
-      wsClient.url(url + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
+      Logger.logger.debug(s"call ${info.url} for user $user")
+      wsClient.url(info.url + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
     }
-    sim.manageServiceCall( new LoginInfo(user,userPwd,"superset"),callPublicSlice ).map{json =>
-      Logger.logger.debug(s"resp superset $user: ${json.json \ "result"}")
+    sim.manageServiceCall( new LoginInfo(user,info.userPwd,info.appName),callPublicSlice ).map{json =>
       Ok((json.json \ "result").get)
     }
 
