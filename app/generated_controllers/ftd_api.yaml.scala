@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                            
+                                                                                                                                                
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -558,12 +558,14 @@ package ftd_api.yaml {
         }
         val supersetTableFromDataset = supersetTableFromDatasetAction { (dataset_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
-            val conf = Configuration.load(Environment.simple())
+            val openDataUser = ConfigReader.getSupersetOpenDataUser
+          val supersetOpenUrl = ConfigReader.getSupersetOpenDataUrl
+          val conf = Configuration.load(Environment.simple())
           val URL = conf.getString("app.local.url").get
           val supersetUrl = conf.getString("superset.url").get
           val username = CredentialManager.readCredentialFromRequest(currentRequest).username
 
-          val tables = ws.url(URL + s"/superset/table/$username/$dataset_name")
+          val tables: Future[Seq[SupersetUrl]] = ws.url(URL + s"/superset/table/$username/$dataset_name")
             .withHeaders("Content-Type" -> "application/json",
               "Accept" -> "application/json"
             ).get().map { resp =>
@@ -579,7 +581,27 @@ package ftd_api.yaml {
              supersetTables
           }
 
-          SupersetTableFromDataset200(tables)
+          val tablesOpen: Future[Seq[SupersetUrl]] = ws.url(URL + s"/superset/table/$openDataUser/$dataset_name")
+            .withHeaders("Content-Type" -> "application/json",
+              "Accept" -> "application/json"
+            ).get().map{ resp =>
+            val tables = resp.json.as[Seq[JsValue]]
+            val supersetOpenTables: Seq[SupersetUrl] = tables.map(x => {
+              val id = (x \ "id").as[Int]
+              val stringId = id.toString
+              val tableName = (x \ "text").as[String]
+              val url = s"$supersetOpenUrl/superset/explore/table/$stringId/"
+              SupersetUrl(id,tableName,url)
+            })
+            supersetOpenTables
+          }
+
+          val res = for{
+            supersetOpen <- tablesOpen
+            superset <- tables
+          } yield superset.toList ::: supersetOpen.toList
+
+          SupersetTableFromDataset200(res)
         //  NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
         }

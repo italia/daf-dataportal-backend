@@ -1843,6 +1843,8 @@ definitions:
         type: string
       order:
         type: string
+      sharedWithMe:
+        type: boolean
   Error:
     type: object
     properties:

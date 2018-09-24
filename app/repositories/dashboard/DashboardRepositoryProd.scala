@@ -772,7 +772,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner)
+              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner) ::: sharedWithMe(filters.sharedWithMe, groups)
             ),
             should(
               must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
@@ -1121,6 +1121,18 @@ class DashboardRepositoryProd extends DashboardRepository {
       }
       case None => List()
 
+    }
+  }
+
+  private def sharedWithMe(sharedWithMeFilter: Option[Boolean], groups: List[String]) ={
+    sharedWithMeFilter match {
+      case Some(true) => {
+        List(should(
+          must(matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR"))
+          )
+        )
+      }
+      case _ => List()
     }
   }
 
