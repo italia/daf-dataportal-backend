@@ -560,8 +560,6 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
             val openDataUser = ConfigReader.getSupersetOpenDataUser
           val supersetOpenUrl = ConfigReader.getSupersetOpenDataUrl
-          println(s"openDataUser: $openDataUser")
-          println(s"openDataUrl: $supersetOpenUrl")
           val conf = Configuration.load(Environment.simple())
           val URL = conf.getString("app.local.url").get
           val supersetUrl = conf.getString("superset.url").get
