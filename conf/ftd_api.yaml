@@ -2065,6 +2065,7 @@ definitions:
      - id
      - name
      - url
+     - appName
     properties:
       id:
         type: integer
@@ -2072,6 +2073,8 @@ definitions:
       name:
         type: string
       url:
+        type: string
+      appName:
         type: string
   Subscription:
     type: object
