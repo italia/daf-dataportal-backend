@@ -757,9 +757,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case None => ""
     }
 
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
+    val order: String = filters.order match {
+      case Some(o) => o
       case _ => "desc"
     }
 
@@ -866,9 +865,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case None => ""
     }
 
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
+    val order: String = filters.order match {
+      case Some(o) => o
       case _ => "desc"
     }
 
@@ -1214,14 +1212,15 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).toList.map(searchResult => (extractDate(searchResult.`type`.get, searchResult.source.get), searchResult))
     )
 
-    val res = timestamp match {
+    val res: Future[List[(String, SearchResult)]] = timestamp match {
       case Some("") => futureTupleSearchResult
       case Some(x) => filterDate(futureTupleSearchResult, x)
       case None => futureTupleSearchResult
     }
 
-    val result = order match {
+    val result: Future[List[(String, SearchResult)]] = order match {
       case "score" => res
+      case "a-z" | "z-a" => orderByName(res, order)
       case "asc" => res.map(r => r.sortWith(_._1 < _._1))
       case _ => res.map(r => r.sortWith(_._1 > _._1))
     }
@@ -1229,6 +1228,22 @@ class DashboardRepositoryProd extends DashboardRepository {
     val toReturn = result.map(r => r.map(elem => elem._2))
     toReturn onComplete (r => Logger.logger.debug(s"found ${r.getOrElse(List()).size}"))
     toReturn
+  }
+
+  private def orderByName(futureListSearchResult: Future[List[(String, SearchResult)]], order: String) = {
+    futureListSearchResult.map{ listSearchResult =>
+      val listTuple: List[(String, String, SearchResult)] = listSearchResult.map{ searchResult =>
+        val title: String = searchResult._2.`type` match {
+          case Some("catalog_test") => (Json.parse(searchResult._2.source.get) \ "dcatapit" \ "title").get.toString()
+          case _ => (Json.parse(searchResult._2.source.get) \ "title").get.toString()
+        }
+        (title, searchResult._1, searchResult._2)
+      }
+      order match {
+        case "a-z" => listTuple.sortWith(_._1 < _._1).map(t => (t._2, t._3))
+        case "z-a" => listTuple.sortWith(_._1 > _._1).map(t => (t._2, t._3))
+      }
+    }
   }
 
   private def extractDate(typeDate: String, source: String): String = {
