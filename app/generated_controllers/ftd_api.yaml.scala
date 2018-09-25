@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                
+                                                                                                                                                                        
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -560,6 +560,8 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
             val openDataUser = ConfigReader.getSupersetOpenDataUser
           val supersetOpenUrl = ConfigReader.getSupersetOpenDataUrl
+          val appNameSuperset = "superset"
+          val appNameSupersetOpen = "superset_open"
           val conf = Configuration.load(Environment.simple())
           val URL = conf.getString("app.local.url").get
           val supersetUrl = conf.getString("superset.url").get
@@ -576,7 +578,7 @@ package ftd_api.yaml {
                 val stringId = id.toString
                 val tableName = (x \ "text").as[String]
                 val url = s"$supersetUrl/superset/explore/table/$stringId/"
-                SupersetUrl(id,tableName,url)
+                SupersetUrl(id,tableName,url, appNameSuperset)
               })
              supersetTables
           }
@@ -591,7 +593,7 @@ package ftd_api.yaml {
               val stringId = id.toString
               val tableName = (x \ "text").as[String]
               val url = s"$supersetOpenUrl/superset/explore/table/$stringId/"
-              SupersetUrl(id,tableName,url)
+              SupersetUrl(id,tableName,url, appNameSupersetOpen)
             })
             supersetOpenTables
           }
