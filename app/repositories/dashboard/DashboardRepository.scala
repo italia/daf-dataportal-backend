@@ -17,17 +17,17 @@ trait DashboardRepository {
   def iframes(metaUser: String, wsClient: WSClient): Future[Seq[DashboardIframes]]
   def iframesByOrg(user: String,org: String, wsClient: WSClient): Future[Seq[DashboardIframes]]
   def dashboards(username:String, groups: List[String], status: Option[Int]): Seq[Dashboard]
-  def dashboardById(username: String, groups: List[String], id: String): Dashboard
+  def dashboardById(username: String, groups: List[String], id: String): Option[Dashboard]
   def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success
   def deleteDashboard(dashboardId: String): Success
   def stories(username: String, groups: List[String], status: Option[Int], page: Option[Int], limit: Option[Int]): Seq[UserStory]
-  def storyById(username:String, groups: List[String], id: String): UserStory
-  def publicStoryById(id: String): UserStory
+  def storyById(username:String, groups: List[String], id: String): Option[UserStory]
+  def publicStoryById(id: String): Option[UserStory]
   def saveStory(story: UserStory, user: String, token: String, wsClient: WSClient): Success
   def deleteStory(storyId: String): Success
   def storiesPublic(org: Option[String]): Seq[UserStory]
   def dashboardsPublic(org: Option[String]): Seq[Dashboard]
-  def publicDashboardById(id: String): Dashboard
+  def publicDashboardById(id: String): Option[Dashboard]
   def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]]
   def searchLast(username: String, groups: List[String]): Future[List[SearchResult]]
   def searchLastPublic(org: Option[String]): Future[List[SearchResult]]
