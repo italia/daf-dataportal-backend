@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                        
+                                                                                                                                                                                                                        
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -344,7 +344,11 @@ package ftd_api.yaml {
             out <- Future.successful{DashboardRegistry.dashboardService.storyById(
               credentials.username, orgs.toList, story_id)}
           } yield out
-          result flatMap( Storiesbyid200(_) )
+          result flatMap{
+            case Some(s) => Storiesbyid200(s)
+            case _ => Storiesbyid404(Error(Some(404), Some("User-Story non trovata"), None))
+          }
+
 
           /*
       Storiesbyid200(DashboardRegistry.dashboardService.storyById(
@@ -616,7 +620,10 @@ package ftd_api.yaml {
             out <- Future.successful{DashboardRegistry.dashboardService.dashboardById(
               credentials.username, orgs.toList, dashboard_id)}
           } yield out
-          result flatMap( Dashboardsbyid200(_) )
+          result flatMap{
+            case Some(d) => Dashboardsbyid200(d)
+            case _ => Dashboardsbyid404(Error(Some(404), Some("Dashboard non trovata"), None))
+          }
 
           /*
             Dashboardsbyid200(DashboardRegistry.dashboardService.dashboardById(
@@ -717,7 +724,10 @@ package ftd_api.yaml {
         }
         val publicDashboardsById = publicDashboardsByIdAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
-            PublicDashboardsById200(DashboardRegistry.dashboardService.publicDashboardById(dashboard_id))
+            DashboardRegistry.dashboardService.publicDashboardById(dashboard_id) match {
+              case Some(d) => PublicDashboardsById200(d)
+              case _ => PublicDashboardsById404(Error(Some(404), Some("Dashboard non trovata"), None))
+            }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
         }
         val isDatasetOnMetabase = isDatasetOnMetabaseAction { (dataset_name: String) =>  
@@ -753,7 +763,10 @@ package ftd_api.yaml {
         }
         val publicStoriesbyid = publicStoriesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
-            PublicStoriesbyid200(DashboardRegistry.dashboardService.publicStoryById(story_id))
+            DashboardRegistry.dashboardService.publicStoryById(story_id) match {
+              case Some(s) => PublicStoriesbyid200(s)
+              case _ => PublicStoriesbyid404(Error(Some(404), Some("User-Story non trovata"), None))
+            }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
         }
         val updateTable = updateTableAction { input: (File, String, String, String) =>

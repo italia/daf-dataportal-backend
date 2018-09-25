@@ -74,8 +74,8 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
-    Dashboard(None, None, None, None, None, None, None, None, None, None)
+  def dashboardById(username: String, groups: List[String], id: String): Option[Dashboard] = {
+    Some(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
   def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success = {
@@ -90,12 +90,12 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(UserStory(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def storyById(username: String, groups: List[String], id: String): UserStory = {
-    UserStory(None, None, None, None, None, None, None, None, None, None)
+  def storyById(username: String, groups: List[String], id: String): Option[UserStory] = {
+    Some(UserStory(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def publicStoryById(id: String): UserStory = {
-    UserStory(None, None, None, None, None, None, None, None, None, None)
+  def publicStoryById(id: String): Option[UserStory] = {
+    Some(UserStory(None, None, None, None, None, None, None, None, None, None))
   }
 
   def saveStory(story: UserStory, user: String, token: String, wsClient: WSClient): Success = {
@@ -114,8 +114,8 @@ class DashboardRepositoryDev extends DashboardRepository {
     Seq(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def publicDashboardById(id: String): Dashboard = {
-    Dashboard(None, None, None, None, None, None, None, None, None, None)
+  def publicDashboardById(id: String): Option[Dashboard] = {
+    Some(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
   def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]] = {

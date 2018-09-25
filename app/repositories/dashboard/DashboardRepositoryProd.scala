@@ -399,7 +399,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
+  def dashboardById(username: String, groups: List[String], id: String): Option[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -409,12 +409,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     dashboardJsResult match {
-      case s: JsSuccess[Dashboard] => s.get
-      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[Dashboard] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def publicDashboardById(id: String): Dashboard = {
+  def publicDashboardById(id: String): Option[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -424,8 +424,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     dashboardJsResult match {
-      case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
-      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[Dashboard] => Some(s.get)
+      case e: JsError => None
     }
   }
 
@@ -560,7 +560,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     $and(mongodb.casbah.Imports.MongoDBObject("id" -> id), privateQueryToMongo(nameFieldStatus, user, groups))
   }
 
-
   private def privateQueryToMongo(nameFieldStatus: String, user: String, groups: List[String], status: Option[Int] = None) = {
     import mongodb.casbah.query.Imports._
 
@@ -588,7 +587,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 2)
   }
 
-  def storyById(username: String, groups: List[String], id: String): UserStory = {
+  def storyById(username: String, groups: List[String], id: String): Option[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -598,12 +597,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     storyJsResult match {
-      case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[UserStory] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def publicStoryById(id: String): UserStory = {
+  def publicStoryById(id: String): Option[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -613,8 +612,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     storyJsResult match {
-      case s: JsSuccess[UserStory] => s.get
-      case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[UserStory] => Some(s.get)
+      case _: JsError => None
     }
   }
 
@@ -652,6 +651,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case Some(x) => {
         val json: JsValue = Json.toJson(story)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        if(story.user.isEmpty) obj.put("user",  user)
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
@@ -1106,7 +1106,6 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => List()
     }
   }
-
 
   private def ownerQueryString(owner: Option[String]): List[BoolQueryDefinition] = {
     owner match {

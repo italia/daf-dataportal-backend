@@ -844,6 +844,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Dashboard"
+        404:
+          description: dashboard not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -869,6 +873,10 @@ paths:
             description: successful operation
             schema:
               "$ref": "#/definitions/Dashboard"
+          404:
+            description: dashboard not found
+            schema:
+              $ref: '#/definitions/Error'
           default:
             description: Unexpected error
             schema:
@@ -1032,6 +1040,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/UserStory"
+        404:
+          description: user-story not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1057,6 +1069,10 @@ paths:
             description: successful operation
             schema:
               "$ref": "#/definitions/UserStory"
+          404:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
           default:
             description: Unexpected error
             schema:
