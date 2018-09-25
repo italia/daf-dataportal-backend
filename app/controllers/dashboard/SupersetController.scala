@@ -103,7 +103,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
           "Cookie" -> cookie
         ).get
 
-    val response = if(user.equals(openDataUser)) sim.manageServiceCall( new LoginInfo(null,null,"superset_open"),callDb )
+    val response = if(user.equals(openDataUser)) sim.manageServiceCall( new LoginInfo(null,null,"superset_open"),callDbOpen )
     else sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb )
 
     response.map{ resp => Ok(resp.json)}
