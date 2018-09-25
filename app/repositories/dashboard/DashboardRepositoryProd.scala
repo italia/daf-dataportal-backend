@@ -736,7 +736,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.dataset_type")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
@@ -845,7 +845,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.dataset_type")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldStories ++ fieldsOpenData
@@ -1299,7 +1299,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
-      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.dataset_type")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")
@@ -1338,7 +1338,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
-      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.dataset_type")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")
