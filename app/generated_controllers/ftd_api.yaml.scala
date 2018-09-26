@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                    
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -575,7 +575,6 @@ package ftd_api.yaml {
             .withHeaders("Content-Type" -> "application/json",
               "Accept" -> "application/json"
             ).get().map { resp =>
-              println(resp.body)
               val tables = resp.json.as[Seq[JsValue]]
               val supersetTables: Seq[SupersetUrl] = tables.map(x => {
                 val id = (x \ "id").as[Int]
