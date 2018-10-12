@@ -71,6 +71,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   val metauser = conf.getString("metabase.user").get
   val metapass = conf.getString("metabase.pass").get
 
+  private val OPEN_DATA_GROUP = "open_data_group"
+
 
 
   private def  metabaseTableInfo(iframes :Seq[DashboardIframes], wsClient: WSClient): Future[Seq[DashboardIframes]] = {
@@ -447,7 +449,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         if(dashboard.status.get != 0)
           sendMessageToKafka(
             user,
-            dashboard.org.get,
+            if(dashboard.status.get == 2) OPEN_DATA_GROUP else dashboard.org.get,
             token,
             s"Pubblicazione Dashboard",
             buildMessaggeToKafka(dashboard.status.get, "Dashboard", dashboard.title.getOrElse(""), dashboard.org.get),
@@ -658,7 +660,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         if(story.published.get != 0)
           sendMessageToKafka(
             user,
-            story.org.get,
+            if(story.published.get == 2) OPEN_DATA_GROUP else story.org.get,
             token,
             s"Pubblicazione Storia",
             buildMessaggeToKafka(story.published.get, "Storia", story.title.getOrElse(""), story.org.get),
