@@ -58,7 +58,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                    
 
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
@@ -391,49 +391,50 @@ package ftd_api.yaml {
         val kyloFeedByName = kyloFeedByNameAction { (feed_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
             RequestContext.execInContext[Future[KyloFeedByNameType[T] forSome { type T }]]("kyloFeedByName") { () =>
-            val kyloUrl = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
-            val feed = ws.url(kyloUrl)
-              .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
-              .get().map { resp =>
-              println(resp.body)
-              val name = (resp.json \ "feedName").as[String]
-              val active = (resp.json \ "active").as[Boolean]
-              val state = (resp.json \ "state").as[String]
-              val updatedate = (resp.json \ "updateDate").as[Long]
-              KyloFeed(name, state, updatedate, active, None, None, None)
-
-            }
-
-            def feedWithJobs(kyloFeed: KyloFeed) = {
-              val queryParam = URLEncoder.encode("=~%", "UTF-8")
-              val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job${queryParam}${kyloFeed.feed_name}&limit=5&sort=-startTime&start=0"
-              logger.info(kyloJobUrl)
-              ws.url(kyloJobUrl)
+              val kyloUrl: String = ConfigReader.kyloUrl + "/api/v1/feedmgr/feeds/by-name/" + feed_name
+              logger.debug("HERE WE ARE")
+              logger.debug(kyloUrl)
+              val feed: Future[KyloFeed] = ws.url(kyloUrl)
                 .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
                 .get().map { resp =>
-                val data = (resp.json \ "data").as[Seq[JsValue]]
-                logger.info(data.toString())
-                val feed = data match {
-                  case Seq() => kyloFeed.copy(has_job = Some(false))
-                  case jobs => {
-                    val job = jobs.head
-                    val status = (job \ "status").as[String]
-                    val created = (job \ "startTime").as[Long]
-                    kyloFeed.copy(has_job = Some(true), job_status = Some(status), job_created = Some(created))
+                logger.debug("HERE WE ARE")
+                logger.debug(resp.body)
+                val name = (resp.json \ "feedName").as[String]
+                val active = (resp.json \ "active").as[Boolean]
+                val state = (resp.json \ "state").as[String]
+                val updatedate = (resp.json \ "updateDate").as[Long]
+                KyloFeed(name, state, updatedate, active, None, None, None)
+              }
+
+                def feedWithJobs(kyloFeed: KyloFeed) = {
+                  val queryParam = URLEncoder.encode("=~%", "UTF-8")
+                  val kyloJobUrl = ConfigReader.kyloUrl + s"/api/v1/jobs?filter=job${queryParam}${kyloFeed.feed_name}&limit=5&sort=-startTime&start=0"
+                  logger.info(kyloJobUrl)
+                  ws.url(kyloJobUrl)
+                    .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
+                    .get().map { resp =>
+                    val data = (resp.json \ "data").as[Seq[JsValue]]
+                    logger.info(data.toString())
+                    val feed = data match {
+                      case Seq() => kyloFeed.copy(has_job = Some(false))
+                      case jobs => {
+                        val job = jobs.head
+                        val status = (job \ "status").as[String]
+                        val created = (job \ "startTime").as[Long]
+                        kyloFeed.copy(has_job = Some(true), job_status = Some(status), job_created = Some(created))
+                      }
+                    }
+                    feed
                   }
                 }
-                feed
+
+                val feedWithJob = for {
+                  k <- feed
+                  withJobStatus <- feedWithJobs(k)
+                } yield withJobStatus
+
+                KyloFeedByName200(feedWithJob)
               }
-            }
-
-            val feedWithJob = for {
-              k <- feed
-              withJobStatus <- feedWithJobs(k)
-            } yield withJobStatus
-
-            KyloFeedByName200(feedWithJob)
-          }
-         // NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
         val searchFullTextPublic = searchFullTextPublicAction { (filters: Filters) =>  
