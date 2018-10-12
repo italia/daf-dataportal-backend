@@ -399,7 +399,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
+  def dashboardById(username: String, groups: List[String], id: String): Option[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -409,12 +409,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     dashboardJsResult match {
-      case s: JsSuccess[Dashboard] => s.get
-      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[Dashboard] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def publicDashboardById(id: String): Dashboard = {
+  def publicDashboardById(id: String): Option[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -424,8 +424,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     dashboardJsResult match {
-      case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
-      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[Dashboard] => Some(s.get)
+      case e: JsError => None
     }
   }
 
@@ -560,7 +560,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     $and(mongodb.casbah.Imports.MongoDBObject("id" -> id), privateQueryToMongo(nameFieldStatus, user, groups))
   }
 
-
   private def privateQueryToMongo(nameFieldStatus: String, user: String, groups: List[String], status: Option[Int] = None) = {
     import mongodb.casbah.query.Imports._
 
@@ -588,7 +587,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 2)
   }
 
-  def storyById(username: String, groups: List[String], id: String): UserStory = {
+  def storyById(username: String, groups: List[String], id: String): Option[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -598,12 +597,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     storyJsResult match {
-      case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[UserStory] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def publicStoryById(id: String): UserStory = {
+  def publicStoryById(id: String): Option[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -613,8 +612,8 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     storyJsResult match {
-      case s: JsSuccess[UserStory] => s.get
-      case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[UserStory] => Some(s.get)
+      case _: JsError => None
     }
   }
 
@@ -652,6 +651,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case Some(x) => {
         val json: JsValue = Json.toJson(story)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        if(story.user.isEmpty) obj.put("user",  user)
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
@@ -736,7 +736,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
@@ -757,9 +757,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case None => ""
     }
 
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
+    val order: String = filters.order match {
+      case Some(o) => o
       case _ => "desc"
     }
 
@@ -772,7 +771,7 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner)
+              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner) ::: sharedWithMe(filters.sharedWithMe, groups)
             ),
             should(
               must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
@@ -846,7 +845,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldStories ++ fieldsOpenData
@@ -866,9 +865,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case None => ""
     }
 
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
+    val order: String = filters.order match {
+      case Some(o) => o
       case _ => "desc"
     }
 
@@ -1109,7 +1107,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-
   private def ownerQueryString(owner: Option[String]): List[BoolQueryDefinition] = {
     owner match {
       case Some("") => List()
@@ -1121,6 +1118,18 @@ class DashboardRepositoryProd extends DashboardRepository {
       }
       case None => List()
 
+    }
+  }
+
+  private def sharedWithMe(sharedWithMeFilter: Option[Boolean], groups: List[String]) ={
+    sharedWithMeFilter match {
+      case Some(true) => {
+        List(should(
+          must(matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR"))
+          )
+        )
+      }
+      case _ => List()
     }
   }
 
@@ -1202,14 +1211,15 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).toList.map(searchResult => (extractDate(searchResult.`type`.get, searchResult.source.get), searchResult))
     )
 
-    val res = timestamp match {
+    val res: Future[List[(String, SearchResult)]] = timestamp match {
       case Some("") => futureTupleSearchResult
       case Some(x) => filterDate(futureTupleSearchResult, x)
       case None => futureTupleSearchResult
     }
 
-    val result = order match {
+    val result: Future[List[(String, SearchResult)]] = order match {
       case "score" => res
+      case "a-z" | "z-a" => orderByName(res, order)
       case "asc" => res.map(r => r.sortWith(_._1 < _._1))
       case _ => res.map(r => r.sortWith(_._1 > _._1))
     }
@@ -1217,6 +1227,22 @@ class DashboardRepositoryProd extends DashboardRepository {
     val toReturn = result.map(r => r.map(elem => elem._2))
     toReturn onComplete (r => Logger.logger.debug(s"found ${r.getOrElse(List()).size}"))
     toReturn
+  }
+
+  private def orderByName(futureListSearchResult: Future[List[(String, SearchResult)]], order: String) = {
+    futureListSearchResult.map{ listSearchResult =>
+      val listTuple: List[(String, String, SearchResult)] = listSearchResult.map{ searchResult =>
+        val title: String = searchResult._2.`type` match {
+          case Some("catalog_test") => (Json.parse(searchResult._2.source.get) \ "dcatapit" \ "title").get.toString()
+          case _ => (Json.parse(searchResult._2.source.get) \ "title").get.toString()
+        }
+        (title, searchResult._1, searchResult._2)
+      }
+      order match {
+        case "a-z" => listTuple.sortWith(_._1 < _._1).map(t => (t._2, t._3))
+        case "z-a" => listTuple.sortWith(_._1 > _._1).map(t => (t._2, t._3))
+      }
+    }
   }
 
   private def extractDate(typeDate: String, source: String): String = {
@@ -1273,7 +1299,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
-      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")
@@ -1312,7 +1338,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
-      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")

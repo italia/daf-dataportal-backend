@@ -1,7 +1,6 @@
 package controllers.dashboard
 
 import javax.inject._
-
 import it.gov.daf.common.sso.common.{LoginInfo, SecuredInvocationManager}
 import play.api.cache.CacheApi
 import play.api.{Configuration, Environment}
@@ -13,6 +12,8 @@ import scala.concurrent.Future
 import play.api.libs.json._
 import play.api.inject.ConfigurationProvider
 import play.api.Logger
+
+import scala.util.Try
 
 
 @Singleton
@@ -70,7 +71,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
   def publicSlice(user :String) = Action.async { implicit request =>
 
     case class AppInfo(appName: String, url: String, userPwd: String)
-    val info = if(user == openDataUser) AppInfo("superset_open", openDataUrl, openDataPwd) else AppInfo("superset", URL, null)
+    val info = if(user == openDataUser) AppInfo("superset_open", openDataUrl, null) else AppInfo("superset", URL, null)
 
     Logger.logger.debug(s"call publicSlice for $user")
 
@@ -79,7 +80,7 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
       wsClient.url(info.url + "/slicemodelview/api/read").withHeaders("Cookie" -> cookie).get()
     }
     sim.manageServiceCall( new LoginInfo(user,info.userPwd,info.appName),callPublicSlice ).map{json =>
-      Ok((json.json \ "result").get)
+      Ok(Try{(json.json \ "result").get}.getOrElse(JsNull))
     }
 
   }
@@ -95,8 +96,17 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
         "Cookie" -> cookie
       ).get
 
-    sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb ).map{resp => Ok(resp.json)}
+    def callDbOpen(cookie:String, wsClient:WSClient)=
+      wsClient.url(openDataUrl + s"/tablemodelview/api/readvalues?_flt_3_table_name=$datasetName")
+        .withHeaders("Content-Type" -> "application/json",
+          "Accept" -> "application/json",
+          "Cookie" -> cookie
+        ).get
 
+    val response = if(user.equals(openDataUser)) sim.manageServiceCall( new LoginInfo(null,null,"superset_open"),callDbOpen )
+    else sim.manageServiceCall( new LoginInfo(user,null,"superset"),callDb )
+
+    response.map{ resp => Ok(resp.json)}
   }
 
   /*

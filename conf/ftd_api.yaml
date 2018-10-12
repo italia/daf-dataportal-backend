@@ -844,6 +844,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Dashboard"
+        404:
+          description: dashboard not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -869,6 +873,10 @@ paths:
             description: successful operation
             schema:
               "$ref": "#/definitions/Dashboard"
+          404:
+            description: dashboard not found
+            schema:
+              $ref: '#/definitions/Error'
           default:
             description: Unexpected error
             schema:
@@ -1032,6 +1040,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/UserStory"
+        404:
+          description: user-story not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1057,6 +1069,10 @@ paths:
             description: successful operation
             schema:
               "$ref": "#/definitions/UserStory"
+          404:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
           default:
             description: Unexpected error
             schema:
@@ -1843,6 +1859,8 @@ definitions:
         type: string
       order:
         type: string
+      sharedWithMe:
+        type: boolean
   Error:
     type: object
     properties:
@@ -2063,6 +2081,7 @@ definitions:
      - id
      - name
      - url
+     - appName
     properties:
       id:
         type: integer
@@ -2070,6 +2089,8 @@ definitions:
       name:
         type: string
       url:
+        type: string
+      appName:
         type: string
   Subscription:
     type: object
