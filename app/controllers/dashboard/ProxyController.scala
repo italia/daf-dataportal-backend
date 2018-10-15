@@ -24,8 +24,8 @@ class ProxyController @Inject()(ws: WSClient,
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
-  private val mongoHost: String = ConfigReader.getDbHost
-  private val mongoPort:String = ConfigReader.getDbPort
+  //private val mongoHost: String = ConfigReader.getDbHost
+  //private val mongoPort:Int = ConfigReader.getDbPort
 
   private val datasetManagerUrl = ConfigReader.getDatasetUrl
   private val opendataUserEmail = ConfigReader.getDatasetUserOpendataEmail
@@ -102,7 +102,7 @@ class ProxyController @Inject()(ws: WSClient,
   def openDataPreview(logicalUri :String) = Action.async { implicit request =>
 
       val url = datasetManagerUrl +
-        URLEncoder.encode(physicalUriEncoded,"UTF-8") // + "?limit=50"
+        URLEncoder.encode(logicalUri,"UTF-8") // + "?limit=50"
       val limitQueryString  = request.getQueryString("limit") match {
         case None => ""
         case Some(limit) => "limit=50"
