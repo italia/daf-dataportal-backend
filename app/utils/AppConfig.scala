@@ -105,7 +105,7 @@ object ConfigReader {
   def getKafkaProxy = config.kafkaProxy.getOrElse("localhost:8085")
 
   def getDatasetUrl =  config.datasetUrl.getOrElse("XXXXX")
-  def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail("XXXXX")
-  def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd("XXXXXXX")
+  def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail.getOrElse("XXXXX")
+  def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
 
 }
