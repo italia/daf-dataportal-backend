@@ -50,6 +50,12 @@ class AppConfig @Inject()(playConfig: Configuration) {
 
   val kafkaProxy: Option[String] = playConfig.getString("kafka-proxy.url")
 
+  val datasetUrl: Option[String] = playConfig.getString("dataset-manager.url")
+  val datasetUserOpendataEmail: Option[String] = playConfig.getString("dataset-manager.email")
+  val datasetUserOpendataPwd: Option[String] = playConfig.getString("dataset-manager.pwd")
+
+
+
 }
 
 object ConfigReader {
@@ -97,5 +103,9 @@ object ConfigReader {
   def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
 
   def getKafkaProxy = config.kafkaProxy.getOrElse("localhost:8085")
+
+  def getDatasetUrl =  config.datasetUrl.getOrElse("XXXXX")
+  def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail("XXXXX")
+  def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd("XXXXXXX")
 
 }

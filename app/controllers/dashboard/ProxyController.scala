@@ -1,5 +1,6 @@
 package controllers.dashboard
 
+import java.net.URLEncoder
 import javax.inject.Inject
 
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
@@ -8,7 +9,7 @@ import ftd_api.yaml.Success
 import play.api.cache.CacheApi
 import play.api.inject.ConfigurationProvider
 import play.api.libs.json.Json
-import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.libs.ws.{WSAuthScheme, WSClient, WSResponse}
 import play.api.mvc.{Action, Controller}
 import utils.ConfigReader
 
@@ -24,7 +25,13 @@ class ProxyController @Inject()(ws: WSClient,
   private val password = ConfigReader.password
 
   private val mongoHost: String = ConfigReader.getDbHost
-  private val mongoPort = ConfigReader.getDbPort
+  private val mongoPort:String = ConfigReader.getDbPort
+
+  private val datasetManagerUrl = ConfigReader.getDatasetUrl
+  private val opendataUserEmail = ConfigReader.getDatasetUserOpendataEmail
+  private val opendataUserPwd = ConfigReader.getDatasetUserOpendataPwd
+
+
 
   val server = new ServerAddress(mongoHost, 27017)
   val credentials = MongoCredential.createCredential(userName, source, password.toCharArray)
@@ -89,6 +96,53 @@ class ProxyController @Inject()(ws: WSClient,
     val jsonString = com.mongodb.util.JSON.serialize(datasets)
     val json = Json.parse(jsonString)
     Ok(json)
+  }
+
+
+  def openDataPreview(logicalUri :String) = Action.async { implicit request =>
+
+      val url = datasetManagerUrl +
+        URLEncoder.encode(physicalUriEncoded,"UTF-8") // + "?limit=50"
+      val limitQueryString  = request.getQueryString("limit") match {
+        case None => ""
+        case Some(limit) => "limit=50"
+      }
+      val format = request.getQueryString("format").getOrElse("json")
+
+      def buildQueryString = if (limitQueryString == "") {
+        "?format=" + format
+      } else {
+        "?format=" + format + "&" + limitQueryString
+      }
+
+      println(url)
+      println(buildQueryString)
+
+      val responseWs: Future[WSResponse] =
+          ws.url(url + buildQueryString)
+          .withAuth(opendataUserEmail, opendataUserPwd, WSAuthScheme.BASIC).get
+              responseWs.map { response =>
+              Ok(response.json)
+            }
+  }
+
+
+  def openDataDownload(physicalUriEncoded :String) = Action.async { implicit request =>
+
+
+    val url = "https://api.daf.teamdigitale.it/dataset-manager/v1/dataset/" +
+      URLEncoder.encode(physicalUriEncoded,"UTF-8")
+
+    println("URL")
+    println(url)
+    val responseWs: Future[WSResponse] =
+      ws.url(url)
+        .withAuth(opendataUserEmail, opendataUserPwd, WSAuthScheme.BASIC)
+        .withFollowRedirects(true)
+        .get
+    responseWs.map { response =>
+      Ok(response.json) //.as("application/json")
+    }
   }
 
 

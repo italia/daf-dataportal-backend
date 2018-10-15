@@ -64,6 +64,11 @@ spec:
             secretKeyRef:
               name: daf-secret
               key: superset_open_data_pwd
+        - name: OPEN_DATA_USER_PWD
+          valueFrom:
+            secretKeyRef:
+              name: daf-secret
+              key: open_data_user_pwd
         ports:
         - name: client
           containerPort: 9000

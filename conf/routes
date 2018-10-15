@@ -45,7 +45,8 @@ GET        /dati-gov/ckan_proxy/:action           controllers.dashboard.ProxyCon
 GET        /dati-gov/ckan_geo_proxy/:action       controllers.dashboard.ProxyController.ckanGeoProxy(action: String)
 GET        /dati-gov/v1/public/opendata/:name     controllers.dashboard.ProxyController.externalOpendata(name: String)
 GET        /dati-gov/v1/public/opendata_resource/:name     controllers.dashboard.ProxyController.dafResourcesInExtOpendata(name: String)
-
+GET        /dati-gov/v1/public/storage-manager/:physicalUri     controllers.dashboard.ProxyController.openDataPreview(physicalUri: String)
+GET        /dati-gov/v1/public/storage-manager/download/:physicalUri  controllers.dashboard.ProxyController.openDataDownload(physicalUri: String)
 
 GET        /dati-gov/img/*file                    controllers.Assets.versioned(path="/public/img", file: Asset)
 GET        /dati-gov/*file                        controllers.Assets.versioned(path="/public/swagger", file: Asset)
