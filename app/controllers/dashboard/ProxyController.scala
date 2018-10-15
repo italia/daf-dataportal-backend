@@ -24,7 +24,7 @@ class ProxyController @Inject()(ws: WSClient,
   private val source = ConfigReader.database
   private val password = ConfigReader.password
 
-  //private val mongoHost: String = ConfigReader.getDbHost
+  private val mongoHost: String = ConfigReader.getDbHost
   //private val mongoPort:Int = ConfigReader.getDbPort
 
   private val datasetManagerUrl = ConfigReader.getDatasetUrl
