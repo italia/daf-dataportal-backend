@@ -84,6 +84,35 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
   }
 
+  override def deleteSubscription(user: String, subscription: Subscription): Future[Either[Error, Success]] = {
+    import ftd_api.yaml.ResponseWrites.SubscriptionWrites.writes
+
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("subscriptions")
+    val json = writes(subscription)
+    val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+    obj.put("user", user)
+    val resultRemove = coll.remove(obj)
+    if(resultRemove.getN > 0) {
+      logger.debug(s"$user deleted $subscription")
+      Future.successful(Right(Success(Some(s"$user deleted $subscription"), None)))
+    } else {
+      logger.debug(s"delete subscription $user: $subscription")
+      Future.successful(Left(Error(Some(404), Some("subscription not found"), None)))
+    }
+  }
+
+  override def deleteAllSubscription(user: String): Future[Success] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val coll = mongoDB("subscriptions")
+    val obj = DBObject("user" -> user)
+    val response = coll.remove(obj)
+    logger.debug(s"delete ${response.getN} subscriptions for user $user")
+    Future.successful(Success(Some(s"delete all subscriptions for user $user"), None))
+  }
+
   override def getSubscriptions(user: String): Future[Seq[Subscription]] = {
     import ftd_api.yaml.BodyReads.SubscriptionReads
 
@@ -124,17 +153,17 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val coll = mongoDB("notifications")
-    val seqJson = notifications.map(n => (n.offset, n.user, notificationToJson(n)))
+    val seqJson = notifications.map(n => (n.offset, n.user, n.notificationtype, notificationToJson(n)))
 
-    val seqMongoObj = seqJson.map{ case (offset, user, json) =>
-      (offset, user, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
+    val seqMongoObj = seqJson.map{ case (offset, user, notificationType, json) =>
+      (offset, user, notificationType, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
     }
 
     val mongoResults = seqMongoObj.map{
-      case (offset, user, mongoObj) =>
+      case (offset, user, notificationType, mongoObj) =>
         (offset, user,
           coll.update(
-            composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("offset", offset)))),
+            composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("notificationtype", notificationType), QueryComponent("offset", offset)))),
             mongoObj)
         )
     }
@@ -194,13 +223,13 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     Future.successful(notifications)
   }
 
-  override def getLastOffset: Future[LastOffset] = {
+  override def getLastOffset(notificationType: String): Future[LastOffset] = {
     import ftd_api.yaml.BodyReads.NotificationReads
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val results = mongoDB("notifications")
-      .find()
+      .find(composeQuery(SimpleQuery(QueryComponent("notificationtype", notificationType))))
       .sort(composeQuery(SimpleQuery(QueryComponent("offset",-1))))
       .limit(1)
       .one()
@@ -212,7 +241,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       case s: JsSuccess[Notification] => s.get.offset
       case _: JsError => 0
     }
-    logger.debug(s"getLastOffset: $offset")
+    logger.debug(s"getLastOffset for $notificationType: $offset")
     Future.successful(LastOffset(offset))
   }
 }

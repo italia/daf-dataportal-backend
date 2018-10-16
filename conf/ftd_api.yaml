@@ -616,6 +616,50 @@ paths:
             description: Unexpected error
             schema:
               $ref: '#/definitions/Error'
+  "/dashboard/open-iframes":
+    get:
+      tags:
+      - Dashboard
+      summary: List of iframes for dashboard visualization
+      operationId: dashboardOpenIframes
+      produces:
+      - application/json
+      responses:
+        200:
+          description: An array of iFrames
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DashboardIframes'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/dashboard/open-iframesByName/{tableName}":
+    get:
+      tags:
+      - Dashboard
+      summary: List of iframes for dashboard visualization
+      operationId: openIframesByTableName
+      produces:
+      - application/json
+      parameters:
+      - name: tableName
+        in: path
+        description: Table name
+        required: true
+        type: string
+      responses:
+        200:
+          description: An array of iFrames
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DashboardIframes'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/dashboard/iframesByName/{tableName}":
         get:
           tags:
@@ -771,6 +815,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Success"
+        401:
+          description:
+          schema:
+            type: string
         default:
           description: Unexpected error
           schema:
@@ -796,6 +844,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Dashboard"
+        404:
+          description: dashboard not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -821,6 +873,10 @@ paths:
             description: successful operation
             schema:
               "$ref": "#/definitions/Dashboard"
+          404:
+            description: dashboard not found
+            schema:
+              $ref: '#/definitions/Error'
           default:
             description: Unexpected error
             schema:
@@ -955,6 +1011,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/Success"
+        401:
+          description: Error Message
+          schema:
+            type: string
         default:
           description: Unexpected error
           schema:
@@ -980,6 +1040,10 @@ paths:
           description: successful operation
           schema:
             "$ref": "#/definitions/UserStory"
+        404:
+          description: user-story not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -1005,6 +1069,10 @@ paths:
             description: successful operation
             schema:
               "$ref": "#/definitions/UserStory"
+          404:
+            description: Unexpected error
+            schema:
+              $ref: '#/definitions/Error'
           default:
             description: Unexpected error
             schema:
@@ -1397,27 +1465,57 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/unsubscribe":
     delete:
       tags:
       - PushNotification
-      summary: delete the subscription
+      summary: delete only one subscription
       operationId: deleteSubscription
       consumes:
         - application/json
       produces:
         - application/json
       parameters:
-      - name: pushNotification
+      - name: subscription
         in: body
-        description: info necessary to subscribe the user
+        description: subscription to delete
         required: true
         schema:
           $ref: '#/definitions/Subscription'
       responses:
-        204:
+        200:
           description: successful operation
           schema:
-            $ref: '#/definitions/Subscription'
+            $ref: '#/definitions/Success'
+        404:
+          description: not found
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/unsubscribe/{user}":
+    delete:
+      tags:
+      - PushNotification
+      summary: delete only one subscription
+      operationId: deleteAllSubscription
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: user
+        in: path
+        description: delete all subscription of user
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Success'
         401:
           description: Unauthorized to delete
           schema:
@@ -1605,7 +1703,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/notifications/offset/last":
+  "/notifications/offset/last/{notification_type}":
     get:
       tags:
       - PushNotification
@@ -1613,6 +1711,12 @@ paths:
       operationId: getLastOffset
       produces:
       - application/json
+      parameters:
+      - name: notification_type
+        in: path
+        description: kind of notification
+        required: true
+        type: string
       responses:
         200:
           description: the last offset
@@ -1724,6 +1828,10 @@ definitions:
         type: string
       errors:
         type: string
+      description:
+        type: string
+      link:
+        type: string
   Filters:
     type: object
     properties:
@@ -1747,8 +1855,12 @@ definitions:
         type: array
         items:
           type: string
+      owner:
+        type: string
       order:
         type: string
+      sharedWithMe:
+        type: boolean
   Error:
     type: object
     properties:
@@ -1969,6 +2081,7 @@ definitions:
      - id
      - name
      - url
+     - appName
     properties:
       id:
         type: integer
@@ -1976,6 +2089,8 @@ definitions:
       name:
         type: string
       url:
+        type: string
+      appName:
         type: string
   Subscription:
     type: object
@@ -1999,5 +2114,6 @@ definitions:
         type: string
       auth:
         type: string
+
 
 

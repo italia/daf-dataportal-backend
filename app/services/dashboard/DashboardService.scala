@@ -45,12 +45,12 @@ trait DashboardServiceComponent {
        dashboardRepository.dashboards(username, groups, status)
     }
 
-    def dashboardById(username: String, group: List[String], id: String) :Dashboard = {
+    def dashboardById(username: String, group: List[String], id: String): Option[Dashboard] = {
       dashboardRepository.dashboardById(username, group, id)
     }
 
-    def saveDashboard(dashboard: Dashboard, user :String): Success = {
-        dashboardRepository.saveDashboard(dashboard, user)
+    def saveDashboard(dashboard: Dashboard, user :String, token: String, wsClient: WSClient): Success = {
+        dashboardRepository.saveDashboard(dashboard, user, token, wsClient)
     }
 
     def deleteDashboard(dashboardId :String): Success = {
@@ -61,16 +61,16 @@ trait DashboardServiceComponent {
       dashboardRepository.stories(username, groups, status, page, limit)
     }
 
-    def storyById(username: String, group: List[String], id: String) :UserStory = {
+    def storyById(username: String, group: List[String], id: String): Option[UserStory] = {
       dashboardRepository.storyById(username, group,id)
     }
 
-    def publicStoryById(id: String) :UserStory = {
+    def publicStoryById(id: String): Option[UserStory] = {
       dashboardRepository.publicStoryById(id)
     }
 
-    def saveStory(story: UserStory, user :String): Success = {
-      dashboardRepository.saveStory(story, user)
+    def saveStory(story: UserStory, user :String, token :String, wsClient: WSClient): Success = {
+      dashboardRepository.saveStory(story, user, token, wsClient)
     }
 
     def deleteStory(storyId :String): Success = {
@@ -85,7 +85,7 @@ trait DashboardServiceComponent {
       dashboardRepository.dashboardsPublic(org)
     }
 
-    def publicDashboardById(id: String): Dashboard = {
+    def publicDashboardById(id: String): Option[Dashboard] = {
       dashboardRepository.publicDashboardById(id)
     }
 

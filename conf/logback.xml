@@ -4,7 +4,7 @@
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d{HH:mm:ss.SSS} %mdc{user-id:--} %mdc{request-init-time:--} %mdc{context-name:--} %coloredLevel - %logger - %message%n%xException</pattern>
+      <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] %mdc{user-id:--} %mdc{context-name:--} [%mdc{request-init-time:--}] %level %logger !_! %message%n%xException</pattern>
     </encoder>
   </appender>
 
@@ -24,6 +24,8 @@
 
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
+  <logger name="it.gov.daf" level="DEBUG" />
+  <logger name="controller" level="DEBUG" />
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />

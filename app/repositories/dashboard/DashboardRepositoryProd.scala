@@ -12,7 +12,7 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection}
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory, Error}
 import play.api.libs.json._
 //import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -64,10 +64,14 @@ class DashboardRepositoryProd extends DashboardRepository {
   private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
   private val elasticsearchPort = ConfigReader.getElasticsearchPort
 
+  private val KAFKAPROXY = ConfigReader.getKafkaProxy
+
   val conf = Configuration.load(Environment.simple())
   val URLMETABASE = conf.getString("metabase.url").get
   val metauser = conf.getString("metabase.user").get
   val metapass = conf.getString("metabase.pass").get
+
+  private val OPEN_DATA_GROUP = "open_data_group"
 
 
 
@@ -220,16 +224,14 @@ class DashboardRepositoryProd extends DashboardRepository {
   }
 
   def iframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
-    println("-iframes-")
-//    val wsClient = AhcWSClient()
+    val openDataUser = ConfigReader.getSupersetOpenDataUser
 
-    val metabasePublic = localUrl + "/metabase/public_card/" + user
     val supersetPublic = localUrl + "/superset/public_slice/" + user
 //    val grafanaPublic = localUrl + "/grafana/snapshots/" + user
 //    val tdmetabasePublic = localUrl + "/tdmetabase/public_card"
 
 
-    val request = wsClient.url(metabasePublic).get()
+//    val request = wsClient.url(metabasePublic).get()
     // .andThen { case _ => wsClient.close() }
     // .andThen { case _ => system.terminate() }
 
@@ -241,15 +243,18 @@ class DashboardRepositoryProd extends DashboardRepository {
 //
 //    val requestTdMetabase = wsClient.url(tdmetabasePublic).get
 
+    requestIframes.onComplete{ r => Logger.logger.debug(s"$user: response status superset ${r.get.status}, text ${r.get.statusText}")}
+
 
     val superset: Future[Seq[DashboardIframes]] = requestIframes.map { response =>
+      Logger.logger.debug(s"iframes for $user response status from superset ${response.status}")
       val json = response.json.as[Seq[JsValue]]
       val iframes = json.map(x => {
         val slice_link = (x \ "slice_link").get.as[String]
         val vizType = (x \ "viz_type").get.as[String]
         val title = slice_link.slice(slice_link.indexOf(">") + 1, slice_link.lastIndexOf("</a>")).trim
         val src = slice_link.slice(slice_link.indexOf("\"") + 1, slice_link.lastIndexOf("\"")) + "&standalone=true"
-        val url = ConfigReader.getSupersetUrl + src
+        val url = if(user == ConfigReader.getSupersetOpenDataUser) ConfigReader.getSupersetOpenDataUrl + src else ConfigReader.getSupersetUrl + src
         val decodeSuperst = java.net.URLDecoder.decode(url, "UTF-8");
         val uri = new URL(decodeSuperst)
         val queryString = uri.getQuery.split("&", 2)(0)
@@ -277,30 +282,6 @@ class DashboardRepositoryProd extends DashboardRepository {
 
       res
     }
-
-    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
-      val json = response.json.as[Seq[JsValue]]
-
-      Logger.debug(s"Metabase iframe response: $json")
-      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
-        .map(x => {
-         val uuid = (x \ "public_uuid").get.as[String]
-         val title = (x \ "name").get.as[String]
-      //  val id = (x \ "id").get.as[String]
-         val tableId =   (x \ "table_id").get.as[Int]
-         val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-         DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
-      })
-    }
-
-
-
-    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
-        iframes <- metabase
-        iframesWithTable <- metabaseTableInfo(iframes, wsClient)
-    } yield iframesWithTable
-
-
 
   /*   val tdMetabase  :Future[Seq[DashboardIframes]] = requestTdMetabase.map { response =>
        val json = response.json.as[Seq[JsValue]]
@@ -330,7 +311,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 */
 
-    val services  = List(superset, metabaseWithTables) //, grafana, tdMetabase)
+    val services = if(user == openDataUser) List(superset, getMetabaseIframes(user, wsClient)) else List(superset)
 
     def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
       f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
@@ -353,6 +334,37 @@ class DashboardRepositoryProd extends DashboardRepository {
     val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
 
     results
+  }
+
+  private def getMetabaseIframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
+    val metabasePublic = localUrl + "/metabase/public_card/" + user
+
+    val request = wsClient.url(metabasePublic).get()
+
+    request.onComplete{ r => Logger.logger.debug(s"$user: response status metabase ${r.get.status}")}
+
+    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
+      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
+      val json = response.json.as[Seq[JsValue]]
+
+      Logger.debug(s"Metabase iframe response: $json")
+      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
+        .map(x => {
+          val uuid = (x \ "public_uuid").get.as[String]
+          val title = (x \ "name").get.as[String]
+          //  val id = (x \ "id").get.as[String]
+          val tableId =   (x \ "table_id").get.as[Int]
+          val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+          DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
+        })
+    }
+
+    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
+      iframes <- metabase
+      iframesWithTable <- metabaseTableInfo(iframes, wsClient)
+    } yield iframesWithTable
+
+    metabaseWithTables
   }
 
   def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
@@ -389,7 +401,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def dashboardById(username: String, groups: List[String], id: String): Dashboard = {
+  def dashboardById(username: String, groups: List[String], id: String): Option[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -399,12 +411,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     dashboardJsResult match {
-      case s: JsSuccess[Dashboard] => s.get
-      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[Dashboard] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def publicDashboardById(id: String): Dashboard = {
+  def publicDashboardById(id: String): Option[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("dashboards")
@@ -414,12 +426,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val dashboardJsResult: JsResult[Dashboard] = json.validate[Dashboard]
     dashboardJsResult match {
-      case s: JsSuccess[Dashboard] => s.getOrElse(Dashboard(None, None, None, None, None, None, None, None, None, None))
-      case e: JsError => Dashboard(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[Dashboard] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def saveDashboard(dashboard: Dashboard, user: String): Success = {
+  def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -434,6 +446,16 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
+        if(dashboard.status.get != 0)
+          sendMessageToKafka(
+            user,
+            if(dashboard.status.get == 2) OPEN_DATA_GROUP else dashboard.org.get,
+            token,
+            s"Pubblicazione Dashboard",
+            buildMessaggeToKafka(dashboard.status.get, "Dashboard", dashboard.title.getOrElse(""), dashboard.org.get),
+            s"/private/dashboard/list/$x",
+            wsClient,
+            "generic")
         val a: mongodb.casbah.TypeImports.WriteResult = coll.update(query, obj)
       }
       case None => {
@@ -453,7 +475,21 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongoClient.close()
     val response = Success(Some(saved), Some(operation))
     response
+  }
 
+  /**
+    *
+    * @param status new status
+    * @param objString the name of the object to update {Storia || Dashboard}
+    * @param title the title of the object
+    * @param org the organization of the object
+    * @return the message to send to kafka
+    */
+  private def buildMessaggeToKafka(status: Int, objString: String, title: String, org: String): String = {
+    status match {
+      case 1 => s"La $objString $title è stata pubblicata per l'organizzazione $org"
+      case 2 => s"E' stata publicata la $objString $title"
+    }
   }
 
   def deleteDashboard(dashboardId: String): Success = {
@@ -526,7 +562,6 @@ class DashboardRepositoryProd extends DashboardRepository {
     $and(mongodb.casbah.Imports.MongoDBObject("id" -> id), privateQueryToMongo(nameFieldStatus, user, groups))
   }
 
-
   private def privateQueryToMongo(nameFieldStatus: String, user: String, groups: List[String], status: Option[Int] = None) = {
     import mongodb.casbah.query.Imports._
 
@@ -554,7 +589,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     mongodb.casbah.Imports.MongoDBObject(nameFieldStatus -> 2)
   }
 
-  def storyById(username: String, groups: List[String], id: String): UserStory = {
+  def storyById(username: String, groups: List[String], id: String): Option[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -564,12 +599,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     storyJsResult match {
-      case s: JsSuccess[UserStory] => s.get
-      case e: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[UserStory] => Some(s.get)
+      case e: JsError => None
     }
   }
 
-  def publicStoryById(id: String): UserStory = {
+  def publicStoryById(id: String): Option[UserStory] = {
     val mongoClient = MongoClient(server, List(credentials))
     val db = mongoClient(source)
     val coll = db("stories")
@@ -579,12 +614,34 @@ class DashboardRepositoryProd extends DashboardRepository {
     val json = Json.parse(jsonString)
     val storyJsResult: JsResult[UserStory] = json.validate[UserStory]
     storyJsResult match {
-      case s: JsSuccess[UserStory] => s.get
-      case _: JsError => UserStory(None, None, None, None, None, None, None, None, None, None)
+      case s: JsSuccess[UserStory] => Some(s.get)
+      case _: JsError => None
     }
   }
 
-  def saveStory(story: UserStory, user: String): Success = {
+  private def sendMessageToKafka(user: String, group: String, token: String, title: String, description: String, link: String, ws: WSClient, notificationtype: String) = {
+    Logger.logger.debug(s"kafka proxy $KAFKAPROXY")
+    val message = s"""{
+                     |"records":[{"value":{"group":"$group","token":"$token","notificationtype": "$notificationtype", "info":{
+                     |"title":"$title","description":"$description","link":"$link"}}}]}""".stripMargin
+
+    val jsonBody = Json.parse(message)
+
+    val responseWs = ws.url(KAFKAPROXY + "/topics/notification")
+      .withHeaders(("Content-Type", "application/vnd.kafka.v2+json"))
+      .post(jsonBody)
+
+    responseWs.map{ res =>
+      if( res.status == 200 ) {
+        Logger.logger.debug(s"message sent to kakfa proxy for user $user")
+      }
+      else {
+        Logger.logger.debug(s"error in sending message to kafka proxy for user $user: ${res.statusText}")
+      }
+    }
+  }
+
+  def saveStory(story: UserStory, user: String, token: String, wsClient: WSClient): Success = {
     import ftd_api.yaml.ResponseWrites.UserStoryWrites
     val id = story.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -596,9 +653,21 @@ class DashboardRepositoryProd extends DashboardRepository {
       case Some(x) => {
         val json: JsValue = Json.toJson(story)
         val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+        if(story.user.isEmpty) obj.put("user",  user)
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
+        if(story.published.get != 0)
+          sendMessageToKafka(
+            user,
+            if(story.published.get == 2) OPEN_DATA_GROUP else story.org.get,
+            token,
+            s"Pubblicazione Storia",
+            buildMessaggeToKafka(story.published.get, "Storia", story.title.getOrElse(""), story.org.get),
+            s"/private/userstory/list/$x",
+            wsClient,
+            "generic"
+          )
         coll.update(query, obj)
       }
       case None => {
@@ -650,7 +719,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _: JsError => Seq()
     }
 
-    Logger.logger.debug(s"find ${dataApp.size} results")
+    Logger.logger.debug(s"found ${dataApp.size} results")
 
     dataApp
   }
@@ -669,7 +738,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldDashboard = listFields("Dashboard")
     val fieldStories = listFields("User-Story")
@@ -690,9 +759,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case None => ""
     }
 
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
+    val order: String = filters.order match {
+      case Some(o) => o
       case _ => "desc"
     }
 
@@ -705,10 +773,11 @@ class DashboardRepositoryProd extends DashboardRepository {
             ),
             must(
                 createFilterOrg(filters.org) ::: createFilterStatus(filters.status) :::
-              createThemeFilter(filters.theme)
+              createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner) ::: sharedWithMe(filters.sharedWithMe, groups)
             ),
             should(
-              must(termQuery("dcatapit.privatex", true), matchQuery("dcatapit.owner_org", groups.mkString(" ")).operator("OR")),
+              must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
+              must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username)),
               termQuery("dcatapit.privatex", false),
               must(termQuery("status", 0), termQuery("user", username)),
               must(termQuery("published", 0), termQuery("user", username)),
@@ -778,7 +847,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     val fieldUsDsSub = "subtitle"
     val fieldUsDsWget = "widgets"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
-      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org")
+      fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldStories = listFields("User-Story")
     val fieldToReturn = fieldDataset ++ fieldStories ++ fieldsOpenData
@@ -798,9 +867,8 @@ class DashboardRepositoryProd extends DashboardRepository {
       case None => ""
     }
 
-    val order = filters.order match {
-      case Some("score") => "score"
-      case Some("asc") => "asc"
+    val order: String = filters.order match {
+      case Some(o) => o
       case _ => "desc"
     }
 
@@ -1000,16 +1068,18 @@ class DashboardRepositoryProd extends DashboardRepository {
       List()
   }
 
-  private def createFilterStatus(status: Option[Seq[String]]): List[QueryDefinition] = {
+  private def createFilterStatus(status: Option[Seq[String]]): List[BoolQueryDefinition] = {
     status match {
       case Some(List()) => List()
       case Some(x) => {
         val statusDataset = x.map {
-          case "2" => "0"
-          case _ => "1"
+          case "2" => false
+          case _ => true
         }
-        List(should(termsQuery("dcatapit.privatex", statusDataset), termsQuery("status", status.get),
-          termsQuery("published", status.get), termQuery("private", statusDataset)))
+        List(should(
+          statusDataset.flatMap(s => List(termsQuery("dcatapit.privatex", s), termQuery("private", s))).toList :::
+          x.flatMap(s => List(termsQuery("published", s), termsQuery("status", s))).toList)
+        )
       }
       case _ => List()
     }
@@ -1032,6 +1102,32 @@ class DashboardRepositoryProd extends DashboardRepository {
                 matchQuery(opendataOrg, nameOrg).operator("AND")
               )
             )
+          )
+        )
+      }
+      case _ => List()
+    }
+  }
+
+  private def ownerQueryString(owner: Option[String]): List[BoolQueryDefinition] = {
+    owner match {
+      case Some("") => List()
+      case Some(ownerName) => {
+        List(should(
+          must(termQuery("dcatapit.author", ownerName)),
+          must(termQuery("user", ownerName))
+        ))
+      }
+      case None => List()
+
+    }
+  }
+
+  private def sharedWithMe(sharedWithMeFilter: Option[Boolean], groups: List[String]) ={
+    sharedWithMeFilter match {
+      case Some(true) => {
+        List(should(
+          must(matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR"))
           )
         )
       }
@@ -1117,21 +1213,38 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).toList.map(searchResult => (extractDate(searchResult.`type`.get, searchResult.source.get), searchResult))
     )
 
-    val res = timestamp match {
+    val res: Future[List[(String, SearchResult)]] = timestamp match {
       case Some("") => futureTupleSearchResult
       case Some(x) => filterDate(futureTupleSearchResult, x)
       case None => futureTupleSearchResult
     }
 
-    val result = order match {
+    val result: Future[List[(String, SearchResult)]] = order match {
       case "score" => res
+      case "a-z" | "z-a" => orderByName(res, order)
       case "asc" => res.map(r => r.sortWith(_._1 < _._1))
       case _ => res.map(r => r.sortWith(_._1 > _._1))
     }
 
     val toReturn = result.map(r => r.map(elem => elem._2))
-    toReturn onComplete (r => Logger.logger.debug(s"find ${r.getOrElse(List()).size}"))
+    toReturn onComplete (r => Logger.logger.debug(s"found ${r.getOrElse(List()).size}"))
     toReturn
+  }
+
+  private def orderByName(futureListSearchResult: Future[List[(String, SearchResult)]], order: String) = {
+    futureListSearchResult.map{ listSearchResult =>
+      val listTuple: List[(String, String, SearchResult)] = listSearchResult.map{ searchResult =>
+        val title: String = searchResult._2.`type` match {
+          case Some("catalog_test") => (Json.parse(searchResult._2.source.get) \ "dcatapit" \ "title").get.toString()
+          case _ => (Json.parse(searchResult._2.source.get) \ "title").get.toString()
+        }
+        (title, searchResult._1, searchResult._2)
+      }
+      order match {
+        case "a-z" => listTuple.sortWith(_._1 < _._1).map(t => (t._2, t._3))
+        case "z-a" => listTuple.sortWith(_._1 > _._1).map(t => (t._2, t._3))
+      }
+    }
   }
 
   private def extractDate(typeDate: String, source: String): String = {
@@ -1188,7 +1301,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
-      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")
@@ -1216,7 +1329,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
     } yield resFutureDataset ::: resFutureStories ::: resFutureDash ::: resFutureAggr
 
-    result onComplete{r => client.close(); Logger.logger.debug(s"find ${r.getOrElse(List()).size} results")}
+    result onComplete{r => client.close(); Logger.logger.debug(s"found ${r.getOrElse(List()).size} results")}
 
     result
   }
@@ -1227,7 +1340,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
-      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author")
+      "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
     val fieldsStories = listFields("User-Story")
     val fieldsDash = listFields("Dashboard")
@@ -1250,7 +1363,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
     }yield resFutureDataset ::: resFutureStories ::: resFutureAggr
 
-    result onComplete {r => client.close(); Logger.logger.debug(s"find ${r.getOrElse(List()).size} results")}
+    result onComplete {r => client.close(); Logger.logger.debug(s"found ${r.getOrElse(List()).size} results")}
     result
   }
 
@@ -1259,8 +1372,9 @@ class DashboardRepositoryProd extends DashboardRepository {
       boolQuery()
         .must(
           should(
-            must(termQuery("dcatapit.privatex", "1"), matchQuery("dcatapit.owner_org", groups.mkString(" "))),
-            termQuery("dcatapit.privatex", "0"),
+            must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" "))),
+            must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username)),
+            termQuery("dcatapit.privatex", false),
             must(termQuery("status", "0"), termQuery("user", username)),
             must(termQuery("published", "0"), termQuery("user", username)),
             must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),

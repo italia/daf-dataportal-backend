@@ -19,8 +19,11 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val metapass = playConfig.getString("metabase.pass")
 
   val supersetURL= playConfig.getString("superset.url")
+  val supersetOpenDataUrl = playConfig.getString("superset.openDataUrl")
   val supersetUser = playConfig.getString("superset.user")
   val supersetPass = playConfig.getString("superset.pass")
+  val supersetOpenDataUser = playConfig.getString("superset.openDataUser")
+  val supersetOpenDataPwd = playConfig.getString("superset.openDataPwd")
 
   val grafanaURL= playConfig.getString("grafana.url")
 
@@ -45,6 +48,13 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val elasticsearchUrl = playConfig.getString("elasticsearch.url")
   val elasticsearchPort = playConfig.getInt("elasticsearch.port")
 
+  val kafkaProxy: Option[String] = playConfig.getString("kafka-proxy.url")
+
+  val datasetUrl: Option[String] = playConfig.getString("dataset-manager.url")
+  val datasetUserOpendataEmail: Option[String] = playConfig.getString("dataset-manager.email")
+  val datasetUserOpendataPwd: Option[String] = playConfig.getString("dataset-manager.pwd")
+
+
 
 }
 
@@ -64,8 +74,11 @@ object ConfigReader {
   def getMetaPass = config.metapass.getOrElse("password")
 
   def getSupersetUrl = config.supersetURL.getOrElse("http://localhost:8088")
+  def getSupersetOpenDataUrl = config.supersetOpenDataUrl.getOrElse("")
   def getSupersetUser = config.supersetUser.getOrElse("alessandro")
   def getSupersetPass = config.supersetPass.getOrElse("password")
+  def getSupersetOpenDataUser = config.supersetOpenDataUser.getOrElse("")
+  def getSupersetOpenDataPwd = config.supersetOpenDataPwd.getOrElse("")
 
   def getGrafanaUrl = config.grafanaURL.getOrElse("TO DO")
 
@@ -88,5 +101,11 @@ object ConfigReader {
 
   def getElasticsearchUrl = config.elasticsearchUrl.get
   def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
+
+  def getKafkaProxy = config.kafkaProxy.getOrElse("localhost:8085")
+
+  def getDatasetUrl =  config.datasetUrl.getOrElse("XXXXX")
+  def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail.getOrElse("XXXXX")
+  def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
 
 }

@@ -19,6 +19,14 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.getSubscriptions(user)
     }
 
+    def deleteSubscription(user: String, subscription: Subscription) = {
+      pushNotificationRepository.deleteSubscription(user, subscription)
+    }
+
+    def deleteAllSubscription(user: String) = {
+      pushNotificationRepository.deleteAllSubscription(user)
+    }
+
     def saveNotifications(notification: Notification) = {
       pushNotificationRepository.saveNotifications(notification)
     }
@@ -34,8 +42,8 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.checkNewNotifications(user)
     }
 
-    def getLastOffset: Future[LastOffset] = {
-      pushNotificationRepository.getLastOffset
+    def getLastOffset(notificationType: String): Future[LastOffset] = {
+      pushNotificationRepository.getLastOffset(notificationType)
     }
 
   }
