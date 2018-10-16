@@ -105,7 +105,7 @@ class ProxyController @Inject()(ws: WSClient,
         URLEncoder.encode(logicalUri,"UTF-8") // + "?limit=50"
       val limitQueryString  = request.getQueryString("limit") match {
         case None => ""
-        case Some(limit) => "limit=50"
+        case Some(_) => "limit=50"
       }
       val format = request.getQueryString("format").getOrElse("json")
 
@@ -115,14 +115,17 @@ class ProxyController @Inject()(ws: WSClient,
         "?format=" + format + "&" + limitQueryString
       }
 
-      println(url)
-      println(buildQueryString)
 
-      val responseWs: Future[WSResponse] =
-          ws.url(url + buildQueryString)
-          .withAuth(opendataUserEmail, opendataUserPwd, WSAuthScheme.BASIC).get
-              responseWs.map { response =>
-              Ok(response.json)
+      val responseWs: Future[WSResponse] = ws.url(url + buildQueryString)
+        .withAuth(opendataUserEmail, opendataUserPwd, WSAuthScheme.BASIC)
+        .get
+
+      responseWs.map { response =>
+              if (format.equals("csv")) {
+                Ok(response.body)
+              } else {
+                Ok(response.json)
+              }
             }
   }
 
