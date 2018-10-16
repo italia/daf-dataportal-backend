@@ -12,7 +12,7 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection}
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory, Error}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory, Error, Organization, SupersetTable}
 import play.api.libs.json._
 //import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -107,6 +107,20 @@ class DashboardRepositoryProd extends DashboardRepository {
     } catch {
       case e: Exception => 0
     }
+  }
+
+  def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Seq[SupersetTable]] = {
+    val res = orgs.map{ org =>
+      ws.url(localUrl + s"/superset/database/$user/${org.name}-db").get().flatMap { res =>
+        val databaseId: Int = (res.json \\ "id").head.as[Int]
+        ws.url(localUrl + s"/superset/table_by_id_name/$user/${org}_o_$tableName/$databaseId").get().map { res =>
+          val tableId = (res.json \\ "id").head.as[Long]
+          SupersetTable(tableId, org.name)
+        }
+      }
+    }
+
+    ???
   }
 
   def save(upFile: File, tableName: String, fileType: String, wsClient: WSClient): Success = {

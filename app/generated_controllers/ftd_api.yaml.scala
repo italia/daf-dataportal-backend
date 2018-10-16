@@ -58,7 +58,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+                                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -288,6 +288,12 @@ package ftd_api.yaml {
             DashboardTables200(tables)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardTables
+        }
+        val supersetTablesByOrgs = supersetTablesByOrgsAction { input: (String, DashboardSupersetTablesTableNamePostOrgs) =>
+            val (tableName, orgs) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTablesByOrgs
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTablesByOrgs
         }
         val dashboardIframes = dashboardIframesAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
@@ -1042,6 +1048,14 @@ package ftd_api.yaml {
 
   NotImplementedYet
   // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.supersetTableByOrgs
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableByOrgs
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableByOrgs
      */
 
     
