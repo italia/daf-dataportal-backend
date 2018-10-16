@@ -420,7 +420,7 @@ paths:
               $ref: '#/definitions/Error'
   "/public/data-applications":
     get:
-      tag:
+      tags:
       - data-application
       summary: return the data-applications saved in db
       operationId: getDataApplications
@@ -439,7 +439,7 @@ paths:
             $ref: '#/definitions/Error'
   "/delete/data-application":
       delete:
-        tag:
+        tags:
         - data-application
         summary: return the data-application saved in db
         operationId: deleteDataApplication
@@ -661,55 +661,55 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   "/dashboard/iframesByName/{tableName}":
-        get:
-          tags:
-          - Dashboard
-          summary: List of iframes for dashboard visualization
-          operationId: iframesByTableName
-          produces:
-           - application/json
-          parameters:
-          - name: tableName
-            in: path
-            description: Table name
-            required: true
-            type: string
-          responses:
-            200:
-              description: An array of iFrames
-              schema:
-                type: array
-                items:
-                  $ref: '#/definitions/DashboardIframes'
-            default:
-              description: Unexpected error
-              schema:
-                $ref: '#/definitions/Error'
+    get:
+      tags:
+      - Dashboard
+      summary: List of iframes for dashboard visualization
+      operationId: iframesByTableName
+      produces:
+      - application/json
+      parameters:
+      - name: tableName
+        in: path
+        description: Table name
+        required: true
+        type: string
+      responses:
+        200:
+          description: An array of iFrames
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DashboardIframes'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/dashboard/iframesbyorg/{orgName}":
-      get:
-        tags:
-        - Dashboard
-        summary: List all iframes of an organization for dashboard visualization
-        operationId: dashboardIframesbyorg
-        produces:
-         - application/json
-        parameters:
-        - name: orgName
-          in: path
-          description: organization name
-          required: true
-          type: string
-        responses:
-          200:
-            description: An array of iFrames
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/DashboardIframes'
-          default:
-            description: Unexpected error
-            schema:
-              $ref: '#/definitions/Error'
+    get:
+      tags:
+      - Dashboard
+      summary: List all iframes of an organization for dashboard visualization
+      operationId: dashboardIframesbyorg
+      produces:
+      - application/json
+      parameters:
+      - name: orgName
+        in: path
+        description: organization name
+        required: true
+        type: string
+      responses:
+        200:
+          description: An array of iFrames
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DashboardIframes'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/dashboards":
     get:
       tags:
