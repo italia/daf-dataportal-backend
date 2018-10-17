@@ -2,7 +2,7 @@ package services.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Error, Filters, Organization, SearchResult, Success, SupersetTable, UserStory}
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Environment}
 import repositories.dashboard.{DashboardRepository, DashboardRepositoryComponent}
@@ -106,6 +106,10 @@ trait DashboardServiceComponent {
 
     def getAllDataApp: Seq[DataApp] = {
       dashboardRepository.getAllDataApp
+    }
+
+    def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Either[Error, Seq[SupersetTable]]]  = {
+      dashboardRepository.getSupersetTableByTableNameIdAndOrgs(user, tableName, orgs, ws)
     }
   }
 }

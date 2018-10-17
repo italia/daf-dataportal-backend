@@ -3,7 +3,7 @@ package repositories.dashboard
 import java.io.File
 import java.util.Date
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Error, Filters, Organization, SearchResult, Success, SupersetTable, UserStory}
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -136,6 +136,10 @@ class DashboardRepositoryDev extends DashboardRepository {
 
   def getAllDataApp: Seq[DataApp] = {
     Seq(DataApp(None, None, None, None, None, None))
+  }
+
+  def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Either[Error, Seq[SupersetTable]]] = {
+    Future(Right(Seq[SupersetTable]()))
   }
 
 }

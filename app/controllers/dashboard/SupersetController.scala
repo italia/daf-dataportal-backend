@@ -98,6 +98,39 @@ class SupersetController @Inject() ( ws: WSClient, cache: CacheApi  ,config: Con
 
   }
 
+  def databaseIdByName(user: String, dbName: String) = Action.async { implicit request =>
+    RequestContext.execInContext[Future[Result]] ("databaseIdByName") { () =>
+
+      Logger.logger.debug(s"$user call superset for $dbName")
+
+      def callDb(cookie: String, wsClient: WSClient) =
+        wsClient.url(URL + s"/databaseview/api/readvalues?_flt_3_database_name=$dbName")
+          .withHeaders("Content-Type" -> "application/json",
+            "Accept" -> "application/json",
+            "Cookie" -> cookie
+          ).get
+
+      sim.manageServiceCall(new LoginInfo(null, null, "superset"), callDb).map { resp => Ok(resp.json) }
+
+    }
+  }
+
+  def tableByNameAndId(user: String, tableName: String, id: Int) = Action.async { implicit request =>
+    RequestContext.execInContext[Future[Result]] ("tableByNameAndId") { () =>
+      def callDb(cookie: String, wsClient: WSClient) =
+        wsClient.url(URL + s"/tablemodelview/api/readvalues?_flt_0_database=$id&_flt_3_table_name=$tableName")
+          .withHeaders("Content-Type" -> "application/json",
+            "Accept" -> "application/json",
+            "Cookie" -> cookie
+          ).get
+      Logger.logger.debug(s"$user call superset with table name $tableName and id $id")
+
+      sim.manageServiceCall(new LoginInfo(user, null, "superset"), callDb).map { resp => Ok(resp.json) }
+
+    }
+
+  }
+
 
   def tableByName(user: String, datasetName :String) = Action.async { implicit request =>
 
