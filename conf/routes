@@ -27,6 +27,8 @@ GET        /superset/iframes                      controllers.dashboard.Superset
 GET        /superset/session                      controllers.dashboard.SupersetController.session()
 GET        /superset/public_slice/:user           controllers.dashboard.SupersetController.publicSlice(user :String)
 GET        /superset/table/:user/:datasetName     controllers.dashboard.SupersetController.tableByName(user: String, datasetName :String)
+GET        /superset/database/:user/:dbName       controllers.dashboard.SupersetController.databaseIdByName(user: String, dbName: String)
+GET        /superset/table_by_id_name/:user/:tableName/:id  controllers.dashboard.SupersetController.tableByNameAndId(user: String, tableName: String, id: Int)
 
 GET        /metabase/session                      controllers.dashboard.MetabaseController.session()
 GET        /metabase/public_card/:metaUser        controllers.dashboard.MetabaseController.publicCard(metaUser :String)
