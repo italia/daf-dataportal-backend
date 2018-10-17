@@ -2,7 +2,7 @@ package repositories.dashboard
 
 import java.io.File
 
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Error, Filters, Organization, SearchResult, Success, SupersetTable, UserStory}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
@@ -33,6 +33,7 @@ trait DashboardRepository {
   def searchLastPublic(org: Option[String]): Future[List[SearchResult]]
   def searchTextPublic(filters: Filters): Future[List[SearchResult]]
   def getAllDataApp: Seq[DataApp]
+  def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Either[Error, Seq[SupersetTable]]]
 }
 
 object DashboardRepository {
