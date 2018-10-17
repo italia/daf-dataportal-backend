@@ -109,18 +109,36 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Seq[SupersetTable]] = {
-    val res = orgs.map{ org =>
-      ws.url(localUrl + s"/superset/database/$user/${org.name}-db").get().flatMap { res =>
-        val databaseId: Int = (res.json \\ "id").head.as[Int]
-        ws.url(localUrl + s"/superset/table_by_id_name/$user/${org}_o_$tableName/$databaseId").get().map { res =>
-          val tableId = (res.json \\ "id").head.as[Long]
-          SupersetTable(tableId, org.name)
+  def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Either[Error, Seq[SupersetTable]]] = {
+    def callSupersetDatabaseId(user: String, org: String): Future[Option[Int]] = {
+      ws.url(localUrl + s"/superset/database/$user/${org}-db").get()
+        .map{ res =>
+          val id = res.json \\ "id"
+          if(id.isEmpty) None
+          else Logger.logger.debug(s"$user: dabaseId ${id.head} for $org"); Some(id.head.as[Int])
         }
-      }
     }
 
-    ???
+    def callSupersetTableName(user: String, org: String, tableName: String, databaseId: Int): Future[Option[Int]] = {
+      ws.url(localUrl + s"/superset/table_by_id_name/$user/$tableName/$databaseId").get()
+        .map { res =>
+          val tableId = res.json \\ "id"
+          if(tableId.isEmpty) None
+          else Logger.logger.debug(s"$user: dabaseId ${tableId.head} for $org"); Some(tableId.head.as[Int])
+        }
+    }
+
+    val res = orgs.map{ org =>
+      callSupersetDatabaseId(user, org.name)
+      .flatMap{ case Some(x) => callSupersetTableName(user, org.name, tableName, x) }
+        .map{ case Some(x) => SupersetTable(x, org.name) }
+    }
+
+    val seqSupersetTable = Future.traverse(res)(s => s)
+    seqSupersetTable.map(seq =>
+      if(seq.isEmpty) Left(Error(Some(404), Some("not found"), None))
+      else {Logger.logger.debug(s"$user found ${seq.size}"); Right(seq)}
+    )
   }
 
   def save(upFile: File, tableName: String, fileType: String, wsClient: WSClient): Success = {
