@@ -115,7 +115,6 @@ class ProxyController @Inject()(ws: WSClient,
         "?format=" + format + "&" + limitQueryString
       }
 
-
       val responseWs: Future[WSResponse] = ws.url(url + buildQueryString)
         .withAuth(opendataUserEmail, opendataUserPwd, WSAuthScheme.BASIC)
         .get
