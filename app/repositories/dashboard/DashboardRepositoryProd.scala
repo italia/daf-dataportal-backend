@@ -12,7 +12,7 @@ import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection}
-import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory, Error}
+import ftd_api.yaml.{Catalog, Dashboard, DashboardIframes, DataApp, Filters, SearchResult, Success, UserStory, Error, Organization, SupersetTable}
 import play.api.libs.json._
 //import play.api.libs.ws.ahc.AhcWSClient
 import utils.ConfigReader
@@ -71,6 +71,8 @@ class DashboardRepositoryProd extends DashboardRepository {
   val metauser = conf.getString("metabase.user").get
   val metapass = conf.getString("metabase.pass").get
 
+  private val OPEN_DATA_GROUP = "open_data_group"
+
 
 
   private def  metabaseTableInfo(iframes :Seq[DashboardIframes], wsClient: WSClient): Future[Seq[DashboardIframes]] = {
@@ -105,6 +107,38 @@ class DashboardRepositoryProd extends DashboardRepository {
     } catch {
       case e: Exception => 0
     }
+  }
+
+  def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Either[Error, Seq[SupersetTable]]] = {
+    def callSupersetDatabaseId(user: String, org: String): Future[Option[Int]] = {
+      ws.url(localUrl + s"/superset/database/$user/${org}-db").get()
+        .map{ res =>
+          val id = res.json \\ "id"
+          if(id.isEmpty) None
+          else Logger.logger.debug(s"$user: dabaseId ${id.head} for $org"); Some(id.head.as[Int])
+        }
+    }
+
+    def callSupersetTableName(user: String, org: String, tableName: String, databaseId: Int): Future[Option[Int]] = {
+      ws.url(localUrl + s"/superset/table_by_id_name/$user/$tableName/$databaseId").get()
+        .map { res =>
+          val tableId = res.json \\ "id"
+          if(tableId.isEmpty) None
+          else Logger.logger.debug(s"$user: dabaseId ${tableId.head} for $org"); Some(tableId.head.as[Int])
+        }
+    }
+
+    val res = orgs.map{ org =>
+      callSupersetDatabaseId(user, org.name)
+      .flatMap{ case Some(x) => callSupersetTableName(user, org.name, tableName, x) }
+        .map{ case Some(x) => SupersetTable(x, org.name) }
+    }
+
+    val seqSupersetTable = Future.traverse(res)(s => s)
+    seqSupersetTable.map(seq =>
+      if(seq.isEmpty) Left(Error(Some(404), Some("not found"), None))
+      else {Logger.logger.debug(s"$user found ${seq.size}"); Right(seq)}
+    )
   }
 
   def save(upFile: File, tableName: String, fileType: String, wsClient: WSClient): Success = {
@@ -447,7 +481,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         if(dashboard.status.get != 0)
           sendMessageToKafka(
             user,
-            dashboard.org.get,
+            if(dashboard.status.get == 2) OPEN_DATA_GROUP else dashboard.org.get,
             token,
             s"Pubblicazione Dashboard",
             buildMessaggeToKafka(dashboard.status.get, "Dashboard", dashboard.title.getOrElse(""), dashboard.org.get),
@@ -658,7 +692,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         if(story.published.get != 0)
           sendMessageToKafka(
             user,
-            story.org.get,
+            if(story.published.get == 2) OPEN_DATA_GROUP else story.org.get,
             token,
             s"Pubblicazione Storia",
             buildMessaggeToKafka(story.published.get, "Storia", story.title.getOrElse(""), story.org.get),
