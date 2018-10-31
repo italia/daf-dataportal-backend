@@ -463,7 +463,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success = {
+  def saveDashboard(dashboard: Dashboard, user: String, shared: Option[Boolean], token: String, wsClient: WSClient): Success = {
     import ftd_api.yaml.ResponseWrites.DashboardWrites
     val id = dashboard.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -478,7 +478,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        if(dashboard.status.get != 0)
+        if(shared.getOrElse(false) && dashboard.status.get != 0)
           sendMessageToKafka(
             user,
             if(dashboard.status.get == 2) OPEN_DATA_GROUP else dashboard.org.get,
@@ -673,7 +673,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
   }
 
-  def saveStory(story: UserStory, user: String, token: String, wsClient: WSClient): Success = {
+  def saveStory(story: UserStory, user: String, shared: Option[Boolean], token: String, wsClient: WSClient): Success = {
     import ftd_api.yaml.ResponseWrites.UserStoryWrites
     val id = story.id
     val mongoClient = MongoClient(server, List(credentials))
@@ -689,7 +689,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         val query = MongoDBObject("id" -> x)
         saved = id.get
         operation = "updated"
-        if(story.published.get != 0)
+        if(shared.getOrElse(false) && story.published.get != 0)
           sendMessageToKafka(
             user,
             if(story.published.get == 2) OPEN_DATA_GROUP else story.org.get,

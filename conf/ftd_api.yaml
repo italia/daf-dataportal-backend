@@ -849,6 +849,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/Dashboard'
+      - name: shared
+        in: query
+        description: if it is a sharing dashboard shared=true
+        required: false
+        type: boolean
       responses:
         '200':
           description: successful operation
@@ -1045,6 +1050,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/UserStory'
+      - name: shared
+        in: query
+        description: if it is a sharing user-story shared=true
+        required: false
+        type: boolean
       responses:
         '200':
           description: successful operation
