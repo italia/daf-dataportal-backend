@@ -19,6 +19,7 @@ import javax.inject._
 
 import java.io.File
 
+import scala.math.BigInt
 import de.zalando.play.controllers.PlayBodyParsing._
 import it.gov.daf.common.authentication.Authentication
 import org.pac4j.play.store.PlaySessionStore
@@ -58,7 +59,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                    
+                                                                                                                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -228,13 +229,15 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.settingsByName
         }
-        val savestories = savestoriesAction { (story: UserStory) =>  
+        val savestories = savestoriesAction { input: (UserStory, KyloFeedHas_job) =>
+            val (story, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             RequestContext.execInContext[Future[SavestoriesType[T] forSome { type T }]]("savestories") { () =>
             val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+              println(user)
             val token = readTokenFromRequest(currentRequest.headers)
             token match {
-              case Some(t) => Savestories200(DashboardRegistry.dashboardService.saveStory(story, user, t, ws))
+              case Some(t) => Savestories200(DashboardRegistry.dashboardService.saveStory(story, user, shared, t, ws))
               case None => Savestories401("No token found")
             }
           }
@@ -770,14 +773,15 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
-        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
+        val savedashboard = savedashboardAction { input: (Dashboard, KyloFeedHas_job) =>
+            val (dashboard, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             RequestContext.execInContext[Future[SavedashboardType[T] forSome { type T }]]("savedashboard") { () =>
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
             val user = credentials.username
             val token = readTokenFromRequest(currentRequest.headers)
             token match {
-              case Some(t) => Savedashboard200(DashboardRegistry.dashboardService.saveDashboard(dashboard, user, t, ws))
+              case Some(t) => Savedashboard200(DashboardRegistry.dashboardService.saveDashboard(dashboard, user, shared, t, ws))
               case None => Savedashboard401("No token found")
             }
           }

@@ -78,7 +78,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Some(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def saveDashboard(dashboard: Dashboard, user: String, token: String, wsClient: WSClient): Success = {
+  def saveDashboard(dashboard: Dashboard, user: String, shared: Option[Boolean], token: String, wsClient: WSClient): Success = {
     Success(None, None)
   }
 
@@ -98,7 +98,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Some(UserStory(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def saveStory(story: UserStory, user: String, token: String, wsClient: WSClient): Success = {
+  def saveStory(story: UserStory, user: String, shared: Option[Boolean], token: String, wsClient: WSClient): Success = {
     Success(None, None)
   }
 

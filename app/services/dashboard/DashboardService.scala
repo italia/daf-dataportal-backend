@@ -49,8 +49,8 @@ trait DashboardServiceComponent {
       dashboardRepository.dashboardById(username, group, id)
     }
 
-    def saveDashboard(dashboard: Dashboard, user :String, token: String, wsClient: WSClient): Success = {
-        dashboardRepository.saveDashboard(dashboard, user, token, wsClient)
+    def saveDashboard(dashboard: Dashboard, user :String, shared: Option[Boolean], token: String, wsClient: WSClient): Success = {
+        dashboardRepository.saveDashboard(dashboard, user, shared, token, wsClient)
     }
 
     def deleteDashboard(dashboardId :String): Success = {
@@ -69,8 +69,8 @@ trait DashboardServiceComponent {
       dashboardRepository.publicStoryById(id)
     }
 
-    def saveStory(story: UserStory, user :String, token :String, wsClient: WSClient): Success = {
-      dashboardRepository.saveStory(story, user, token, wsClient)
+    def saveStory(story: UserStory, user :String, shared: Option[Boolean], token: String, wsClient: WSClient): Success = {
+      dashboardRepository.saveStory(story, user, shared, token, wsClient)
     }
 
     def deleteStory(storyId :String): Success = {
