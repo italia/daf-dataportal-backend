@@ -1775,6 +1775,34 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/widget/save":
+    post:
+      tags:
+      - Widgets
+      summary: save widget
+      operationId: widgetSave
+      consumes:
+      - application/json
+      parameters:
+      - name: widget
+        in: body
+        description: the widget to save
+        required: true
+        schema:
+          $ref: '#/definitions/Widget'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Success"
+        500:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -2181,4 +2209,40 @@ definitions:
         format: int64
       org:
         type: string
+  Acl:
+    type: object
+    properties:
+      groupName:
+        type: string
+      groupType:
+        type: string
+      permission:
+        type: string
+  ChartOpts:
+    type: object
+    properties:
+
+  Widget:
+    type: object
+    properties:
+      id:
+        type: string
+      query:
+        type: string
+      name:
+        type: string
+      shared:
+        type: bool
+      acl:
+        type: array
+        items:
+          $ref: '#/definitions/Acl'
+      sources:
+        type: array
+        items:
+          type: string
+      author:
+        type: string
+      chartOpts:
+
 
