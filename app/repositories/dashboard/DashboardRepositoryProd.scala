@@ -1407,7 +1407,7 @@ class DashboardRepositoryProd extends DashboardRepository {
         .must(
           should(
             should(
-              must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" "))),
+              must(matchQuery("operational.acl.groupName", groups.mkString(" "))),
               must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username))
             ),
             termQuery("dcatapit.privatex", false),
