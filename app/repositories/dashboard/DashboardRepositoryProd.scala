@@ -808,8 +808,10 @@ class DashboardRepositoryProd extends DashboardRepository {
               createThemeFilter(filters.theme) ::: ownerQueryString(filters.owner) ::: sharedWithMe(filters.sharedWithMe, groups)
             ),
             should(
-              must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
-              must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username)),
+              should(
+                must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR")),
+                must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username))
+              ),
               termQuery("dcatapit.privatex", false),
               must(termQuery("status", 0), termQuery("user", username)),
               must(termQuery("published", 0), termQuery("user", username)),
@@ -1404,8 +1406,10 @@ class DashboardRepositoryProd extends DashboardRepository {
       boolQuery()
         .must(
           should(
-            must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" "))),
-            must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username)),
+            should(
+              must(termQuery("dcatapit.privatex", true), matchQuery("operational.acl.groupName", groups.mkString(" "))),
+              must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username))
+            ),
             termQuery("dcatapit.privatex", false),
             must(termQuery("status", "0"), termQuery("user", username)),
             must(termQuery("published", "0"), termQuery("user", username)),
