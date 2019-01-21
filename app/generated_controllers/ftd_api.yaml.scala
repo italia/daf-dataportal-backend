@@ -26,7 +26,6 @@ import org.pac4j.play.store.PlaySessionStore
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
-import it.gov.daf.common.utils.WebServiceUtil
 import play.api.libs.ws.WSClient
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.Base64
@@ -42,7 +41,6 @@ import play.api.libs.ws.WSAuthScheme
 import utils.ConfigReader
 import java.io.PrintWriter
 import play.api.libs.Files.TemporaryFile
-import play.api.libs.ws.WSResponse
 import scala.concurrent.Future
 import utils.InferSchema
 import java.nio.charset.CodingErrorAction
@@ -59,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                            
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -1060,14 +1058,6 @@ package ftd_api.yaml {
 
   NotImplementedYet
   // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
-     */
-
-    
-     // Dead code for absent methodFtd_apiYaml.supersetTableByOrgs
-     /*
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.supersetTableByOrgs
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableByOrgs
      */
 
     
