@@ -25,7 +25,6 @@ import org.pac4j.play.store.PlaySessionStore
 import services.ComponentRegistry
 import services.dashboard.DashboardRegistry
 import play.api.Configuration
-import it.gov.daf.common.utils.WebServiceUtil
 import play.api.libs.ws.WSClient
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.Base64
@@ -41,7 +40,6 @@ import play.api.libs.ws.WSAuthScheme
 import utils.ConfigReader
 import java.io.PrintWriter
 import play.api.libs.Files.TemporaryFile
-import play.api.libs.ws.WSResponse
 import scala.concurrent.Future
 import utils.InferSchema
 import java.nio.charset.CodingErrorAction

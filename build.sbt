@@ -127,7 +127,8 @@ publishTo in ThisBuild := {
     Some("releases"  at nexus + "maven-releases/")
 }
 
-credentials += {if(isStaging) Credentials(Path.userHome / ".ivy2" / ".credentialsTest") else Credentials(Path.userHome / ".ivy2" / ".credentials")}
+//credentials += {if(isStaging) Credentials(Path.userHome / ".ivy2" / ".credentialsTest") else Credentials(Path.userHome / ".ivy2" / ".credentials")}
+credentials += { Credentials(Path.userHome / ".ivy2" / ".credentials") }
 
 
 javaOptions in Test += "-Dconfig.resource=" + System.getProperty("config.resource", "production.conf")
