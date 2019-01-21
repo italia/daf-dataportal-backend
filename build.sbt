@@ -14,7 +14,7 @@ name := "daf-datipubblici"
 
 //version in ThisBuild := "1.0-alpha.1"
 
-version in ThisBuild := "2.0.0-SNAPSHOT"
+version in ThisBuild := "2.0.1-SNAPSHOT"
 
 val isStaging = System.getProperty("STAGING") != null
 
@@ -56,7 +56,7 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah" % "3.1.1",
   "net.sf.opencsv" % "opencsv" % "2.3",
   "me.lessis" %% "base64" % "0.2.0",
-  "it.gov.daf" %% "common" % "1.1.1-SNAPSHOT",
+  "it.gov.daf" %% "common" % "1.1.3-SNAPSHOT",
   "com.github.cb372" %% "scalacache-guava" % "0.9.4",
   "com.chuusai" %% "shapeless" % "2.3.2",
   "com.sksamuel.avro4s" %% "avro4s-core" % "1.8.0",
@@ -127,7 +127,9 @@ publishTo in ThisBuild := {
     Some("releases"  at nexus + "maven-releases/")
 }
 
-credentials += {if(isStaging) Credentials(Path.userHome / ".ivy2" / ".credentialsTest") else Credentials(Path.userHome / ".ivy2" / ".credentials")}
+//credentials += {if(isStaging) Credentials(Path.userHome / ".ivy2" / ".credentialsTest") else Credentials(Path.userHome / ".ivy2" / ".credentials")}
+
+credentials += { Credentials(Path.userHome / ".ivy2" / ".credentials") }
 
 
 javaOptions in Test += "-Dconfig.resource=" + System.getProperty("config.resource", "production.conf")
