@@ -1900,6 +1900,10 @@ definitions:
         type: string
       sharedWithMe:
         type: boolean
+      limit:
+        type: integer
+        format: int32
+        minimum: 0
   Error:
     type: object
     properties:
