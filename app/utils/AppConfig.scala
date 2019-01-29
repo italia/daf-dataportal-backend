@@ -47,6 +47,8 @@ class AppConfig @Inject()(playConfig: Configuration) {
 
   val elasticsearchUrl = playConfig.getString("elasticsearch.url")
   val elasticsearchPort = playConfig.getInt("elasticsearch.port")
+  val elasticsearchMaxResult = playConfig.getInt("elasticsearch.max_result")
+  val elasticsearchDefaultResult = playConfig.getInt("elasticsearch.default_result")
 
   val kafkaProxy: Option[String] = playConfig.getString("kafka-proxy.url")
 
@@ -62,6 +64,7 @@ object ConfigReader {
   private val config = new AppConfig(Configuration.load(Environment.simple()))
 
   require(config.elasticsearchUrl.nonEmpty, "A elasticsearch url must be specified")
+  require(config.elasticsearchMaxResult.nonEmpty, "A elasticsearch max result must be specified")
 
   def getDbHost: String = config.dbHost.getOrElse("localhost")
   def getDbPort: Int = config.dbPort.getOrElse(27017)
@@ -101,6 +104,8 @@ object ConfigReader {
 
   def getElasticsearchUrl = config.elasticsearchUrl.get
   def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
+  def getElasticsearcMaxResult = config.elasticsearchMaxResult.get
+  def getElasticsearchDefaultResult = config.elasticsearchDefaultResult.getOrElse(1000)
 
   def getKafkaProxy = config.kafkaProxy.getOrElse("localhost:8085")
 
