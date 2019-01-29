@@ -63,6 +63,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
   private val elasticsearchPort = ConfigReader.getElasticsearchPort
+  private val elasticsearchMaxResult = ConfigReader.getElastcsearchMaxResult
 
   private val KAFKAPROXY = ConfigReader.getKafkaProxy
 
@@ -756,7 +757,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     dataApp
   }
 
-  def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]] = {
+  def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -796,6 +797,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
+    val limitParam = limit match {
+      case Some(0) => elasticsearchMaxResult
+      case Some(x)  => x
+      case None     => 1000
+    }
+
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
@@ -825,7 +832,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
+    val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
@@ -867,7 +874,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
-  def searchTextPublic(filters: Filters): Future[List[SearchResult]] = {
+  def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -906,6 +913,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
+    val limitParam = limit match {
+      case Some(0) => elasticsearchMaxResult
+      case Some(x)  => x
+      case None     => 1000
+    }
+
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
@@ -926,7 +939,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
+    val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),

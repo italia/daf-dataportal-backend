@@ -89,8 +89,8 @@ trait DashboardServiceComponent {
       dashboardRepository.publicDashboardById(id)
     }
 
-    def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]] = {
-      dashboardRepository.searchText(filters, username, groups)
+    def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]] = {
+      dashboardRepository.searchText(filters, username, groups, limit)
     }
 
     def searchLast(username: String, groups: List[String]): Future[List[SearchResult]] = {
@@ -100,8 +100,8 @@ trait DashboardServiceComponent {
       dashboardRepository.searchLastPublic(org)
     }
 
-    def searchTextPublic(filters: Filters): Future[List[SearchResult]] = {
-      dashboardRepository.searchTextPublic(filters)
+    def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]] = {
+      dashboardRepository.searchTextPublic(filters, limit)
     }
 
     def getAllDataApp: Seq[DataApp] = {

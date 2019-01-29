@@ -28,10 +28,10 @@ trait DashboardRepository {
   def storiesPublic(org: Option[String]): Seq[UserStory]
   def dashboardsPublic(org: Option[String]): Seq[Dashboard]
   def publicDashboardById(id: String): Option[Dashboard]
-  def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]]
+  def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]]
   def searchLast(username: String, groups: List[String]): Future[List[SearchResult]]
   def searchLastPublic(org: Option[String]): Future[List[SearchResult]]
-  def searchTextPublic(filters: Filters): Future[List[SearchResult]]
+  def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]]
   def getAllDataApp: Seq[DataApp]
   def getSupersetTableByTableNameIdAndOrgs(user: String, tableName: String, orgs: Seq[Organization], ws: WSClient): Future[Either[Error, Seq[SupersetTable]]]
 }

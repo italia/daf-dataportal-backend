@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -250,16 +250,15 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
-        val searchFullText = searchFullTextAction { (filters: Filters) =>  
+        val searchFullText = searchFullTextAction { input: (Filters, ElasticsearchSearchPostLimit) =>
+            val (filters, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullText
             RequestContext.execInContext[Future[SearchFullTextType[T] forSome { type T }]]("searchFullText") { () =>
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
 
             val result = for {
               orgsWorks <- getUserOrgsWorkgroups(credentials.username)
-              out <- Future.successful {
-                DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgsWorks.toList)
-              }
+              out <- DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgsWorks.toList, limit)
             } yield out
             result flatMap (SearchFullText200(_))
           }
@@ -451,10 +450,11 @@ package ftd_api.yaml {
               }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
-        val searchFullTextPublic = searchFullTextPublicAction { (filters: Filters) =>  
+        val searchFullTextPublic = searchFullTextPublicAction { input: (Filters, ElasticsearchSearchPostLimit) =>
+            val (filters, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
             RequestContext.execInContext[Future[SearchFullTextPublicType[T] forSome { type T }]]("searchFullTextPublic") { () =>
-            SearchFullTextPublic200(DashboardRegistry.dashboardService.searchTextPublic(filters))
+            SearchFullTextPublic200(DashboardRegistry.dashboardService.searchTextPublic(filters, limit))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
         }

@@ -118,7 +118,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Some(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]] = {
+  def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]] = {
     Future(List(SearchResult(None, None, None)))
   }
 
@@ -130,7 +130,7 @@ class DashboardRepositoryDev extends DashboardRepository {
     Future(List(SearchResult(None, None, None)))
   }
 
-  def searchTextPublic(filters: Filters): Future[List[SearchResult]] = {
+  def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]] = {
     Future(List(SearchResult(None, None, None)))
   }
 

@@ -333,6 +333,13 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/Filters'
+      - name: limit
+        in: query
+        description: limit of result to return
+        required: false
+        type: integer
+        format: int32
+        minimum: 0
       responses:
         200:
           description: Successful operation
@@ -407,6 +414,13 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Filters'
+        - name: limit
+          in: query
+          description: limit of result to return
+          required: false
+          type: integer
+          format: int32
+          minimum: 0
         responses:
           200:
             description: Successful operation
