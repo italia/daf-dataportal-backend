@@ -56,7 +56,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                
+                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -310,11 +310,12 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboardIframes
         }
-        val iframesByTableName = iframesByTableNameAction { (tableName: String) =>  
+        val iframesByTableName = iframesByTableNameAction { input: (String, DistributionLabel) =>
+            val (tableName, user) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
             RequestContext.execInContext[Future[IframesByTableNameType[T] forSome { type T }]]("iframesByTableName") { () =>
-            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
-            val iframes = DashboardRegistry.dashboardService.iframes(credentials.username, ws)
+            val username = if(CredentialManager.isDafSysAdmin(currentRequest)) user.get else CredentialManager.readCredentialFromRequest(currentRequest).username
+            val iframes = DashboardRegistry.dashboardService.iframes(username, ws)
             val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
             IframesByTableName200(iframesByName)
           }
