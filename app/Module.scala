@@ -10,7 +10,7 @@ class Module(environment: Environment, configuration: Configuration) extends Abs
 
   def configure() = {
 
-    Logger.debug("Datipubblici lib v.2.0.0-SNAPSHOT-4.4.3")
+    Logger.debug("Datipubblici lib v.2.0.2-SNAPSHOT-0.0.1")
 
     Logger.debug("executing module..")
 
