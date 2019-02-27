@@ -63,43 +63,44 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
   private val elasticsearchPort = ConfigReader.getElasticsearchPort
+  private val elasticsearchMaxResult = ConfigReader.getElastcsearchMaxResult
 
   private val KAFKAPROXY = ConfigReader.getKafkaProxy
 
   val conf = Configuration.load(Environment.simple())
-  val URLMETABASE = conf.getString("metabase.url").get
-  val metauser = conf.getString("metabase.user").get
-  val metapass = conf.getString("metabase.pass").get
+//  val URLMETABASE = conf.getString("metabase.url").get
+//  val metauser = conf.getString("metabase.user").get
+//  val metapass = conf.getString("metabase.pass").get
 
   private val OPEN_DATA_GROUP = "open_data_group"
 
 
 
-  private def  metabaseTableInfo(iframes :Seq[DashboardIframes], wsClient: WSClient): Future[Seq[DashboardIframes]] = {
-
-//    val wsClient = AhcWSClient()
-    val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
-      val tableId = iframe.table.getOrElse("0")
-      val internalUrl = localUrl + s"/metabase/table/$tableId"
-      // Missing metabase session not working
-      val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
-       .map { resp =>
-         val tableName = (resp.json \ "name").as[String]
-         iframe.copy(table = Some(tableName))
-       }.map { x:DashboardIframes => scala.util.Success(x)}
-        .recover { case t: Throwable => Failure(t) }
-
-      futureTry
-    }
-
-    val seq: Future[Seq[Try[DashboardIframes]]] = Future.sequence(futureFrames)
-    val dashboardIframes: Future[Seq[DashboardIframes]] = seq.map(
-             _.filter(_.isSuccess)
-              .map(_.get))
-    dashboardIframes
-    //val d: Future[Any] = seq.collect{ case scala.util.Success(x) => x}
-
-  }
+//  private def  metabaseTableInfo(iframes :Seq[DashboardIframes], wsClient: WSClient): Future[Seq[DashboardIframes]] = {
+//
+////    val wsClient = AhcWSClient()
+//    val futureFrames: Seq[Future[Try[DashboardIframes]]] = iframes.map { iframe =>
+//      val tableId = iframe.table.getOrElse("0")
+//      val internalUrl = localUrl + s"/metabase/table/$tableId"
+//      // Missing metabase session not working
+//      val futureTry : Future[Try[DashboardIframes]]= wsClient.url(internalUrl).get()
+//       .map { resp =>
+//         val tableName = (resp.json \ "name").as[String]
+//         iframe.copy(table = Some(tableName))
+//       }.map { x:DashboardIframes => scala.util.Success(x)}
+//        .recover { case t: Throwable => Failure(t) }
+//
+//      futureTry
+//    }
+//
+//    val seq: Future[Seq[Try[DashboardIframes]]] = Future.sequence(futureFrames)
+//    val dashboardIframes: Future[Seq[DashboardIframes]] = seq.map(
+//             _.filter(_.isSuccess)
+//              .map(_.get))
+//    dashboardIframes
+//    //val d: Future[Any] = seq.collect{ case scala.util.Success(x) => x}
+//
+//  }
 
   private def extractToInt(indentifier :String): Int = {
     try {
@@ -343,12 +344,12 @@ class DashboardRepositoryProd extends DashboardRepository {
     }
 */
 
-    val services = if(user == openDataUser) List(superset, getMetabaseIframes(user, wsClient)) else List(superset)
-
-    def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
-      f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
-
-    val withFailed: Seq[Future[Try[Seq[DashboardIframes]]]] = services.map(futureToFutureTry(_))
+//    val services = if(user == openDataUser) List(superset, getMetabaseIframes(user, wsClient)) else List(superset)
+//
+//    def futureToFutureTry[T](f: Future[T]): Future[Try[T]] =
+//      f.map(scala.util.Success(_)).recover { case t: Throwable => Failure(t) }
+//
+//    val withFailed: Seq[Future[Try[Seq[DashboardIframes]]]] = services.map(futureToFutureTry(_))
 
     // Can also be done more concisely (but less efficiently) as:
     // f.map(Success(_)).recover{ case t: Throwable => Failure( t ) }
@@ -359,45 +360,46 @@ class DashboardRepositoryProd extends DashboardRepository {
     //  prom.future
     //}
 
-    val servicesWithFailed = Future.sequence(withFailed)
+//    val servicesWithFailed = Future.sequence(withFailed)
+//
+//    val servicesSuccesses: Future[Seq[Try[Seq[DashboardIframes]]]] = servicesWithFailed.map(_.filter(_.isSuccess))
+//
+//    val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
 
-    val servicesSuccesses: Future[Seq[Try[Seq[DashboardIframes]]]] = servicesWithFailed.map(_.filter(_.isSuccess))
-
-    val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
-
-    results
+//    results
+    superset
   }
 
-  private def getMetabaseIframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
-    val metabasePublic = localUrl + "/metabase/public_card/" + user
-
-    val request = wsClient.url(metabasePublic).get()
-
-    request.onComplete{ r => Logger.logger.debug(s"$user: response status metabase ${r.get.status}")}
-
-    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
-      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
-      val json = response.json.as[Seq[JsValue]]
-
-      Logger.debug(s"Metabase iframe response: $json")
-      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
-        .map(x => {
-          val uuid = (x \ "public_uuid").get.as[String]
-          val title = (x \ "name").get.as[String]
-          //  val id = (x \ "id").get.as[String]
-          val tableId =   (x \ "table_id").get.as[Int]
-          val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
-          DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
-        })
-    }
-
-    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
-      iframes <- metabase
-      iframesWithTable <- metabaseTableInfo(iframes, wsClient)
-    } yield iframesWithTable
-
-    metabaseWithTables
-  }
+//  private def getMetabaseIframes(user: String, wsClient: WSClient): Future[Seq[DashboardIframes]] = {
+//    val metabasePublic = localUrl + "/metabase/public_card/" + user
+//
+//    val request = wsClient.url(metabasePublic).get()
+//
+//    request.onComplete{ r => Logger.logger.debug(s"$user: response status metabase ${r.get.status}")}
+//
+//    val metabase: Future[Seq[DashboardIframes]] = request.map { response =>
+//      Logger.logger.debug(s"iframes for $user response status from metabase ${response.status}")
+//      val json = response.json.as[Seq[JsValue]]
+//
+//      Logger.debug(s"Metabase iframe response: $json")
+//      json.filter( x => !(x \ "public_uuid").asOpt[String].isEmpty)
+//        .map(x => {
+//          val uuid = (x \ "public_uuid").get.as[String]
+//          val title = (x \ "name").get.as[String]
+//          //  val id = (x \ "id").get.as[String]
+//          val tableId =   (x \ "table_id").get.as[Int]
+//          val url = ConfigReader.getMetabaseUrl + "/public/question/" + uuid
+//          DashboardIframes( Some("metabase_" + uuid), Some(url), None, Some("metabase"), Some(title), Some(tableId.toString))
+//        })
+//    }
+//
+//    val metabaseWithTables: Future[Seq[DashboardIframes]] = for {
+//      iframes <- metabase
+//      iframesWithTable <- metabaseTableInfo(iframes, wsClient)
+//    } yield iframesWithTable
+//
+//    metabaseWithTables
+//  }
 
   def dashboards(username: String, groups: List[String], status: Option[Int]): Seq[Dashboard] = {
     val mongoClient = MongoClient(server, List(credentials))
@@ -756,7 +758,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     dataApp
   }
 
-  def searchText(filters: Filters, username: String, groups: List[String]): Future[List[SearchResult]] = {
+  def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -796,6 +798,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
+    val limitParam = limit match {
+      case Some(0) => elasticsearchMaxResult
+      case Some(x)  => x
+      case None     => 1000
+    }
+
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
@@ -825,7 +833,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
+    val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
@@ -867,7 +875,7 @@ class DashboardRepositoryProd extends DashboardRepository {
     response
   }
 
-  def searchTextPublic(filters: Filters): Future[List[SearchResult]] = {
+  def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
@@ -906,6 +914,12 @@ class DashboardRepositoryProd extends DashboardRepository {
       case _ => "desc"
     }
 
+    val limitParam = limit match {
+      case Some(0) => elasticsearchMaxResult
+      case Some(x)  => x
+      case None     => 1000
+    }
+
     def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
@@ -926,7 +940,7 @@ class DashboardRepositoryProd extends DashboardRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(1000, searchType).sourceInclude(fieldToReturn)
+    val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
