@@ -49,6 +49,7 @@ import it.gov.daf.common.sso.common.CredentialManager
 import it.gov.daf.common.utils.RequestContext
 import java.net.URLEncoder
 import play.api.mvc.Headers
+import services.datastory.DatastoryRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -57,7 +58,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                    
+                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -133,6 +134,25 @@ package ftd_api.yaml {
           }
 //            NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllSubscription
+        }
+        val deleteDatastory = deleteDatastoryAction { (id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
+            RequestContext.execInContext[Future[DeleteDatastoryType[T] forSome { type T }]]("deleteDatastory") { () =>
+
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(401) => DeleteDatastory401(error)
+                case Some(404) => DeleteDatastory404(error)
+                case _         => DeleteDatastory500(error)
+              }
+            }
+            val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+            DatastoryRegistry.datastoryService.deleteDatastory(id, user) flatMap {
+              case Right(success) => DeleteDatastory200(success)
+              case Left(error)    => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
         }
         val catalogDistributionLicense = catalogDistributionLicenseAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -227,7 +247,7 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.settingsByName
         }
-        val savestories = savestoriesAction { input: (UserStory, KyloFeedHas_job) =>
+        val savestories = savestoriesAction { input: (UserStory, LayoutDataStoryIsDraggable) =>
             val (story, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             RequestContext.execInContext[Future[SavestoriesType[T] forSome { type T }]]("savestories") { () =>
@@ -264,7 +284,25 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
-        val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+        val getDatastoryById = getDatastoryByIdAction { (id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
+            RequestContext.execInContext[Future[GetDatastoryByIdType[T] forSome { type T }]]("getDatastoryById") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetDatastoryById404(error)
+                case _         => GetDatastoryById500(error)
+              }
+            }
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            val response = DatastoryRegistry.datastoryService.getDatastoryById(id, credential.username, credential.groups.toList)
+            response.flatMap{
+              case Right(datastory) => GetDatastoryById200(datastory)
+              case Left(error)      => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
+        }
+        val stories = storiesAction { input: (LayoutDataStoryMaxW, LayoutDataStoryMaxW, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             RequestContext.execInContext[Future[StoriesType[T] forSome { type T }]]("stories") { () =>
@@ -280,6 +318,23 @@ package ftd_api.yaml {
             result flatMap (Stories200(_))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
+        }
+        val getPublicDatastoryById = getPublicDatastoryByIdAction { (id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
+            RequestContext.execInContext[Future[GetPublicDatastoryByIdType[T] forSome { type T }]]("getPublicDatastoryById") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetPublicDatastoryById404(error)
+                case _         => GetPublicDatastoryById500(error)
+              }
+            }
+            val response = DatastoryRegistry.datastoryService.getPublicDatastoryById(id)
+            response.flatMap{
+              case Right(datastory) => GetPublicDatastoryById200(datastory)
+              case Left(error)      => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
@@ -337,6 +392,22 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
+        val saveDatastory = saveDatastoryAction { (datastory: Datastory) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDatastory
+            RequestContext.execInContext[Future[SaveDatastoryType[T] forSome { type T }]]("saveDatastory") { () =>
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            if(datastory.user.equals(credential.username) && credential.groups.contains(datastory.org))
+              DatastoryRegistry.datastoryService.saveDatastory(credential.username, datastory) flatMap{
+                case Right(success) => SaveDatastory200(success)
+                case Left(error)    => SaveDatastory500(error)
+              }
+            else {
+              logger.debug(s"${credential.username} unauthorized to insert datastory $datastory")
+              SaveDatastory401(Future.successful(Error(Some(401), Some("Unauthorized to insert datastory"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDatastory
+        }
         val catalogDistrubutionFormat = catalogDistrubutionFormatAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
@@ -365,6 +436,23 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
+        }
+        val getAllPublicDatastory = getAllPublicDatastoryAction { (limit: LayoutDataStoryMaxW) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
+            RequestContext.execInContext[Future[GetAllPublicDatastoryType[T] forSome { type T }]]("getAllPublicDatastory") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetAllPublicDatastory404(error)
+                case _         => GetAllPublicDatastory500(error)
+              }
+            }
+            DatastoryRegistry.datastoryService.getAllPublicDatastory(limit) flatMap{
+              case Right(seqDatastory) => GetAllPublicDatastory200(seqDatastory)
+              case Left(error)         => parseError(error)
+
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
         }
         val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
@@ -496,7 +584,7 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
         }
-        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+        val dashboards = dashboardsAction { input: (LayoutDataStoryMaxW, LayoutDataStoryMaxW, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             RequestContext.execInContext[Future[DashboardsType[T] forSome { type T }]]("dashboards") { () =>
@@ -709,6 +797,24 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
+        val getAllDatastory = getAllDatastoryAction { input: (LayoutDataStoryMaxW, LayoutDataStoryMaxW) =>
+            val (limit, status) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
+            RequestContext.execInContext[Future[GetAllDatastoryType[T] forSome { type T }]]("getAllDatastory") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetAllDatastory404(error)
+                case _         => GetAllDatastory500(error)
+              }
+            }
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            DatastoryRegistry.datastoryService.getAllDatastory(credential.username, credential.groups.toList, limit, status) flatMap {
+              case Right(success) => GetAllDatastory200(success)
+              case Left(error)    => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
+        }
         val dashboardIframesbyorg = dashboardIframesbyorgAction { (orgName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
             RequestContext.execInContext[Future[DashboardIframesbyorgType[T] forSome { type T }]]("dashboardIframesbyorg") { () =>
@@ -754,7 +860,7 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }
-        val publicStories = publicStoriesAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+        val publicStories = publicStoriesAction { input: (DistributionLabel, LayoutDataStoryMaxW, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
             RequestContext.execInContext[Future[PublicStoriesType[T] forSome { type T }]]("publicStories") { () =>
@@ -771,7 +877,7 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
-        val savedashboard = savedashboardAction { input: (Dashboard, KyloFeedHas_job) =>
+        val savedashboard = savedashboardAction { input: (Dashboard, LayoutDataStoryIsDraggable) =>
             val (dashboard, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             RequestContext.execInContext[Future[SavedashboardType[T] forSome { type T }]]("savedashboard") { () =>
@@ -785,7 +891,7 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, LayoutDataStoryMaxW, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
             RequestContext.execInContext[Future[PublicDashboardsType[T] forSome { type T }]]("publicDashboards") { () =>
