@@ -44,7 +44,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
         val responseUpdate: TypeImports.WriteResult = collection.update(query, obj)
         if(responseUpdate.isUpdateOfExisting){
           logger.debug(s"datastory ${datastory.title} updatate by $user")
-          Future.successful(Right(Success(Some(s"datastory ${datastory.title} updatate by $user"), None)))
+          Future.successful(Right(Success(Some(s"${datastory.id}"), None)))
         } else {
           logger.debug(s"error in update datastory ${datastory.title}")
           Future.successful(Left(Error(Some(500), Some(s"error in update datastory ${datastory.title}"), None)))
@@ -58,7 +58,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
         val resultInsert: casbah.TypeImports.WriteResult = collection.insert(obj)
         if(resultInsert.wasAcknowledged()){
           logger.debug(s"datastory ${datastory.title} saved for user $user")
-          Future.successful(Right(Success(Some(s"datastory ${datastory.title} saved for user $user"), None)))
+          Future.successful(Right(Success(Some(s"${datastory.id}"), None)))
         }
         else{
           logger.debug(s"error in save datastory ${datastory.title}")
