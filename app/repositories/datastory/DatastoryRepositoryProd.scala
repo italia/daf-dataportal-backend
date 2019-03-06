@@ -1,4 +1,5 @@
 package repositories.datastory
+
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -33,37 +34,62 @@ class DatastoryRepositoryProd extends DatastoryRepository {
 
   private val collection = MongoClient(server, List(credentials))(source)(collectionName)
 
-  private val logger = Logger(this.getClass.getName)
-
   override def saveDatastory(user: String, datastory: Datastory): Future[Either[Error, Success]] = {
     datastory.id match {
       case Some(id) =>
-        val json: JsValue = Json.toJson(datastory)
-        val obj: DBObject = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        val query = MongoDBObject("id" -> id)
-        val responseUpdate: TypeImports.WriteResult = collection.update(query, obj)
-        if(responseUpdate.isUpdateOfExisting){
-          logger.debug(s"datastory ${datastory.title} updatate by $user")
-          Future.successful(Right(Success(Some(s"${datastory.id}"), None)))
-        } else {
-          logger.debug(s"error in update datastory ${datastory.title}")
-          Future.successful(Left(Error(Some(500), Some(s"error in update datastory ${datastory.title}"), None)))
-        }
-      case None    =>
+        updateDatastory(user, id, datastory)
+      case None =>
         val uid: String = UUID.randomUUID().toString
         val timestamps: ZonedDateTime = ZonedDateTime.now()
         val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamps))
-        val json: JsValue = Json.toJson(newDatastory)
-        val obj: DBObject = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
-        val resultInsert: casbah.TypeImports.WriteResult = collection.insert(obj)
-        if(resultInsert.wasAcknowledged()){
-          logger.debug(s"datastory ${datastory.title} saved for user $user")
-          Future.successful(Right(Success(Some(s"${datastory.id}"), None)))
-        }
-        else{
-          logger.debug(s"error in save datastory ${datastory.title}")
-          Future.successful(Left(Error(Some(500), Some(s"error in save datastory ${datastory.title}"), None)))
-        }
+        insertDatastory(user, uid, newDatastory)
+    }
+  }
+
+  private def insertDatastory(user: String, id: String, datastory: Datastory) = {
+    if (checkDatastory(datastory)) {
+      val json: JsValue = Json.toJson(datastory)
+      val obj: DBObject = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+      val resultInsert: casbah.TypeImports.WriteResult = collection.insert(obj)
+      if (resultInsert.wasAcknowledged()) {
+        Logger.logger.debug(s"datastory ${datastory.title} saved for user $user"); Future.successful(Right(Success(Some(s"$id"), None)))
+      }
+      else {
+        Logger.logger.debug(s"error in save datastory ${datastory.title}"); Future.successful(Left(Error(Some(500), Some(s"error in save datastory ${datastory.title}"), None)))
+      }
+    }
+    else {
+      Logger.logger.debug(s"it is not allowed to save a public datastory with private widget")
+      Future.successful(Left(Error(Some(401), Some(s"it is not allowed to save a public datastory with private widget"), None)))
+    }
+  }
+
+
+  private def updateDatastory(user: String, id: String, datastory: Datastory) = {
+    if (checkDatastory(datastory)) {
+      val json: JsValue = Json.toJson(datastory)
+      val obj: DBObject = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
+      val query = MongoDBObject("id" -> id)
+      val responseUpdate: TypeImports.WriteResult = collection.update(query, obj)
+      if (responseUpdate.isUpdateOfExisting) {
+        Logger.logger.debug(s"datastory ${datastory.title} updatate by $user"); Future.successful(Right(Success(Some(s"$id"), None)))
+      }
+      else {
+        Logger.logger.debug(s"error in update datastory ${datastory.title}"); Future.successful(Left(Error(Some(500), Some(s"error in update datastory ${datastory.title}"), None)))
+      }
+    }
+    else {
+      Logger.logger.debug(s"it is not allowed to save a public datastory with private widget")
+      Future.successful(Left(Error(Some(401), Some(s"it is not allowed to save a public datastory with private widget"), None)))
+    }
+  }
+
+  private def checkDatastory(datastory: Datastory) = {
+    datastory.status match {
+      case 2 =>
+        if (datastory.widgets.exists(widgets => widgets.pvt)) { Logger.logger.debug("error: found private widget"); false }
+        else { Logger.logger.debug("only public widgets"); true }
+      case _ => true
     }
   }
 
@@ -74,7 +100,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
     val datastoryResult: JsResult[Datastory] = json.validate[Datastory]
     datastoryResult match {
       case s: JsSuccess[Datastory] => Some(s.get)
-      case e: JsError => logger.debug(s"[getInternalDatastory] error in parsing datastory: $e"); None
+      case e: JsError => Logger.logger.debug(s"[getInternalDatastory] error in parsing datastory: $e"); None
     }
   }
 
@@ -83,11 +109,11 @@ class DatastoryRepositoryProd extends DatastoryRepository {
     val query = $and(mongodb.casbah.Imports.MongoDBObject("id" -> id), mongodb.casbah.Imports.MongoDBObject("user" -> user))
 
     val resultDelete: TypeImports.WriteResult = collection.remove(query)
-    if(resultDelete.getN > 0) {
-      logger.debug(s"$user deleted datastory $id")
+    if (resultDelete.getN > 0) {
+      Logger.logger.debug(s"$user deleted datastory $id")
       Future.successful(Right(Success(Some(s"$user deleted datastory $id"), None)))
     } else {
-      logger.debug(s"$user not delet datastory $id")
+      Logger.logger.debug(s"$user not delet datastory $id")
       Future.successful(Left(Error(Some(500), Some(s"$user not delet datastory $id"), None)))
     }
   }
@@ -95,10 +121,10 @@ class DatastoryRepositoryProd extends DatastoryRepository {
   override def deleteDatastory(id: String, user: String): Future[Either[Error, Success]] = {
 
     getInternalDatastory(id) match {
-      case None            => Future.successful(Left(Error(Some(404), Some("datastory not found"), None)))
+      case None => Future.successful(Left(Error(Some(404), Some("datastory not found"), None)))
       case Some(datastory) =>
         if (datastory.user.equals(user)) delete(id, user)
-        else Future.successful(Left(Error(Some(401), Some(s"$user unauthorized to delete $datastory"), None)))
+        else Future.successful(Left(Error(Some(401), Some(s"$user unauthorized to delete ${datastory.title}"), None)))
     }
   }
 
@@ -111,7 +137,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
         $and(mongodb.casbah.Imports.MongoDBObject("status" -> 1), "org" $in groups)
       case Some(2) =>
         mongodb.casbah.Imports.MongoDBObject("status" -> 2)
-      case None    =>
+      case None =>
         $or(
           $and(mongodb.casbah.Imports.MongoDBObject("status" -> 0), mongodb.casbah.Imports.MongoDBObject("user" -> user)),
           $and(mongodb.casbah.Imports.MongoDBObject("status" -> 1), "org" $in groups),
@@ -124,14 +150,16 @@ class DatastoryRepositoryProd extends DatastoryRepository {
     val result: List[Imports.DBObject] = collection.find(createQuery(status, user, groups))
       .sort(mongodb.casbah.Imports.MongoDBObject("timestamp" -> -1))
       .limit(limit.getOrElse(1000)).toList
-    if(result.isEmpty) { logger.debug("Datastories not found"); Future.successful(Left(Error(Some(404), Some("Datastories not found"), None))) }
+    if (result.isEmpty) {
+      Logger.logger.debug("Datastories not found"); Future.successful(Left(Error(Some(404), Some("Datastories not found"), None)))
+    }
     else {
       val jsonStrirng: String = com.mongodb.util.JSON.serialize(result)
       val json: JsValue = Json.parse(jsonStrirng)
       val seqDatastory: JsResult[Seq[Datastory]] = json.validate[Seq[Datastory]]
       seqDatastory match {
-        case success: JsSuccess[Seq[Datastory]] => logger.debug(s"$user found ${success.get.size}"); Future.successful(Right(success.get))
-        case error: JsError => logger.debug(s"[$user] error in get all datastories: $error"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
+        case success: JsSuccess[Seq[Datastory]] => Logger.logger.debug(s"$user found ${success.get.size}"); Future.successful(Right(success.get))
+        case error: JsError => Logger.logger.debug(s"[$user] error in get all datastories: $error"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
       }
     }
   }
@@ -141,14 +169,16 @@ class DatastoryRepositoryProd extends DatastoryRepository {
     val result: List[Imports.DBObject] = collection.find(query)
       .sort(MongoDBObject("timestamp" -> -1))
       .limit(limit.getOrElse(1000)).toList
-    if(result.isEmpty) { logger.debug("Datastories not found"); Future.successful(Left(Error(Some(404), Some("Datastories not found"), None))) }
+    if (result.isEmpty) {
+      Logger.logger.debug("Datastories not found"); Future.successful(Left(Error(Some(404), Some("Datastories not found"), None)))
+    }
     else {
       val jsonStrirng: String = com.mongodb.util.JSON.serialize(result)
       val json: JsValue = Json.parse(jsonStrirng)
       val seqDatastory: JsResult[Seq[Datastory]] = json.validate[Seq[Datastory]]
       seqDatastory match {
-        case success: JsSuccess[Seq[Datastory]] => logger.debug(s"found ${success.get.size}"); Future.successful(Right(success.get))
-        case error: JsError => logger.debug(s"error in get all datastories: $error"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
+        case success: JsSuccess[Seq[Datastory]] => Logger.logger.debug(s"found ${success.get.size}"); Future.successful(Right(success.get))
+        case error: JsError => Logger.logger.debug(s"error in get all datastories: $error"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
       }
     }
   }
@@ -167,7 +197,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
         val datastoryResult: JsResult[Datastory] = json.validate[Datastory]
         datastoryResult match {
           case s: JsSuccess[Datastory] => Future.successful(Right(s.get))
-          case e: JsError => logger.debug(s"[getDatastoryById] error in parsing datastory: $e"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
+          case e: JsError => Logger.logger.debug(s"[getDatastoryById] error in parsing datastory: $e"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
         }
       case None => Future.successful(Left(Error(Some(404), Some(s"Datastory $id not found"), None)))
     }
@@ -188,7 +218,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
         val datastoryResult: JsResult[Datastory] = json.validate[Datastory]
         datastoryResult match {
           case s: JsSuccess[Datastory] => Future.successful(Right(s.get))
-          case e: JsError => logger.debug(s"[getDatastoryById] error in parsing datastory: $e"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
+          case e: JsError => Logger.logger.debug(s"[getDatastoryById] error in parsing datastory: $e"); Future.successful(Left(Error(Some(500), Some("Internal Server Error"), None)))
         }
       case None => Future.successful(Left(Error(Some(404), Some(s"Datastory $id not found"), None)))
     }
