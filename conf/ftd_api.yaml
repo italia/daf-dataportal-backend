@@ -1033,6 +1033,39 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/widgets":
+    get:
+      tags:
+      - Widgets
+      summary: get widgets open and, if specify org parameter, private widgets
+      operationId: getAllWidgets
+      produces:
+      - application/json
+      parameters:
+      - name: org
+        in: query
+        description: the name of the org
+        required: false
+        type: string
+      responses:
+        200:
+          description: list of widgets
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Widget'
+        401:
+          description: unauthorized to get widgets
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: widgets not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/save/dashboards":
     post:
       tags:
@@ -2254,10 +2287,9 @@ definitions:
     required:
       - user
       - layout
-      - widget
+      - widgets
       - title
       - status
-      - pvt
       - org
     properties:
       user:
@@ -2266,8 +2298,10 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/LayoutDataStory'
-      widget:
-        $ref: '#/definitions/WidgetDataStory'
+      widgets:
+        type: array
+        items:
+          $ref: '#/definitions/Widget'
       title:
         type: string
       status:
@@ -2282,8 +2316,6 @@ definitions:
         format: date-time
       subtitle:
         type: string
-      pvt:
-        type: boolean
       org:
         type: string
   LayoutDataStory:
@@ -2331,18 +2363,18 @@ definitions:
       y:
         type: integer
         format: int32
-  WidgetDataStory:
+  Widget:
     type: object
     required:
       - identifier
       - viz_type
       - origin
       - title
-      - table
+      - pvt
     properties:
       identifier:
         type: string
-      iframe_url:
+      widget_url:
         type: string
       text:
         type: string
@@ -2354,6 +2386,8 @@ definitions:
         type: string
       table:
         type: string
+      pvt:
+        type: boolean
   Oid:
     type: object
     properties:

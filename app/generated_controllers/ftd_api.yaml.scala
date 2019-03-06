@@ -50,6 +50,7 @@ import it.gov.daf.common.utils.RequestContext
 import java.net.URLEncoder
 import play.api.mvc.Headers
 import services.datastory.DatastoryRegistry
+import services.widgets.WidgetsRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -58,7 +59,7 @@ import services.datastory.DatastoryRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                    
+                                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -395,11 +396,18 @@ package ftd_api.yaml {
         val saveDatastory = saveDatastoryAction { (datastory: Datastory) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDatastory
             RequestContext.execInContext[Future[SaveDatastoryType[T] forSome { type T }]]("saveDatastory") { () =>
-            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+              def parseError(error: Error) = {
+                error.code match {
+                  case Some(401) => SaveDatastory401(error)
+                  case _         => SaveDatastory500(error)
+                }
+              }
+
+              val credential = CredentialManager.readCredentialFromRequest(currentRequest)
             if(datastory.user.equals(credential.username) && credential.groups.contains(datastory.org))
               DatastoryRegistry.datastoryService.saveDatastory(credential.username, datastory) flatMap{
                 case Right(success) => SaveDatastory200(success)
-                case Left(error)    => SaveDatastory500(error)
+                case Left(error)    => parseError(error)
               }
             else {
               logger.debug(s"${credential.username} unauthorized to insert datastory $datastory")
@@ -600,6 +608,25 @@ package ftd_api.yaml {
             result flatMap (Dashboards200(_))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
+        }
+        val getAllWidgets = getAllWidgetsAction { (org: DistributionLabel) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
+            RequestContext.execInContext[Future[GetAllWidgetsType[T] forSome { type T }]]("getAllWidgets") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(401) => GetAllWidgets401(error)
+                case Some(404) => GetAllWidgets404(error)
+                case _         => GetAllWidgets500(error)
+              }
+            }
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            val result = WidgetsRegistry.widgetsService.getAllWidgets(credential.username, credential.groups.toList, org, ws)
+            result.flatMap {
+              case Right(widgets) => GetAllWidgets200(widgets)
+              case Left(error)    => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
         }
         val searchLast = searchLastAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLast
