@@ -2313,7 +2313,6 @@ definitions:
         type: string
       timestamp:
         type: string
-        format: date-time
       subtitle:
         type: string
       org:

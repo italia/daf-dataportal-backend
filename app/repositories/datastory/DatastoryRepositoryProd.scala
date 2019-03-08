@@ -40,8 +40,9 @@ class DatastoryRepositoryProd extends DatastoryRepository {
         updateDatastory(user, id, datastory)
       case None =>
         val uid: String = UUID.randomUUID().toString
-        val timestamps: ZonedDateTime = ZonedDateTime.now()
-        val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamps))
+        val timestamp = ZonedDateTime.now().toString
+        println(timestamp)
+        val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamp))
         insertDatastory(user, uid, newDatastory)
     }
   }
