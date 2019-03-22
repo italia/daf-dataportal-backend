@@ -57,7 +57,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -133,11 +133,6 @@ package ftd_api.yaml {
           }
 //            NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllSubscription
-        }
-        val deleteDatastory = deleteDatastoryAction { (id: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
         }
         val catalogDistributionLicense = catalogDistributionLicenseAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -232,7 +227,7 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.settingsByName
         }
-        val savestories = savestoriesAction { input: (UserStory, LayoutDataStoryIsDraggable) =>
+        val savestories = savestoriesAction { input: (UserStory, PartialFilterInfoIsInt) =>
             val (story, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             RequestContext.execInContext[Future[SavestoriesType[T] forSome { type T }]]("savestories") { () =>
@@ -269,11 +264,6 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
-        val getDatastoryById = getDatastoryByIdAction { (id: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
-        }
         val stories = storiesAction { input: (TTLErrorType, TTLErrorType, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
@@ -290,11 +280,6 @@ package ftd_api.yaml {
             result flatMap (Stories200(_))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
-        }
-        val getPublicDatastoryById = getPublicDatastoryByIdAction { (id: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
@@ -352,11 +337,6 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
         }
-        val saveDatastory = saveDatastoryAction { (datastory: Datastory) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDatastory
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDatastory
-        }
         val catalogDistrubutionFormat = catalogDistrubutionFormatAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionFormat
@@ -385,11 +365,6 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
-        }
-        val getAllPublicDatastory = getAllPublicDatastoryAction { (limit: TTLErrorType) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
         }
         val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
@@ -622,11 +597,6 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
-        val getAllWidgets = getAllWidgetsAction { (org: DistributionLabel) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
-        }
         val searchLast = searchLastAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLast
             RequestContext.execInContext[Future[SearchLastType[T] forSome { type T }]]("searchLast") { () =>
@@ -847,12 +817,6 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
         }
-        val getAllDatastory = getAllDatastoryAction { input: (TTLErrorType, TTLErrorType) =>
-            val (limit, status) = input
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
-            NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
-        }
         val dashboardIframesbyorg = dashboardIframesbyorgAction { (orgName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
             RequestContext.execInContext[Future[DashboardIframesbyorgType[T] forSome { type T }]]("dashboardIframesbyorg") { () =>
@@ -936,7 +900,7 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
-        val savedashboard = savedashboardAction { input: (Dashboard, LayoutDataStoryIsDraggable) =>
+        val savedashboard = savedashboardAction { input: (Dashboard, PartialFilterInfoIsInt) =>
             val (dashboard, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             RequestContext.execInContext[Future[SavedashboardType[T] forSome { type T }]]("savedashboard") { () =>
@@ -1283,6 +1247,38 @@ package ftd_api.yaml {
      */
 
     
+     // Dead code for absent methodFtd_apiYaml.saveDatastory
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDatastory
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDatastory
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getDatastoryById
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getAllDatastory
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getAllWidgets
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
+     */
+
+    
      // Dead code for absent methodFtd_apiYaml.getsport
      /*
    // ----- Start of unmanaged code area for action  Ftd_apiYaml.getsport
@@ -1291,11 +1287,35 @@ package ftd_api.yaml {
      */
 
     
+     // Dead code for absent methodFtd_apiYaml.getPublicDatastoryById
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
+     */
+
+    
      // Dead code for absent methodFtd_apiYaml.getAllSystemNotification
      /*
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllSystemNotification
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllSystemNotification
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.getAllPublicDatastory
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
+     */
+
+    
+     // Dead code for absent methodFtd_apiYaml.deleteDatastory
+     /*
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
+            NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
      */
 
     
