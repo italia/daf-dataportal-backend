@@ -1,16 +1,22 @@
 package repositories.push_notification
 
 import com.mongodb
-import com.mongodb.casbah
+import com.mongodb.{BasicDBObject, DBCollection}
 import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
-import com.mongodb.casbah.MongoClient
+import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{Error, LastOffset, Notification, Subscription, Success}
+import ftd_api.yaml.{Error, InfoNotification, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
+import org.joda.time.DateTime
 import play.api.Logger
 import utils.ConfigReader
 import play.api.libs.json._
+import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
+import scala.util
+import scala.util.{Failure, Try}
+import scala.concurrent.ExecutionContext.Implicits._
 
 class PushNotificationRepositoryProd extends PushNotificationRepository {
 
@@ -21,10 +27,17 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   private val dbName = ConfigReader.database
   private val password = ConfigReader.password
 
+  private val collNotificationName = ConfigReader.getCollNotificationName
+  private val collSubscriptionName = ConfigReader.getCollSubscriptionName
+
   val server = new ServerAddress(mongoHost, mongoPort)
   val credentials = MongoCredential.createCredential(userName, dbName, password.toCharArray)
   val logger = Logger.logger
 
+  val catalogManagerHost = ConfigReader.getCatalogManagerHost
+  val catalogManagerNotificationPath = ConfigReader.getCatalogManagerNotificationPath
+  val openDataGroup = ConfigReader.getOpenDataGroup
+  val sysAdminName = ConfigReader.getSysAdminName
 
   private def composeQuery(query: Query) =  {
     def simpleQuery(queryComponent: QueryComponent) = {
@@ -47,18 +60,35 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
   }
 
-  private def validateSeqNotifications(seqMongoDBObj: Seq[casbah.Imports.DBObject]): JsResult[Seq[Notification]] = {
-    import ftd_api.yaml.BodyReads.NotificationReads
-
-    val jsonString = com.mongodb.util.JSON.serialize(seqMongoDBObj)
-    val json = Json.parse(jsonString)
-    json.validate[Seq[Notification]]
-  }
-
   private def notificationToJson(notification: Notification) = {
-    import ftd_api.yaml.ResponseWrites.NotificationWrites.writes
+    val infoDBObject = notification.info match {
+      case Some(info) =>
+        MongoDBObject(
+          List(
+            "name" -> info.name,
+            "description" -> info.description,
+            "errors" -> info.errors,
+            "link" -> info.link,
+            "title" -> info.title
+          )
+        )
+      case None    => MongoDBObject()
+    }
 
-    writes(notification)
+    val creationDate = notification.createDate.replace("_", "T").concat("Z")
+    val endDate = Try{new DateTime(notification.endDate.get.replace("_", "T").concat("Z")).toDate}
+
+    MongoDBObject(
+      List(
+        "createDate" -> new DateTime(creationDate).toDate,
+        "offset" -> notification.offset,
+        "status" -> notification.status,
+        "user" -> notification.user,
+        "notificationtype" -> notification.notificationtype,
+        "info" -> infoDBObject,
+        "endDate" -> endDate.getOrElse(null)
+      )
+    )
   }
 
   override def saveSubscription(user: String, subscription: Subscription): Future[Either[Error, Success]] = {
@@ -66,7 +96,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val coll = mongoDB("subscriptions")
+    val coll = mongoDB(collSubscriptionName)
     val json = writes(subscription)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
     obj.put("user", user)
@@ -89,7 +119,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val coll = mongoDB("subscriptions")
+    val coll = mongoDB(collSubscriptionName)
     val json = writes(subscription)
     val obj = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
     obj.put("user", user)
@@ -103,10 +133,56 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     }
   }
 
+  override def getTtl: Future[Either[Error, Seq[KeysIntValue]]] = {
+    val mongoClient = com.mongodb.casbah.MongoClient(server, List(credentials))
+    val mongoDB: MongoDB = mongoClient(dbName)
+    val coll = mongoDB(collNotificationName)
+
+    val indexesInfo = coll.indexInfo.toList.filterNot( x => x.toMap.get("name").equals("_id_"))
+    val seqKeyIntValue = indexesInfo.map{ index =>
+      Try{
+        val json = Json.parse(index.toString)
+        KeysIntValue((json \ "partialFilterExpression" \ "notificationtype").get.toString().replace("\"", ""), (json \ "expireAfterSeconds").get.as[Int])
+      }
+    }
+
+    if(seqKeyIntValue.exists(x => x.isFailure)){ Logger.debug("error in get ttl"); Future.successful(Left(Error(Some(500), Some("Error in get ttl"), None))) }
+    else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get})) }
+  }
+
+
+
+  override def updateTtl(ttl: Seq[KeysIntValue]): Future[Either[Error, Success]] = {
+
+    def update(db: MongoDB, keyValue: Int, expirationAfterSeconds: Int) = {
+        db.underlying.command(
+          new BasicDBObject("collMod", collNotificationName)
+            .append("index", new BasicDBObject("keyPattern", new BasicDBObject("createDate", keyValue)).append("expireAfterSeconds", expirationAfterSeconds))
+        )
+    }
+
+    val mongoClient = com.mongodb.casbah.MongoClient(server, List(credentials))
+    val mongoDB: MongoDB = mongoClient(dbName)
+
+    val mapKeyValueIndex = Map("genericType" -> 1, "successType" -> 2, "errorType" -> 3)
+
+    val result = ttl.map{ keysIntValue =>
+      (keysIntValue.name, update(mongoDB, mapKeyValueIndex(keysIntValue.name), keysIntValue.value))
+    }
+
+    if(result.exists(v => !v._2.ok())) {
+      Logger.debug("error in update ttl for index: " + result.filter(x => !x._2.ok()).map(x => x._1 + ": " + x._2.getErrorMessage).mkString(", "))
+      Future.successful(Left(Error(Some(500), Some("error in update ttl for index: " + result.filter(x => !x._2.ok()).map(x => x._1).mkString(", ")), None)))
+    } else {
+      Logger.debug(result.map{ x => s"${x._1} update"}.mkString(", "))
+      Future.successful(Right(Success(Some("ttl updatate fot index: " + result.map(x => x._1).mkString(", ")), None)))
+    }
+  }
+
   override def deleteAllSubscription(user: String): Future[Success] = {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val coll = mongoDB("subscriptions")
+    val coll = mongoDB(collSubscriptionName)
     val obj = DBObject("user" -> user)
     val response = coll.remove(obj)
     logger.debug(s"delete ${response.getN} subscriptions for user $user")
@@ -118,7 +194,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val coll = mongoDB("subscriptions")
+    val coll = mongoDB(collSubscriptionName)
     val results = coll.find(composeQuery(SimpleQuery(QueryComponent("user", user)))).toList
     mongoClient.close()
     val jsonString = com.mongodb.util.JSON.serialize(results)
@@ -133,10 +209,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def saveNotifications(notification: Notification): Future[Either[Error, Success]] = {
-    val mongoClient = MongoClient(server, List(credentials))
+    val mongoClient = com.mongodb.casbah.MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val coll = mongoDB("notifications")
-    val obj = com.mongodb.util.JSON.parse(notificationToJson(notification).toString()).asInstanceOf[DBObject]
+    val coll: MongoCollection = mongoDB(collNotificationName)
+    val obj = notificationToJson(notification)
+
     val result = coll.insert(obj)
     val response = if(result.wasAcknowledged()){
       logger.debug(s"notification saved in mongo")
@@ -152,11 +229,12 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   override def updateNotifications(notifications: Seq[Notification]): Future[Either[Error, Success]] = {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val coll = mongoDB("notifications")
+    val coll = mongoDB(collNotificationName)
+
     val seqJson = notifications.map(n => (n.offset, n.user, n.notificationtype, notificationToJson(n)))
 
-    val seqMongoObj = seqJson.map{ case (offset, user, notificationType, json) =>
-      (offset, user, notificationType, com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject])
+    val seqMongoObj = seqJson.map{ case (offset, user, notificationType, mongoObj) =>
+      (offset, user, notificationType, mongoObj)
     }
 
     val mongoResults = seqMongoObj.map{
@@ -164,7 +242,8 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         (offset, user,
           coll.update(
             composeQuery(MultiQuery(Seq(QueryComponent("user", user), QueryComponent("notificationtype", notificationType), QueryComponent("offset", offset)))),
-            mongoObj)
+            mongoObj
+          )
         )
     }
 
@@ -186,33 +265,54 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   override def getAllNotifications(user: String, limit: Option[Int]): Future[Seq[Notification]] = {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val results = mongoDB("notifications")
+    val results = mongoDB(collNotificationName)
       .find(composeQuery(SimpleQuery(QueryComponent("user", user))))
       .limit(limit.getOrElse(0))
       .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
       .toList
     mongoClient.close()
-    val notifications = validateSeqNotifications(results) match {
-      case s: JsSuccess[Seq[Notification]] => s.get
-      case _: JsError => Seq()
-    }
+    val notifications = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
     logger.debug(s"getAllNotificaitons: finds ${notifications.size} notifications for user $user")
     Future.successful(notifications)
+  }
+
+  private def validateSeqNotification(seqNotification: JsArray) = {
+    seqNotification.value.map{ jsValue =>
+      validateNotification(jsValue)
+    }.collect { case Right(r) => r}
+  }
+
+  private def validateNotification(json: JsValue) = {
+    import ftd_api.yaml.BodyReads.InfoNotificationReads
+
+    val notification = Try{
+      Notification(
+        offset = (json \ "offset").as[Int],
+        status = (json \ "status").as[Int],
+        user = (json \ "user").as[String],
+        notificationtype = (json \ "notificationtype").asOpt[String],
+        createDate = (json \ "createDate" \ "$date").as[String],
+        info = (json \ "info").asOpt[InfoNotification],
+        endDate = (json \ "endDate" \ "$date").asOpt[String]
+      )
+    }
+    notification match {
+      case Failure(exception)  => Logger.debug(s"validation error: $exception"); Left(exception)
+      case util.Success(value) => Logger.debug(s"success in validation: {${value.user} : ${value.offset}}"); Right(value)
+    }
   }
 
   override def checkNewNotifications(user: String): Future[Seq[Notification]] = {
     val seqQueryConditions = Seq(QueryComponent("user", user), QueryComponent("status", 0))
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val result = mongoDB("notifications")
+    val results = mongoDB(collNotificationName)
       .find(composeQuery(MultiQuery(seqQueryConditions)))
       .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
       .toList
     mongoClient.close()
-    val notifications = validateSeqNotifications(result) match {
-      case s: JsSuccess[Seq[Notification]] => s.get
-      case _: JsError => Seq()
-    }
+
+    val notifications = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
 
     if(notifications.nonEmpty) {
       Logger.logger.debug(s"checkNewNotifications: find ${notifications.size} notifications")
@@ -224,25 +324,147 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def getLastOffset(notificationType: String): Future[LastOffset] = {
-    import ftd_api.yaml.BodyReads.NotificationReads
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val results = mongoDB("notifications")
+    val results = mongoDB(collNotificationName)
       .find(composeQuery(SimpleQuery(QueryComponent("notificationtype", notificationType))))
-      .sort(composeQuery(SimpleQuery(QueryComponent("offset",-1))))
+      .sort(composeQuery(SimpleQuery(QueryComponent("offset",1))))
       .limit(1)
       .one()
     mongoClient.close()
     val jsonString = com.mongodb.util.JSON.serialize(results)
     val json = Json.parse(jsonString)
-    val notificationJsResult = json.validate[Notification]
-    val offset = notificationJsResult match {
-      case s: JsSuccess[Notification] => s.get.offset
-      case _: JsError => 0
+    val offset = validateNotification(json) match {
+      case Right(notification) => notification.offset
+      case Left(error)         => logger.debug(error.getMessage); 0
     }
+
     logger.debug(s"getLastOffset for $notificationType: $offset")
     Future.successful(LastOffset(offset))
+  }
+
+  override def systemNotificationInsert(sysNotificationInfo: SysNotificationInfo, token: String, ws: WSClient): Future[Either[Error, Success]] = {
+    val jsonString =
+      s"""
+        |{
+        |"topicName":"notification",
+        |"description":"${sysNotificationInfo.description.orNull}",
+        |"notificationType":"system",
+        |"title":"${sysNotificationInfo.title}",
+        |"expirationDate":"${sysNotificationInfo.endDate}",
+        |"group":"$openDataGroup"
+        |}
+      """.stripMargin
+
+    val url = s"$catalogManagerHost/$catalogManagerNotificationPath"
+
+    Logger.debug(s"call to catalog at url $url with body $jsonString")
+
+    val response = ws.url(url)
+      .withHeaders("Authorization" -> s"Bearer $token", "Content-Type" -> "application/json")
+      .post(Json.parse(jsonString))
+
+    response.map{ res =>
+      res.status match {
+        case 200       => Logger.debug(s"200: ${res.body}"); Right(Success(Some((res.json \ "message").get.as[String]), None))
+        case 401 | 500 => Logger.debug(s"${res.status}: ${res.body}"); Left(Error(Some(res.status), Some(res.body), None))
+        case _         => Logger.debug(s"500 --> ${res.status}: ${res.body}"); Left(Error(Some(500), Some(res.body), None))
+      }
+    }
+  }
+
+  def deleteSystemNotificationByOffset(offset: Int): Future[Either[Error, Success]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+    collection.findOne(new BasicDBObject("offset", offset).append("user", sysAdminName)) match {
+      case Some(_) =>
+        val responseDelete = collection.remove(new BasicDBObject("offset", offset))
+        if(responseDelete.getN > 0) { logger.debug(s"$sysAdminName deleted ${responseDelete.getN} notifications"); Future.successful(Right(Success(Some(s"$sysAdminName deleted ${responseDelete.getN} notifications"), None))) }
+        else { logger.debug("error in delete notification"); Future.successful(Left(Error(Some(500), Some(s"error in delete notification"), None)))}
+      case None    => Future.successful(Left(Error(Some(404), Some(s"No found sys notification with offset $offset"), None)))
+    }
+  }
+
+  override def updateSystemNotification(offset: Int, notificationInfo: SysNotificationInfo): Future[Either[Error, Success]] = {
+    def createQueryUpdateFields = {
+      notificationInfo.description match {
+        case Some(desc) => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", notificationInfo.endDate).append("info.description", desc))
+        case None       => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", notificationInfo.endDate))
+      }
+    }
+
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+    collection.findOne(new BasicDBObject("offset", offset).append("user", sysAdminName)) match {
+      case Some(_) =>
+        logger.debug(s"Update collection $collNotificationName, offset $offset")
+        val query = MongoDBObject("offset" -> offset)
+        val responseUpdates = collection.update(query, createQueryUpdateFields, multi = true)
+        if(responseUpdates.isUpdateOfExisting) { logger.debug("Mongo update: success"); Future.successful(Right(Success(Some("Mongo update: success"), None)))}
+        else { logger.debug("Mongo update: error"); Future.successful(Left(Error(Some(500), Some("Mongo update: success"), None)))}
+      case None    => { logger.debug("notifications not found"); Future.successful(Left(Error(Some(404), Some(s"No found sys notification with offset $offset"), None))) }
+    }
+  }
+
+  override def getSystemNotificationByOffset(offset: Int): Future[Either[Error, Notification]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+    val query = new BasicDBObject("offset", offset).append("user", sysAdminName)
+    collection.findOne(query) match {
+      case Some(resutlFind) =>
+        val json = Json.parse(com.mongodb.util.JSON.serialize(resutlFind))
+        validateNotification(json) match {
+          case Right(notification) => logger.debug(s"found: $notification"); Future.successful(Right(notification))
+          case Left(error)         => logger.debug(error.getMessage); Future.successful(Left(Error(Some(500), Some(error.getMessage), None)))
+        }
+      case None             => logger.debug(s"notification with offset $offset not found"); Future.successful(Left(Error(Some(404), Some(s"notification with offset $offset not found"), None)))
+    }
+  }
+
+  override def getAllSystemNotification: Future[Either[Error, Seq[Notification]]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+    val query = new BasicDBObject("user", sysAdminName)
+    val results = collection.find(query).toList
+    if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Left(Error(Some(404), Some("notification not found"), None)))}
+    else{
+      val notificationsSeq = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
+      logger.debug(s"found ${notificationsSeq.size} notifications")
+      Future.successful(Right(notificationsSeq))
+    }
+  }
+
+  override def insertTtl(insertTTLInfo: InsertTTLInfo): Future[Either[Error, Success]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+
+    var partialFilterObject = new BasicDBObject(insertTTLInfo.partialFilter.head.name, insertTTLInfo.partialFilter.head.value)
+    insertTTLInfo.partialFilter.foreach{ m => partialFilterObject = partialFilterObject.append(m.name, if(m.isInt.getOrElse(false)) m.value.toInt else m.value)}
+
+    val resultCreateIndex = Try{collection.underlying.createIndex(
+      new BasicDBObject(insertTTLInfo.keyName, insertTTLInfo.keyValue),
+      new BasicDBObject("expireAfterSeconds", insertTTLInfo.expireAfterSeconds)
+        .append("partialFilterExpression", partialFilterObject)
+    )}
+
+    if(resultCreateIndex.isSuccess) { logger.debug(s"index ${insertTTLInfo.keyName} created"); Future.successful(Right(Success(Some(s"index ${insertTTLInfo.keyName} created"), None))) }
+    else { logger.debug("error in create index"); Future.successful(Left(Error(Some(500), Some("Error in create index"), None))) }
+  }
+
+  override def deleteTtl(ttlKey: KeysIntValue): Future[Either[Error, Success]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+    val responseDelete = Try{ collection.dropIndex(s"${ttlKey.name}_${ttlKey.value}") }
+
+    if(responseDelete.isSuccess){ logger.debug(s"index ${ttlKey.name} deleted"); Future.successful(Right(Success(Some(s"index ${ttlKey.name} deleted"), None))) }
+    else { logger.debug(s"error in delete index ${ttlKey.name}"); Future.successful(Left(Error(Some(500), Some(s"error in delete index ${ttlKey.name}"), None))) }
   }
 }
 

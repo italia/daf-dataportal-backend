@@ -90,7 +90,7 @@ class WidgetsRepositoryProd extends WidgetsRepository {
 
 
   private def parseWidgetFromSupersetResponse(jsonSeq: Seq[JsValue], isPrivate: Boolean) = {
-    val widgetsSeq = jsonSeq.map{ json =>
+    jsonSeq.map{ json =>
       val slice_link: String = (json \ "slice_link").get.as[String]
       val vizType: String = (json \ "viz_type").get.as[String]
       val title: String = slice_link.slice(slice_link.indexOf(">") + 1, slice_link.lastIndexOf("</a>")).trim
@@ -119,12 +119,7 @@ class WidgetsRepositoryProd extends WidgetsRepository {
           ))
         }.getOrElse(Left(Widget(identifier = "", viz_type = "", origin = "", title = "", pvt = false, table = None, widget_url = None, text = None)))
       }
-    }
-    val response = widgetsSeq.filter {
-        case Right(_) => true
-        case _  => false
-    }.map{ case Right(b) => b }
-    response
+    }.collect { case Right(r) => r}
   }
 
   private def extractToInt(indentifier: String): Int  = {

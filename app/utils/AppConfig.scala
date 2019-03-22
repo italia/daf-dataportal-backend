@@ -10,30 +10,39 @@ import play.api.{Configuration, Environment}
 class AppConfig @Inject()(playConfig: Configuration) {
   val dbHost: Option[String] = playConfig.getString("mongo.host")
   val dbPort: Option[Int] = playConfig.getInt("mongo.port")
-  val ckanHost  = playConfig.getString("app.ckan.url")
-  val ckanApiKey =  playConfig.getString("app.ckan.auth.token")
-  val localUrl = playConfig.getString("app.local.url")
+  val ckanHost: Option[String]  = playConfig.getString("app.ckan.url")
+  val ckanApiKey: Option[String] =  playConfig.getString("app.ckan.auth.token")
+  val localUrl: Option[String] = playConfig.getString("app.local.url")
 
-  val metabaseURL= playConfig.getString("metabase.url")
-  val metauser = playConfig.getString("metabase.user")
-  val metapass = playConfig.getString("metabase.pass")
+  val metabaseURL: Option[String]= playConfig.getString("metabase.url")
+  val metauser: Option[String] = playConfig.getString("metabase.user")
+  val metapass: Option[String] = playConfig.getString("metabase.pass")
 
-  val supersetURL= playConfig.getString("superset.url")
-  val supersetOpenDataUrl = playConfig.getString("superset.openDataUrl")
-  val supersetUser = playConfig.getString("superset.user")
-  val supersetPass = playConfig.getString("superset.pass")
-  val supersetOpenDataUser = playConfig.getString("superset.openDataUser")
-  val supersetOpenDataPwd = playConfig.getString("superset.openDataPwd")
+  val supersetURL: Option[String]= playConfig.getString("superset.url")
+  val supersetOpenDataUrl: Option[String] = playConfig.getString("superset.openDataUrl")
+  val supersetUser: Option[String] = playConfig.getString("superset.user")
+  val supersetPass: Option[String] = playConfig.getString("superset.pass")
+  val supersetOpenDataUser: Option[String] = playConfig.getString("superset.openDataUser")
+  val supersetOpenDataPwd: Option[String] = playConfig.getString("superset.openDataPwd")
 
-  val grafanaURL= playConfig.getString("grafana.url")
+  val grafanaURL: Option[String] = playConfig.getString("grafana.url")
 
-  val tdMetabaseURL = playConfig.getString("tdmetabase.url")
+  val tdMetabaseURL: Option[String] = playConfig.getString("tdmetabase.url")
 
   val userName :Option[String] = playConfig.getString("mongo.username")
   val password :Option[String] = playConfig.getString("mongo.password")
   val database :Option[String] = playConfig.getString("mongo.database")
+  val collNotificationName: Option[String] = playConfig.getString("mongo.collNotificationName")
+  val collSubscriptionName: Option[String] = playConfig.getString("mongo.collSubscriptionName")
 
   val securityManHost :Option[String] = playConfig.getString("security.manager.host")
+
+  val catalogManagerHost: Option[String] = playConfig.getString("catalog-manager.host")
+  val catalogManagerNotificationPath: Option[String] = playConfig.getString("catalog-manager.notificationPath")
+
+  val sysAdminName: Option[String] = playConfig.getString("sysAdmin")
+
+  val openDataGroup: Option[String] = playConfig.getString("openDataGroup")
 
   val cookieExpiration :Option[Long] = playConfig.getLong("cookie.expiration")
 
@@ -45,9 +54,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val kyloCsvSerde : Option[String] = playConfig.getString("kylo.csvSerde")
   val kyloJsonSerde : Option[String] = playConfig.getString("kylo.jsonSerde")
 
-  val elasticsearchUrl = playConfig.getString("elasticsearch.url")
-  val elasticsearchPort = playConfig.getInt("elasticsearch.port")
-  val elastisearchMaxResult = playConfig.getInt("elasticsearch.max_result_window")
+  val elasticsearchUrl: Option[String] = playConfig.getString("elasticsearch.url")
+  val elasticsearchPort: Option[Int] = playConfig.getInt("elasticsearch.port")
+  val elastisearchMaxResult: Option[Int] = playConfig.getInt("elasticsearch.max_result_window")
 
   val kafkaProxy: Option[String] = playConfig.getString("kafka-proxy.url")
 
@@ -64,6 +73,14 @@ object ConfigReader {
 
   require(config.elasticsearchUrl.nonEmpty, "A elasticsearch url must be specified")
   require(config.elastisearchMaxResult.nonEmpty, "A elasticsearch max result must be specified")
+  require(config.catalogManagerHost.nonEmpty, "A catalog-manager url must be specified")
+  require(config.catalogManagerNotificationPath.nonEmpty, "Path of API to insert message to kafka must be specified")
+  require(config.openDataGroup.nonEmpty, "Open data group must be specified")
+  require(config.collNotificationName.nonEmpty, "The name of the collectio notification must be specified")
+  require(config.collSubscriptionName.nonEmpty, "The name of the collectio subscription must be specified")
+  require(config.sysAdminName.nonEmpty, "The name of sys admin must be specified")
+
+  def getOpenDataGroup = config.openDataGroup.get
 
   def getDbHost: String = config.dbHost.getOrElse("localhost")
   def getDbPort: Int = config.dbPort.getOrElse(27017)
@@ -89,7 +106,14 @@ object ConfigReader {
   def database :String = config.database.getOrElse("monitor_mdb")
   def password :String = config.password.getOrElse("")
   def userName :String = config.userName.getOrElse("")
+  def getCollNotificationName: String = config.collNotificationName.get
+  def getCollSubscriptionName: String = config.collSubscriptionName.get
+
+  def getSysAdminName: String = config.sysAdminName.get
+
   def securityManHost :String = config.securityManHost.getOrElse("xxx")
+  def getCatalogManagerHost: String = config.catalogManagerHost.get
+  def getCatalogManagerNotificationPath: String = config.catalogManagerNotificationPath.get
 
   def cookieExpiration:Long = config.cookieExpiration.getOrElse(30L)// 30 min by default
   // TODO think about a defaul ingestion mechanism without kylo
