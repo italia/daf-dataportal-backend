@@ -147,6 +147,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     }
 
     if(seqKeyIntValue.exists(x => x.isFailure)){ Logger.debug("error in get ttl"); Future.successful(Left(Error(Some(500), Some("Error in get ttl"), None))) }
+    else if(seqKeyIntValue.isEmpty) { Logger.debug("ttl not found"); Future.successful(Left(Error(Some(404), Some("TTL not found"), None))) }
     else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get})) }
   }
 

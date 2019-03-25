@@ -59,7 +59,7 @@ import services.widgets.WidgetsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-        
+                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -1199,6 +1199,12 @@ package ftd_api.yaml {
         val getTtl = getTtlAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getTtl
             RequestContext.execInContext[Future[GetTtlType[T] forSome { type T }]]("getTtl") { () =>
+              def parseResponse(error: Error) = {
+                error.code.getOrElse(500) match {
+                  case 404  => GetTtl404(error)
+                  case _    => GetTtl500(error)
+                }
+              }
               if(CredentialManager.isDafSysAdmin(currentRequest)) {
                 PushNotificationRegistry.pushNotificationService.getTtl.flatMap{
                   case Right(r) => GetTtl200(r)
