@@ -846,6 +846,226 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/datastory/save":
+    post:
+      tags:
+        - Datastory
+      summary: Save Datastory
+      operationId: saveDatastory
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: datastory
+        in: body
+        description: datastory to save
+        required: true
+        schema:
+          $ref: '#/definitions/Datastory'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: Unauthorized to save
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/datastory/delete/{id}":
+    delete:
+      tags:
+      - Datastory
+      summary: delete a Datastory
+      operationId: deleteDatastory
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: id of the datastory to delete
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: Unauthorized to delete
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: datastory not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/datastories":
+    get:
+      tags:
+      - Datastory
+      summary: get all datastory
+      description: get all datastory
+      operationId: getAllDatastory
+      produces:
+      - application/json
+      parameters:
+      - name: limit
+        in: query
+        description: number of datastory to return
+        type: integer
+        format: int32
+        required: false
+      - name: status
+        in: query
+        description: possible status (0,1,2) 2 = public
+        required: false
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: list of datastory
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Datastory'
+        404:
+          description: not found dataStory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/public/datastories":
+    get:
+      tags:
+      - Datastory
+      summary: get all public datastory
+      description: get all public datastory
+      operationId: getAllPublicDatastory
+      produces:
+      - application/json
+      parameters:
+      - name: limit
+        in: query
+        description: number of datastory to return
+        type: integer
+        format: int32
+        required: false
+      responses:
+        200:
+          description: list of public datastory
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Datastory'
+        404:
+          description: not found datastory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/datastory/get-by-id/{id}":
+    get:
+      tags:
+      - Datastory
+      summary: get a datastory by id
+      description: get a datastory by id
+      operationId: getDatastoryById
+      produces:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: the id of the datastory
+        type: string
+        required: true
+      responses:
+        200:
+          description: datastory
+          schema:
+            $ref: '#/definitions/Datastory'
+        404:
+          description: not found datastory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/public/datastory/get-by-id/{id}":
+    get:
+      tags:
+      - Datastory
+      summary: get a public datastory by id
+      description: get a public datastory by id
+      operationId: getPublicDatastoryById
+      produces:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: the id of the datastory
+        type: string
+        required: true
+      responses:
+        200:
+          description: datastory
+          schema:
+            $ref: '#/definitions/Datastory'
+        404:
+          description: not found datastory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/widgets":
+    get:
+      tags:
+      - Widgets
+      summary: get widgets open and, if specify org parameter, private widgets
+      operationId: getAllWidgets
+      produces:
+      - application/json
+      parameters:
+      - name: org
+        in: query
+        description: the name of the org
+        required: false
+        type: string
+      responses:
+        200:
+          description: list of widgets
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Widget'
+        401:
+          description: unauthorized to get widgets
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: widgets not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/save/dashboards":
     post:
       tags:
@@ -2356,6 +2576,111 @@ definitions:
       timestamp:
         type: string
         format: date-time
+  Datastory:
+    type: object
+    required:
+      - user
+      - layout
+      - widgets
+      - title
+      - status
+      - org
+    properties:
+      user:
+        type: string
+      layout:
+        type: array
+        items:
+          $ref: '#/definitions/LayoutDataStory'
+      widgets:
+        type: array
+        items:
+          $ref: '#/definitions/Widget'
+      title:
+        type: string
+      status:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 2
+      id:
+        type: string
+      timestamp:
+        type: string
+      subtitle:
+        type: string
+      org:
+        type: string
+  LayoutDataStory:
+    type: object
+    required:
+      - h
+      - i
+      - moved
+      - static
+      - w
+      - x
+      - y
+    properties:
+      h:
+        type: integer
+        format: int32
+      i:
+        type: string
+      isDraggable:
+        type: boolean
+      isResizable:
+        type: boolean
+      maxH:
+        type: integer
+        format: int32
+      maxW:
+        type: integer
+        format: int32
+      minH:
+        type: integer
+        format: int32
+      minW:
+        type: integer
+        format: int32
+      moved:
+        type: boolean
+      static:
+        type: boolean
+      w:
+        type: integer
+        format: int32
+      x:
+        type: integer
+        format: int32
+      y:
+        type: integer
+        format: int32
+  Widget:
+    type: object
+    required:
+      - identifier
+      - viz_type
+      - origin
+      - title
+      - pvt
+    properties:
+      identifier:
+        type: string
+      widget_url:
+        type: string
+      text:
+        type: string
+      viz_type:
+        type: string
+      origin:
+        type: string
+      title:
+        type: string
+      table:
+        type: string
+      pvt:
+        type: boolean
   Oid:
     type: object
     properties:
