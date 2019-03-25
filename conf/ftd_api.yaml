@@ -2009,6 +2009,298 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/notifications/update/ttl":
+    put:
+      tags:
+      - PushNotification
+      summary: update the ttl of notifications
+      operationId: updateTtl
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: ttl
+        in: body
+        description: values of all ttl
+        required: true
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/KeysIntValue'
+      responses:
+        200:
+          description: ttl updatate
+          schema:
+            $ref: '#/definitions/Success'
+        400:
+          description: no ttl found in request
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: ttl not updatate
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/insert/ttl":
+    post:
+      tags:
+      - PushNotification
+      summary: insert the ttl of notifications
+      operationId: insertTtl
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: ttl
+        in: body
+        description: info of all ttl to insert
+        required: true
+        schema:
+          $ref: '#/definitions/InsertTTLInfo'
+      responses:
+        200:
+          description: ttl inserted
+          schema:
+            $ref: '#/definitions/Success'
+        400:
+          description: no ttl found in request
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: ttl not inserted
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/delete/ttl":
+    delete:
+      tags:
+      - PushNotification
+      summary: delete ttl
+      operationId: deleteTtl
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: ttlKey
+        in: body
+        description: values of ttl
+        required: true
+        schema:
+          $ref: '#/definitions/KeysIntValue'
+      responses:
+        200:
+          description: ttl deleted
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: ttl not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: ttl not deleted
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/get/ttl":
+    get:
+      tags:
+      - PushNotification
+      summary: update the ttl of notifications
+      operationId: getTtl
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        200:
+          description: object that contains ttl
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/KeysIntValue'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in get ttl from mongo
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/save":
+    post:
+      tags:
+      - PushNotification
+      summary: save system notification
+      description: insert a system notification into db
+      operationId: systemNotificationInsert
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: kafkaMessageInfo
+        in: body
+        description: message info to send to kafka by catalog
+        required: true
+        schema:
+          $ref: '#/definitions/SysNotificationInfo'
+      responses:
+        200:
+          description: notification insert into kafka
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in insert into kafka
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/get/all":
+    get:
+      tags:
+      - PushNotification
+      summary: get all notification
+      operationId: getAllSystemNotifications
+      produces:
+      - application/json
+      responses:
+        200:
+          description: sequence of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: notifications not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in get all notifications
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/{offset}":
+    get:
+      tags:
+      - PushNotificaiton
+      summary: get system notification by offset
+      description: get system notification by offset
+      operationId: getSystemNotificationByOffset
+      produces:
+      - application/json
+      parameters:
+      - name: offset
+        in: path
+        description: the offset of the notification
+        required: true
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: notification
+          schema:
+            $ref: '#/definitions/Notification'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in save notification
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+      - PushNotificaiton
+      summary: delete system notification by offset
+      description: delete system notification by offset
+      operationId: deleteSystemNotificationByOffset
+      produces:
+      - application/json
+      parameters:
+      - name: offset
+        in: path
+        description: the offset of the notification
+        required: true
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: notification deleted
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: sys notificatation not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in delete notification
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/update/{offset}":
+    put:
+      tags:
+      - PushNotification
+      summary: update a system notification
+      operationId: updateSystemNotification
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: notificationInfo
+        in: body
+        description: notification to update
+        required: true
+        schema:
+          $ref: '#/definitions/SysNotificationInfo'
+      - name: offset
+        in: path
+        description: offset of the notification
+        required: true
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: notification updatate
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: notifications not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in update notification
+          schema:
+            $ref: '#/definitions/Error'
 definitions:
   Catalog:
     properties:
@@ -2075,7 +2367,7 @@ definitions:
     type: object
     required:
       - user
-      - timestamp
+      - createDate
       - status
       - offset
     properties:
@@ -2083,7 +2375,9 @@ definitions:
         type: string
       user:
         type: string
-      timestamp:
+      endDate:
+        type: string
+      createDate:
         type: string
       status:
         type: integer
@@ -2520,4 +2814,81 @@ definitions:
         format: int64
       org:
         type: string
-
+  TTL:
+    type: object
+    properties:
+      infoType:
+        type: integer
+        format: int32
+      successType:
+        type: integer
+        format: int32
+      errorType:
+        type: integer
+        format: int32
+  KeysIntValue:
+    type: object
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+      value:
+        type: integer
+        format: int32
+  KeysStringValue:
+    type: object
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+  PartialFilterInfo:
+    type: object
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+      isInt:
+        type: boolean
+  SysNotificationInfo:
+    type: object
+    required:
+      - descritpion
+      - title
+      - endDate
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      endDate:
+        type: string
+  InsertTTLInfo:
+    type: object
+    required:
+      - keyName
+      - keyValue
+      - partialFilter
+      - expireAfterSeconds
+    properties:
+      keyName:
+        type: string
+      keyValue:
+        type: integer
+        format: int32
+      partialFilter:
+        type: array
+        items:
+          $ref: '#/definitions/PartialFilterInfo'
+      expireAfterSeconds:
+        type: integer
+        format: int32
