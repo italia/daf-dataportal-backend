@@ -285,15 +285,24 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   private def validateNotification(json: JsValue) = {
     import ftd_api.yaml.BodyReads.InfoNotificationReads
 
+    def parseDate(dateJsLookup: JsLookupResult) = {
+      dateJsLookup match {
+        case JsDefined(value)       =>
+          val str: String = value.toString().replace("\"", "")
+          Some(str.replace("T", "_").substring(0, str.lastIndexOf(".")))
+        case _: JsUndefined => None
+      }
+    }
+
     val notification = Try{
       Notification(
         offset = (json \ "offset").as[Int],
         status = (json \ "status").as[Int],
         user = (json \ "user").as[String],
         notificationtype = (json \ "notificationtype").asOpt[String],
-        createDate = (json \ "createDate" \ "$date").as[String],
+        createDate = parseDate(json \ "createDate" \ "$date").get,
         info = (json \ "info").asOpt[InfoNotification],
-        endDate = (json \ "endDate" \ "$date").asOpt[String]
+        endDate = parseDate(json \ "endDate" \ "$date")
       )
     }
     notification match {
