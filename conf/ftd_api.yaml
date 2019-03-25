@@ -2134,6 +2134,10 @@ paths:
           description: not authorized
           schema:
             $ref: '#/definitions/Error'
+        404:
+          description: ttl not found
+          schema:
+            $ref: '#/definitions/Error'
         500:
           description: error in get ttl from mongo
           schema:
