@@ -67,9 +67,7 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val datasetUserOpendataEmail: Option[String] = playConfig.getString("dataset-manager.email")
   val datasetUserOpendataPwd: Option[String] = playConfig.getString("dataset-manager.pwd")
 
-  val infoTypeValue = playConfig.getInt("notification.infoType")
-  val errorTypeValue = playConfig.getInt("notification.errorType")
-  val successTypeValue = playConfig.getInt("notification.successType")
+  val notificationInfo = playConfig.getObjectList("notificationType")
 
 
 }
@@ -147,8 +145,6 @@ object ConfigReader {
   def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail.getOrElse("XXXXX")
   def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
 
-  def getInfoTypeValue = config.infoTypeValue.get
-  def getErrorTypeValue = config.errorTypeValue.get
-  def getSuccessTypeValue = config.successTypeValue.get
+  def getNotificationInfo = config.notificationInfo.get
 
 }

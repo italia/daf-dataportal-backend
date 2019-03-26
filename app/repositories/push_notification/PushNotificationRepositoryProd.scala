@@ -41,6 +41,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   val catalogManagerNotificationPath = ConfigReader.getCatalogManagerNotificationPath
   val openDataGroup = ConfigReader.getOpenDataGroup
   val sysAdminName = ConfigReader.getSysAdminName
+  val indexMap = ConfigReader.getNotificationInfo
 
   private def composeQuery(query: Query) =  {
     def simpleQuery(queryComponent: QueryComponent) = {
@@ -151,7 +152,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     if(seqKeyIntValue.exists(x => x.isFailure)){ Logger.debug("error in get ttl"); Future.successful(Left(Error(Some(500), Some("Error in get ttl"), None))) }
     else if(seqKeyIntValue.isEmpty) { Logger.debug("ttl not found"); Future.successful(Left(Error(Some(404), Some("TTL not found"), None))) }
-    else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get})) }
+    else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get}.filterNot(v => v.name.equals("system")))) }
   }
 
 
@@ -403,10 +404,13 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   }
 
   override def updateSystemNotification(offset: Int, notificationInfo: SysNotificationInfo): Future[Either[Error, Success]] = {
+
+    def parseDate(endDate: String) = Try{new DateTime(endDate.replace("_", "T").concat("Z")).toDate}
+
     def createQueryUpdateFields = {
       notificationInfo.description match {
-        case Some(desc) => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", notificationInfo.endDate).append("info.description", desc))
-        case None       => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", notificationInfo.endDate))
+        case Some(desc) => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", parseDate(notificationInfo.endDate).getOrElse(null)).append("info.description", desc))
+        case None       => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", parseDate(notificationInfo.endDate).getOrElse(null)))
       }
     }
 
