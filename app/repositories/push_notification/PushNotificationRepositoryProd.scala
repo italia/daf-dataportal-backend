@@ -41,7 +41,8 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   val catalogManagerNotificationPath = ConfigReader.getCatalogManagerNotificationPath
   val openDataGroup = ConfigReader.getOpenDataGroup
   val sysAdminName = ConfigReader.getSysAdminName
-  val indexMap = ConfigReader.getNotificationInfo
+  val mapIndexinfo = ConfigReader.getNotificationInfo
+  val sysNotificationTypeName = ConfigReader.getSysNotificationTypeName
 
   private def composeQuery(query: Query) =  {
     def simpleQuery(queryComponent: QueryComponent) = {
@@ -152,12 +153,14 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     if(seqKeyIntValue.exists(x => x.isFailure)){ Logger.debug("error in get ttl"); Future.successful(Left(Error(Some(500), Some("Error in get ttl"), None))) }
     else if(seqKeyIntValue.isEmpty) { Logger.debug("ttl not found"); Future.successful(Left(Error(Some(404), Some("TTL not found"), None))) }
-    else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get}.filterNot(v => v.name.equals("system")))) }
+    else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get}.filterNot(v => v.name.equals(sysNotificationTypeName)))) }
   }
 
 
 
   override def updateTtl(ttl: Seq[KeysIntValue]): Future[Either[Error, Success]] = {
+
+    def keyValidation = { ttl.map{ elem => (elem.name, mapIndexinfo.contains(elem.name))} }
 
     def update(db: MongoDB, keyValue: Int, expirationAfterSeconds: Int) = {
         db.underlying.command(
@@ -171,19 +174,24 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = com.mongodb.casbah.MongoClient(server, List(rootCredentials))
     val mongoDB: MongoDB = mongoClient(dbName)
 
-    val mapKeyValueIndex = Map("infoType" -> 1, "successType" -> 2, "errorType" -> 3)
+    if(keyValidation.forall(x => x._2)){
+      val result = ttl.map{ keysIntValue =>
+        (keysIntValue.name, update(mongoDB, mapIndexinfo(keysIntValue.name), keysIntValue.value))
+      }
 
-    val result = ttl.map{ keysIntValue =>
-      (keysIntValue.name, update(mongoDB, mapKeyValueIndex(keysIntValue.name), keysIntValue.value))
-    }
-
-    if(result.exists(v => !v._2.ok())) {
-      Logger.debug("error in update ttl for index: " + result.filter(x => !x._2.ok()).map(x => x._1 + ": " + x._2.getErrorMessage).mkString(", "))
-      Future.successful(Left(Error(Some(500), Some("error in update ttl for index: " + result.filter(x => !x._2.ok()).map(x => x._1).mkString(", ")), None)))
+      if(result.exists(v => !v._2.ok())) {
+        Logger.debug("error in update ttl for index: " + result.filter(x => !x._2.ok()).map(x => x._1 + ": " + x._2.getErrorMessage).mkString(", "))
+        Future.successful(Left(Error(Some(500), Some("error in update ttl for index: " + result.filter(x => !x._2.ok()).map(x => x._1).mkString(", ")), None)))
+      } else {
+        Logger.debug(result.map{ x => s"${x._1} update"}.mkString(", "))
+        Future.successful(Right(Success(Some("ttl updatate fot index: " + result.map(x => x._1).mkString(", ")), None)))
+      }
     } else {
-      Logger.debug(result.map{ x => s"${x._1} update"}.mkString(", "))
-      Future.successful(Right(Success(Some("ttl updatate fot index: " + result.map(x => x._1).mkString(", ")), None)))
+      logger.debug("[error in update indexes] " + keyValidation.filter(x => !x._2).map(_._1).mkString(", ") + " not found")
+      Future.successful(Left(Error(Some(500), Some("[error in update indexes] " + keyValidation.filter(x => !x._2).map(_._1).mkString(", ") + " not found"), None)))
     }
+
+
   }
 
   override def deleteAllSubscription(user: String): Future[Success] = {
