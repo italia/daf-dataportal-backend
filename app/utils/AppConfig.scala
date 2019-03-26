@@ -30,8 +30,11 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val tdMetabaseURL: Option[String] = playConfig.getString("tdmetabase.url")
 
   val userName :Option[String] = playConfig.getString("mongo.username")
+  val userRoot: Option[String] = playConfig.getString("mongo.usernameAdmin")
   val password :Option[String] = playConfig.getString("mongo.password")
+  val rootPassword :Option[String] = playConfig.getString("mongo.rootPassword")
   val database :Option[String] = playConfig.getString("mongo.database")
+  val databaseRoot: Option[String] = playConfig.getString("mongo.databaseAdmin")
   val collNotificationName: Option[String] = playConfig.getString("mongo.collNotificationName")
   val collSubscriptionName: Option[String] = playConfig.getString("mongo.collSubscriptionName")
 
@@ -64,6 +67,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val datasetUserOpendataEmail: Option[String] = playConfig.getString("dataset-manager.email")
   val datasetUserOpendataPwd: Option[String] = playConfig.getString("dataset-manager.pwd")
 
+  val infoTypeValue = playConfig.getInt("notification.infoType")
+  val errorTypeValue = playConfig.getInt("notification.errorType")
+  val successTypeValue = playConfig.getInt("notification.successType")
 
 
 }
@@ -79,6 +85,9 @@ object ConfigReader {
   require(config.collNotificationName.nonEmpty, "The name of the collectio notification must be specified")
   require(config.collSubscriptionName.nonEmpty, "The name of the collectio subscription must be specified")
   require(config.sysAdminName.nonEmpty, "The name of sys admin must be specified")
+  require(config.userRoot.nonEmpty, "The mongo user root must be specified")
+  require(config.databaseRoot.nonEmpty, "The mongo database root must be specified")
+
 
   def getOpenDataGroup = config.openDataGroup.get
 
@@ -104,8 +113,11 @@ object ConfigReader {
   def getTdMetabaseURL = config.tdMetabaseURL.getOrElse("https://dashboard.teamdigitale.governo.it")
 
   def database :String = config.database.getOrElse("monitor_mdb")
+  def databaseRoot: String = config.databaseRoot.get
   def password :String = config.password.getOrElse("")
+  def getRootPasswprd: String = config.rootPassword.getOrElse("")
   def userName :String = config.userName.getOrElse("")
+  def userRoot: String = config.userRoot.get
   def getCollNotificationName: String = config.collNotificationName.get
   def getCollSubscriptionName: String = config.collSubscriptionName.get
 
@@ -134,5 +146,9 @@ object ConfigReader {
   def getDatasetUrl =  config.datasetUrl.getOrElse("XXXXX")
   def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail.getOrElse("XXXXX")
   def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
+
+  def getInfoTypeValue = config.infoTypeValue.get
+  def getErrorTypeValue = config.errorTypeValue.get
+  def getSuccessTypeValue = config.successTypeValue.get
 
 }

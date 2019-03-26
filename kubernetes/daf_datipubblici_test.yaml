@@ -70,6 +70,11 @@ spec:
             secretKeyRef:
               name: daf-secret
               key: open_data_user_pwd
+        - name: MONGO_ROOT_PWD
+          valueFrom:
+            secretKeyRef:
+              name: daf-secret
+              key: mongo_admin_pwd
         ports:
         - name: client
           containerPort: 9000

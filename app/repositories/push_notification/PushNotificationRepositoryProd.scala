@@ -24,8 +24,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
   private val userName = ConfigReader.userName
+  private val userRoot = ConfigReader.userRoot
   private val dbName = ConfigReader.database
+  private val dbRootName = ConfigReader.databaseRoot
   private val password = ConfigReader.password
+  private val rootPassword = ConfigReader.getRootPasswprd
 
   private val collNotificationName = ConfigReader.getCollNotificationName
   private val collSubscriptionName = ConfigReader.getCollSubscriptionName
@@ -162,7 +165,9 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         )
     }
 
-    val mongoClient = com.mongodb.casbah.MongoClient(server, List(credentials))
+    val rootCredentials = MongoCredential.createCredential(userRoot, dbRootName, rootPassword.toCharArray)
+
+    val mongoClient = com.mongodb.casbah.MongoClient(server, List(rootCredentials))
     val mongoDB: MongoDB = mongoClient(dbName)
 
     val mapKeyValueIndex = Map("infoType" -> 1, "successType" -> 2, "errorType" -> 3)
