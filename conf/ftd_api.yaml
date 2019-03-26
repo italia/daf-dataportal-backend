@@ -2192,10 +2192,6 @@ paths:
           description: unauthorized
           schema:
             $ref: '#/definitions/Error'
-        404:
-          description: notifications not found
-          schema:
-            $ref: '#/definitions/Error'
         500:
           description: error in get all notifications
           schema:

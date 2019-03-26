@@ -59,7 +59,7 @@ import services.widgets.WidgetsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                    
+                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -1006,16 +1006,10 @@ package ftd_api.yaml {
         val getAllSystemNotifications = getAllSystemNotificationsAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllSystemNotifications
             RequestContext.execInContext[Future[GetAllSystemNotificationsType[T] forSome { type T }]]("getAllSystemNotifications") { () =>
-            def parseError(error: Error) = {
-              error.code match {
-                case Some(404) => GetAllSystemNotifications404(error)
-                case _         => GetAllSystemNotifications500(error)
-              }
-            }
             if(CredentialManager.isDafSysAdmin(currentRequest)){
               PushNotificationRegistry.pushNotificationService.getAllSystemNotification flatMap {
                 case Right(success) => GetAllSystemNotifications200(success)
-                case Left(error)    => parseError(error)
+                case Left(error)    => GetAllSystemNotifications500(error)
               }
             } else {
               logger.debug("Only SysAdmin can get sys notifications")

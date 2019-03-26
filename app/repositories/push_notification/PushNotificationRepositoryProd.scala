@@ -165,7 +165,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = com.mongodb.casbah.MongoClient(server, List(credentials))
     val mongoDB: MongoDB = mongoClient(dbName)
 
-    val mapKeyValueIndex = Map("genericType" -> 1, "successType" -> 2, "errorType" -> 3)
+    val mapKeyValueIndex = Map("infoType" -> 1, "successType" -> 2, "errorType" -> 3)
 
     val result = ttl.map{ keysIntValue =>
       (keysIntValue.name, update(mongoDB, mapKeyValueIndex(keysIntValue.name), keysIntValue.value))
@@ -441,7 +441,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val collection = mongoDB(collNotificationName)
     val query = new BasicDBObject("user", sysAdminName)
     val results = collection.find(query).toList
-    if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Left(Error(Some(404), Some("notification not found"), None)))}
+    if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Right(Seq[Notification]()))}
     else{
       val notificationsSeq = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
       logger.debug(s"found ${notificationsSeq.size} notifications")
