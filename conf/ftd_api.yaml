@@ -2090,12 +2090,11 @@ paths:
       consumes:
       - application/json
       parameters:
-      - name: ttlKey
+      - name: deleteTTLNotificationsInfo
         in: body
-        description: values of ttl
         required: true
         schema:
-          $ref: '#/definitions/KeysIntValue'
+          $ref: '#/definitions/DeleteTTLNotificationInfo'
       responses:
         200:
           description: ttl deleted
@@ -2192,6 +2191,25 @@ paths:
           description: unauthorized
           schema:
             $ref: '#/definitions/Error'
+        500:
+          description: error in get all notifications
+          schema:
+            $ref: '#/definitions/Error'
+  "/public/notifications/system/get/all":
+    get:
+      tags:
+      - PushNotification
+      summary: get all notification
+      operationId: getAllPublicSystemNotifications
+      produces:
+      - application/json
+      responses:
+        200:
+          description: sequence of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
         500:
           description: error in get all notifications
           schema:
@@ -2892,3 +2910,13 @@ definitions:
       expireAfterSeconds:
         type: integer
         format: int32
+  DeleteTTLNotificationInfo:
+    type: object
+    required:
+      - keyName
+      - notificationType
+    properties:
+      keyName:
+        type: string
+      notificationType:
+        type: string

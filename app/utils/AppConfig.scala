@@ -43,9 +43,10 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val catalogManagerHost: Option[String] = playConfig.getString("catalog-manager.host")
   val catalogManagerNotificationPath: Option[String] = playConfig.getString("catalog-manager.notificationPath")
 
-  val sysAdminName: Option[String] = playConfig.getString("sysAdmin")
+  val sysAdminName: Option[String] = playConfig.getString("sys-admin")
 
   val openDataGroup: Option[String] = playConfig.getString("openDataGroup")
+  val openDataUser: Option[String] = playConfig.getString("openDataUser")
 
   val cookieExpiration :Option[Long] = playConfig.getLong("cookie.expiration")
 
@@ -67,7 +68,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val datasetUserOpendataEmail: Option[String] = playConfig.getString("dataset-manager.email")
   val datasetUserOpendataPwd: Option[String] = playConfig.getString("dataset-manager.pwd")
 
-  val notificationInfo = playConfig.getObjectList("notificationType")
+  val notificationInfo = playConfig.getConfigSeq("notificationType")
+
+  val sysNotificationTypeName = playConfig.getString("systemNotificationTypeName")
 
 
 }
@@ -85,9 +88,12 @@ object ConfigReader {
   require(config.sysAdminName.nonEmpty, "The name of sys admin must be specified")
   require(config.userRoot.nonEmpty, "The mongo user root must be specified")
   require(config.databaseRoot.nonEmpty, "The mongo database root must be specified")
+  require(config.notificationInfo.nonEmpty, "NotificationInfo must be specified")
+  require(config.openDataUser.nonEmpty, "Open data user must be specified")
 
 
   def getOpenDataGroup = config.openDataGroup.get
+  def getOpenDataUser = config.openDataUser.get
 
   def getDbHost: String = config.dbHost.getOrElse("localhost")
   def getDbPort: Int = config.dbPort.getOrElse(27017)
@@ -145,6 +151,7 @@ object ConfigReader {
   def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail.getOrElse("XXXXX")
   def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
 
-  def getNotificationInfo = config.notificationInfo.get
+  def getNotificationInfo = config.notificationInfo.get.map{x => x.getString("name").get -> x.getInt("value").get}.toMap
 
+  def getSysNotificationTypeName = config.sysNotificationTypeName.get
 }

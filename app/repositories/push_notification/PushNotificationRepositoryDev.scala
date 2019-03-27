@@ -1,6 +1,6 @@
 package repositories.push_notification
 
-import ftd_api.yaml.{Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
@@ -75,7 +75,11 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
     Future.successful(Right(Success(None, None)))
   }
 
-  override def deleteTtl(ttlKey: KeysIntValue): Future[Either[Error, Success]] = {
+  def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]] = {
     Future.successful(Right(Success(None, None)))
+  }
+
+  override def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]] = {
+    Future.successful(Right(Seq[Notification]()))
   }
 }

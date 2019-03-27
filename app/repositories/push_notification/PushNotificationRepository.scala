@@ -1,6 +1,6 @@
 package repositories.push_notification
 
-import ftd_api.yaml.{Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
@@ -22,8 +22,9 @@ trait PushNotificationRepository {
   def updateSystemNotification(offset: Int, notificationInfo: SysNotificationInfo): Future[Either[Error, Success]]
   def getSystemNotificationByOffset(offset: Int): Future[Either[Error, Notification]]
   def getAllSystemNotification: Future[Either[Error, Seq[Notification]]]
+  def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]]
   def insertTtl(insertTTLInfo: InsertTTLInfo): Future[Either[Error, Success]]
-  def deleteTtl(ttlKey: KeysIntValue): Future[Either[Error, Success]]
+  def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]]
 }
 
 
