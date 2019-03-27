@@ -39,6 +39,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
   val catalogManagerHost = ConfigReader.getCatalogManagerHost
   val catalogManagerNotificationPath = ConfigReader.getCatalogManagerNotificationPath
+  val openDataUser = ConfigReader.getOpenDataUser
   val openDataGroup = ConfigReader.getOpenDataGroup
   val sysAdminName = ConfigReader.getSysAdminName
   val mapIndexinfo = ConfigReader.getNotificationInfo
@@ -462,6 +463,20 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     else{
       val notificationsSeq = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
       logger.debug(s"found ${notificationsSeq.size} notifications")
+      Future.successful(Right(notificationsSeq))
+    }
+  }
+
+  override def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collNotificationName)
+    val query = new BasicDBObject("user", openDataUser)
+    val results = collection.find(query).toList
+    if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Right(Seq[Notification]()))}
+    else{
+      val notificationsSeq = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
+      logger.debug(s"found ${notificationsSeq.size} notifications opendata")
       Future.successful(Right(notificationsSeq))
     }
   }

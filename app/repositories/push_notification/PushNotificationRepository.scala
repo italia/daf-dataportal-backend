@@ -22,6 +22,7 @@ trait PushNotificationRepository {
   def updateSystemNotification(offset: Int, notificationInfo: SysNotificationInfo): Future[Either[Error, Success]]
   def getSystemNotificationByOffset(offset: Int): Future[Either[Error, Notification]]
   def getAllSystemNotification: Future[Either[Error, Seq[Notification]]]
+  def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]]
   def insertTtl(insertTTLInfo: InsertTTLInfo): Future[Either[Error, Success]]
   def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]]
 }

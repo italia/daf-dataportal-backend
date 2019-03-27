@@ -2195,6 +2195,25 @@ paths:
           description: error in get all notifications
           schema:
             $ref: '#/definitions/Error'
+  "/public/notifications/system/get/all":
+    get:
+      tags:
+      - PushNotification
+      summary: get all notification
+      operationId: getAllPublicSystemNotifications
+      produces:
+      - application/json
+      responses:
+        200:
+          description: sequence of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
+        500:
+          description: error in get all notifications
+          schema:
+            $ref: '#/definitions/Error'
   "/notifications/system/{offset}":
     get:
       tags:

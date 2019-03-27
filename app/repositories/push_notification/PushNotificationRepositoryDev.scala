@@ -78,4 +78,8 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
   def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]] = {
     Future.successful(Right(Success(None, None)))
   }
+
+  override def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]] = {
+    Future.successful(Right(Seq[Notification]()))
+  }
 }

@@ -75,6 +75,10 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.getAllSystemNotification
     }
 
+    def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]] = {
+      pushNotificationRepository.getAllPublicSystemNotifications
+    }
+
     def insertTtl(insertTTLInfo: InsertTTLInfo): Future[Either[Error, Success]] = {
       pushNotificationRepository.insertTtl(insertTTLInfo)
     }

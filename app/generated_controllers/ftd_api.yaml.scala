@@ -59,7 +59,7 @@ import services.widgets.WidgetsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                            
+                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -1303,6 +1303,16 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
+        }
+        val getAllPublicSystemNotifications = getAllPublicSystemNotificationsAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllPublicSystemNotifications
+            RequestContext.execInContext[Future[GetAllPublicSystemNotificationsType[T] forSome { type T }]]("getAllPublicSystemNotifications") { () =>
+            PushNotificationRegistry.pushNotificationService.getAllPublicSystemNotifications flatMap{
+              case Right(success) => GetAllPublicSystemNotifications200(success)
+              case Left(error)    => GetAllPublicSystemNotifications500(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllPublicSystemNotifications
         }
         val saveSettings = saveSettingsAction { input: (String, Settings) =>
             val (domain, settings) = input
