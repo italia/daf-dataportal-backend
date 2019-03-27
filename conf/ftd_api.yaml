@@ -2090,12 +2090,11 @@ paths:
       consumes:
       - application/json
       parameters:
-      - name: ttlKey
+      - name: deleteTTLNotificationsInfo
         in: body
-        description: values of ttl
         required: true
         schema:
-          $ref: '#/definitions/KeysIntValue'
+          $ref: '#/definitions/DeleteTTLNotificationInfo'
       responses:
         200:
           description: ttl deleted
@@ -2892,3 +2891,13 @@ definitions:
       expireAfterSeconds:
         type: integer
         format: int32
+  DeleteTTLNotificationInfo:
+    type: object
+    required:
+      - keyName
+      - notificationType
+    properties:
+      keyName:
+        type: string
+      notificationType:
+        type: string

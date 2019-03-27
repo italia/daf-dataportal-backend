@@ -6,7 +6,7 @@ import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{Error, InfoNotification, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
 import org.joda.time.DateTime
 import play.api.Logger
 import utils.ConfigReader
@@ -484,14 +484,26 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     else { logger.debug("error in create index"); Future.successful(Left(Error(Some(500), Some("Error in create index"), None))) }
   }
 
-  override def deleteTtl(ttlKey: KeysIntValue): Future[Either[Error, Success]] = {
+  override def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]] = {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val collection = mongoDB(collNotificationName)
-    val responseDelete = Try{ collection.dropIndex(s"${ttlKey.name}_${ttlKey.value}") }
-
-    if(responseDelete.isSuccess){ logger.debug(s"index ${ttlKey.name} deleted"); Future.successful(Right(Success(Some(s"index ${ttlKey.name} deleted"), None))) }
-    else { logger.debug(s"error in delete index ${ttlKey.name}"); Future.successful(Left(Error(Some(500), Some(s"error in delete index ${ttlKey.name}"), None))) }
+    if(mapIndexinfo.contains(deleteTTLNotificationsInfo.notificationType)){
+      logger.debug(s"try to delete index ${deleteTTLNotificationsInfo.keyName}")
+      Try{
+        collection.dropIndex(s"${deleteTTLNotificationsInfo.keyName}_${mapIndexinfo(deleteTTLNotificationsInfo.notificationType)}")
+      } match {
+        case Failure(exception) =>
+          logger.debug(s"error in delete index ${deleteTTLNotificationsInfo.keyName}: $exception")
+          Future.successful(Left(Error(Some(500), Some(s"error in delete index ${deleteTTLNotificationsInfo.keyName}"), None)))
+        case util.Success(_) =>
+          logger.debug(s"index ${deleteTTLNotificationsInfo.keyName} deleted")
+          Future.successful(Right(Success(Some(s"index ${deleteTTLNotificationsInfo.keyName} deleted"), None)))
+      }
+    } else {
+      logger.debug(s"${deleteTTLNotificationsInfo.keyName} not found in configuration file")
+      Future.successful(Left(Error(Some(500), Some(s"${deleteTTLNotificationsInfo.keyName} not found in configuration file"), None)))
+    }
   }
 }
 

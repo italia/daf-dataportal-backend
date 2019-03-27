@@ -1,7 +1,7 @@
 package services.push_notification
 
 import play.api.{Configuration, Environment}
-import ftd_api.yaml.{Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
 import play.api.libs.ws.WSClient
 import repositories.push_notification.{PushNotificationRepository, PushNotificationRepositoryComponent}
 
@@ -79,8 +79,8 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.insertTtl(insertTTLInfo)
     }
 
-    def deleteTtl(ttlKey: KeysIntValue): Future[Either[Error, Success]] = {
-      pushNotificationRepository.deleteTtl(ttlKey)
+    def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]] = {
+      pushNotificationRepository.deleteTtl(deleteTTLNotificationsInfo)
     }
   }
 }

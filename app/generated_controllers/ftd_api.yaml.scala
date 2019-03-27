@@ -59,7 +59,7 @@ import services.widgets.WidgetsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                        
+                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -470,11 +470,11 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
         }
-        val deleteTtl = deleteTtlAction { (ttlKey: KeysIntValue) =>  
+        val deleteTtl = deleteTtlAction { (deleteTTLNotificationsInfo: DeleteTTLNotificationInfo) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteTtl
             RequestContext.execInContext[Future[DeleteTtlType[T] forSome { type T }]]("deleteTtl") { () =>
             if(CredentialManager.isDafSysAdmin(currentRequest)){
-              PushNotificationRegistry.pushNotificationService.deleteTtl(ttlKey) flatMap {
+              PushNotificationRegistry.pushNotificationService.deleteTtl(deleteTTLNotificationsInfo) flatMap {
                 case Right(success) => DeleteTtl200(success)
                 case Left(error)    => DeleteTtl500(error)
               }
