@@ -51,6 +51,7 @@ import java.net.URLEncoder
 import play.api.mvc.Headers
 import services.datastory.DatastoryRegistry
 import services.widgets.WidgetsRegistry
+import services.elasticsearch.ElasticsearchRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -58,10 +59,8 @@ import services.widgets.WidgetsRegistry
  */
 
 package ftd_api.yaml {
-
-  import services.elasticsearch.ElasticsearchRegistry
-  // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                
+    // ----- Start of unmanaged code area for package Ftd_apiYaml
+                                                                                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml

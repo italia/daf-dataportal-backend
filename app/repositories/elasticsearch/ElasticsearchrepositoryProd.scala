@@ -2,7 +2,7 @@ package repositories.elasticsearch
 
 import com.sksamuel.elastic4s.http.ElasticDsl.{boolQuery, existsQuery, highlight, matchQuery, missingAgg, must, search, should, termQuery, termsAgg, termsQuery}
 import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryDefinition}
-import ftd_api.yaml.{Dashboard, Filters, SearchResult, UserStory}
+import ftd_api.yaml.{Dashboard, Datastory, Filters, SearchResult, UserStory}
 import play.api.Logger
 import play.api.libs.json.{JsLookupResult, JsValue, Json}
 import utils.ConfigReader
@@ -15,7 +15,6 @@ import org.elasticsearch.index.query.Operator
 
 import scala.concurrent.Future
 import scala.util.Try
-
 import scala.concurrent.ExecutionContext.Implicits._
 
 class ElasticsearchrepositoryProd extends ElasticsearchRepository {
@@ -34,26 +33,26 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     val fieldDatasetDcatNote = "dcatapit.notes"
     val fieldDatasetDcatTheme = "dcatapit.theme"
     val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
-    val fieldUsDsTitle = "title"
-    val fieldUsDsSub = "subtitle"
-    val fieldUsDsWget = "widgets"
+    val fieldDsTitle = "title"
+    val fieldDsSub = "subtitle"
+    val fieldDsWdgetTitle = "widgets.title"
+    val fieldDsWdgetText = "widgets.text"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
       fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
-    val fieldDashboard = listFields("Dashboard")
-    val fieldStories = listFields("User-Story")
-    val fieldToReturn = fieldDataset ++ fieldDashboard ++ fieldStories ++ fieldsOpenData
+    val fieldDatastory: List[String] = listFields("Datastory")
+    val fieldToReturn: List[String] = fieldDataset ++ fieldDatastory ++ fieldsOpenData
 
-    val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
-      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org") ::: fieldsOpenData
+    val listFieldSearch: List[String] = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
+      fieldDatasetDataFieldName, fieldDsTitle, fieldDsSub, fieldDsWdgetTitle, fieldDsWdgetText, "dcatapit.owner_org", "org") ::: fieldsOpenData
 
-    val searchText = filters.text match {
+    val searchText: Boolean = filters.text match {
       case Some("") => false
       case Some(_) => true
       case None => false
     }
 
-    val searchType = filters.index match {
+    val searchType: String = filters.index match {
       case Some(List()) => ""
       case Some(x) => x.mkString(",")
       case None => ""
@@ -64,13 +63,13 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       case _ => "desc"
     }
 
-    val limitParam = limit match {
+    val limitParam: Int = limit match {
       case Some(0) => elasticsearchMaxResult
       case Some(x)  => x
       case None     => 1000
     }
 
-    def queryElasticsearch(limitResult: Int, searchTypeInQuery: String) = {
+    def queryElasticsearch(limitResult: Int, searchTypeInQuery: String): SearchDefinition = {
       search(index).types(searchTypeInQuery).query(
         boolQuery()
           must(
@@ -88,11 +87,8 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
             ),
             termQuery("dcatapit.privatex", false),
             must(termQuery("status", 0), termQuery("user", username)),
-            must(termQuery("published", 0), termQuery("user", username)),
             must(termQuery("status", 1), matchQuery("org", groups.mkString(" ")).operator("OR")),
-            must(termQuery("published", 1), matchQuery("org", groups.mkString(" ")).operator("OR")),
             termQuery("status", 2),
-            termQuery("published", 2),
             termQuery("private", false)
           )
         )
@@ -102,9 +98,14 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
-        termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        termsAgg("org_stdash", "org.keyword"), termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000), termsAgg("org_ext", "organization.name.keyword").size(1000),
-        termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000), termsAgg("cat_ext", "theme.keyword").size(1000)
+        termsAgg("status_ds", "status"),
+        termsAgg("status_cat", "dcatapit.privatex"),
+        termsAgg("status_ext", "private"),
+        termsAgg("org_ds", "org.keyword"),
+        termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000),
+        termsAgg("org_ext", "organization.name.keyword").size(1000),
+        termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000),
+        termsAgg("cat_ext", "theme.keyword").size(1000)
       )
       .highlighting(listFieldSearch
         .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
@@ -112,14 +113,14 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
           .fragmentSize(70))
       )
 
-    val queryAggregationNoCat = queryElasticsearch(0, "ext_opendata")
+    val queryAggregationNoCat: SearchDefinition = queryElasticsearch(0, "ext_opendata")
       .fetchSource(false)
       .aggregations(
         missingAgg("no_category", "theme.keyword")
       )
 
     val responseFutureQuery: Future[SearchResponse] = client.execute(query)
-    val futureSearchResults = wrapResponse(responseFutureQuery, order, searchText, filters.date)
+    val futureSearchResults: Future[List[SearchResult]] = wrapResponse(responseFutureQuery, order, searchText, filters.date)
 
     val futureMapAggregation: Future[Map[String, AnyRef]] = responseFutureQuery.map(r => r.aggregations)
 
@@ -129,9 +130,9 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       case _ => None
     }
 
-    val futureAggregationResults = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
+    val futureAggregationResults: Future[List[SearchResult]] = createAggregationResponse(futureMapAggregation, responseFutureQueryNoCat)
 
-    val response = for{
+    val response: Future[List[SearchResult]] = for{
       searchResult <- futureSearchResults
       aggregationResult <- futureAggregationResults
     } yield searchResult ::: aggregationResult
@@ -153,15 +154,16 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     val fieldDatasetDataFieldName = "dataschema.avro.fields.name"
     val fieldUsDsTitle = "title"
     val fieldUsDsSub = "subtitle"
-    val fieldUsDsWget = "widgets"
+    val fieldDsWdgetTitle = "widgets.title"
+    val fieldDsWdgetText = "widgets.text"
     val fieldDataset = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote,
       fieldDatasetDataFieldName, fieldDatasetDcatTheme, "dcatapit.privatex", "dcatapit.modified", "dcatapit.owner_org", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
-    val fieldStories = listFields("User-Story")
-    val fieldToReturn = fieldDataset ++ fieldStories ++ fieldsOpenData
+    val fieldDatastory: List[String] = listFields("Datastory")
+    val fieldToReturn = fieldDataset ++ fieldDatastory ++ fieldsOpenData
 
     val listFieldSearch = List(fieldDatasetDcatName, fieldDatasetDcatTitle, fieldDatasetDcatNote, fieldDatasetDcatTheme,
-      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldUsDsWget, "dcatapit.owner_org", "org") ::: fieldsOpenData
+      fieldDatasetDataFieldName, fieldUsDsTitle, fieldUsDsSub, fieldDsWdgetTitle, fieldDsWdgetText, "dcatapit.owner_org", "org") ::: fieldsOpenData
 
     val searchText = filters.text match {
       case Some("") => false
@@ -199,7 +201,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
             ),
             should(
               termQuery("dcatapit.privatex", false),
-              termQuery("published", 2),
+              termQuery("status", 2),
               termQuery("private", false)
             )
           )
@@ -209,9 +211,14 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
-        termsAgg("status_dash", "status"), termsAgg("status_st", "published"), termsAgg("status_cat", "dcatapit.privatex"), termsAgg("status_ext", "private"),
-        termsAgg("org_stdash", "org.keyword").size(1000), termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000), termsAgg("org_ext", "organization.name.keyword").size(1000),
-        termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000), termsAgg("cat_ext", "theme.keyword").size(1000)
+        termsAgg("status_ds", "status"),
+        termsAgg("status_cat", "dcatapit.privatex"),
+        termsAgg("status_ext", "private"),
+        termsAgg("org_ds", "org.keyword").size(1000),
+        termsAgg("org_cat", "dcatapit.owner_org.keyword").size(1000),
+        termsAgg("org_ext", "organization.name.keyword").size(1000),
+        termsAgg("cat_cat", "dcatapit.theme.keyword").size(1000),
+        termsAgg("cat_ext", "theme.keyword").size(1000)
       )
       .highlighting(listFieldSearch
         .filterNot(s => s.equals("org") || s.equals("dcatapit.owner_org"))
@@ -303,7 +310,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     val futureListAggrOrg = for{
       orgCat <- futureMapAggr.map(mapAggr => mapAggr("org_cat").toList)
       orgExt <- futureMapAggr.map(mapAggr => mapAggr("org_ext").toList)
-      orgStDash <- futureMapAggr.map(mapAggr => mapAggr("org_stdash").toList)
+      orgStDash <- futureMapAggr.map(mapAggr => mapAggr("org_ds").toList)
     } yield orgCat ::: orgExt ::: orgStDash
 
     futureListAggrOrg.map(listAggrOrg => SearchResult(Some("organization"), Some("{" + mergeAggr(listAggrOrg).mkString(",") + "}"), None))
@@ -316,12 +323,11 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       Map("0" -> countTrue, "1" -> countTrue, "2" -> countFalse)
     }
 
-    val futureListStatus = for {
+    val futureListStatus: Future[List[(String, Int)]] = for {
       aggrCat <- futureMapAggr.map(mapAggr => convertAggrDataset(mapAggr("status_cat")).toList)
       aggrExt <- futureMapAggr.map(mapAggr => convertAggrDataset(mapAggr("status_ext")).toList)
-      aggrDash <- futureMapAggr.map(mapAggr => mapAggr("status_dash").toList)
-      aggrSt <- futureMapAggr.map(mapAggr => mapAggr("status_st").toList)
-    }yield aggrCat ::: aggrExt ::: aggrDash ::: aggrSt
+      aggrDash <- futureMapAggr.map(mapAggr => mapAggr("status_ds").toList)
+    }yield aggrCat ::: aggrExt ::: aggrDash
 
     futureListStatus.map(listStatus => SearchResult(Some("status"), Some("{" + mergeAggr(listStatus).mkString(",") + "}"), None))
   }
@@ -329,7 +335,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   private def parseAggrTheme(futureMapAggr: Future[Map[String, Map[String, Int]]], futureMapNoCat: Future[Map[String, Int]]): Future[SearchResult] = {
     def extractAggregationTheme(name: String, count: Int): List[(String, Int)] = {
       if(name.contains("theme")){
-        val themes = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
+        val themes: String = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
         themes.split(",").map(t => (t, count)).toList
       }
       else List((name, count))
@@ -337,7 +343,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
 
     val futureListThemeOpen: Future[List[(String, Int)]] = futureMapAggr.map(mapAggr => mapAggr("cat_cat").toList.flatMap(elem => extractAggregationTheme(elem._1, elem._2)))
     val futureCountNoThemeOpen: Future[Int] = futureListThemeOpen.map(listThemeOpen => listThemeOpen.filter(elem => elem._1.equals("[]") || elem._1.equals("")).map(elem => elem._2).sum)
-    val futureListNoTheme = for{
+    val futureListNoTheme: Future[List[(String, Int)]] = for{
       mapThemeNoCat <- futureMapNoCat
       countNoThemeOpen <- futureCountNoThemeOpen
     }  yield List(("no_category", mapThemeNoCat.values.sum + countNoThemeOpen))
@@ -372,7 +378,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       "trasporto" -> "TRAN"
     )
 
-    val searchTheme = search.split(" ").map(s =>
+    val searchTheme: List[String] = search.split(" ").map(s =>
       mapTheme.getOrElse(s, "")
     ).toList.filterNot(s => s.equals(""))
 
@@ -386,13 +392,13 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     status match {
       case Some(List()) => List()
       case Some(x) => {
-        val statusDataset = x.map {
+        val statusDataset: Seq[Boolean] = x.map {
           case "2" => false
           case _ => true
         }
         List(should(
           statusDataset.flatMap(s => List(termsQuery("dcatapit.privatex", s), termQuery("private", s))).toList :::
-            x.flatMap(s => List(termsQuery("published", s), termsQuery("status", s))).toList)
+            x.flatMap(s => List(termsQuery("status", s))).toList)
         )
       }
       case _ => List()
@@ -426,12 +432,11 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   private def ownerQueryString(owner: Option[String]): List[BoolQueryDefinition] = {
     owner match {
       case Some("") => List()
-      case Some(ownerName) => {
+      case Some(ownerName) =>
         List(should(
           must(termQuery("dcatapit.author", ownerName)),
           must(termQuery("user", ownerName))
         ))
-      }
       case None => List()
 
     }
@@ -468,14 +473,14 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   }
 
   private def filterDate(futureTupleSearchResults: Future[List[(String, SearchResult)]], timestamp: String): Future[List[(String, SearchResult)]] = {
-    val start = timestamp.split(" ")(0)
-    val end = timestamp.split(" ")(1)
+    val start: String = timestamp.split(" ")(0)
+    val end: String = timestamp.split(" ")(1)
     futureTupleSearchResults.map(tupleSearchResults => tupleSearchResults.filter(result => (result._1 >= start) && (result._1 <= end)))
   }
 
   private def themeFormatter(json: JsValue): String = {
-    val themeJson = (json \ "theme").getOrElse(Json.parse("no_category")).toString()
-    val themeString = if(themeJson.contains("theme")){
+    val themeJson: String = (json \ "theme").getOrElse(Json.parse("no_category")).toString()
+    val themeString: String = if(themeJson.contains("theme")){
       val listThemes: Array[String] = themeJson.toString.replace("\"[", "").replace("]\"", "").replace("},", "} # ").split(" # ")
       listThemes.map(elem => (Json.parse(elem.trim.replace("\\", "")) \ "theme").get).toList.map(s => s.toString().replace("\"", "")).mkString(",")
     } else themeJson
@@ -486,12 +491,12 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   private def createSearchResult(source: SearchHit, search: Boolean): SearchResult = {
     val sourceResponse: String = source.`type` match {
       case "ext_opendata" =>  {
-        val theme = themeFormatter(Json.parse(source.sourceAsString))
-        val k = source.sourceAsMap.updated("theme", theme)
-        val res = k.map(elem =>
+        val theme: String = themeFormatter(Json.parse(source.sourceAsString))
+        val sourceMap: Map[String, AnyRef] = source.sourceAsMap.updated("theme", theme)
+        val res: String = sourceMap.map(elem =>
           elem._2 match {
             case map: Map[String, AnyRef] =>
-              val value = map
+              val value: String = map
                 .map(child => s""""${child._1}":"${Try(child._2.toString.replaceAll("\"", "")).getOrElse("")}"""").mkString(",")
               s""""${elem._1}":{$value}"""
             case _ => s""""${elem._1}":"${Try(elem._2.toString.replaceAll("\"", "")).getOrElse("")}""""
@@ -501,7 +506,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       }
       case _ => source.sourceAsString
     }
-    val highlight = source.highlight match {
+    val highlight: Some[String] = source.highlight match {
       case mapHighlight: Map[String, Seq[String]] => {
         Some(
           "{" +
@@ -540,7 +545,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       case _ => res.map(r => r.sortWith(_._1 > _._1))
     }
 
-    val toReturn = result.map(r => r.map(elem => elem._2))
+    val toReturn: Future[List[SearchResult]] = result.map(r => r.map(elem => elem._2))
     toReturn onComplete (r => Logger.logger.debug(s"found ${r.getOrElse(List()).size}"))
     toReturn
   }
@@ -567,7 +572,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       case "ext_opendata" => Json.parse(source.replace("\\", "\\\"")) \ "modified"
       case _ => Json.parse(source) \ "timestamp"
     }
-    val date = result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", "") match {
+    val date: String = result.getOrElse(Json.parse("23/07/2017")).toString().replaceAll("\"", "") match {
       case "" => "23/07/2017"
       case x: String => x
     }
@@ -576,9 +581,9 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
 
   private def parseDate(date: String): String = {
     if(date.contains("/")){
-      val day = date.split("/")(0)
-      val month = date.split("/")(1)
-      val year = date.split("/")(2)
+      val day: String = date.split("/")(0)
+      val month: String = date.split("/")(1)
+      val year: String = date.split("/")(2)
       s"""$year-$month-$day"""
     }
     else if(date.contains("T")){
@@ -588,10 +593,10 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   }
 
   private def wrapAggrResp(listCount: List[AnyVal]): (String, Int) = {
-    if(listCount.length == 2) (listCount(0).toString, listCount(1).asInstanceOf[Int])
+    if(listCount.length == 2) (listCount.head.toString, listCount(1).asInstanceOf[Int])
     else {
-      val key = listCount(1).toString
-      val count = listCount(2).asInstanceOf[Int]
+      val key: String = listCount(1).toString
+      val count: Int = listCount(2).asInstanceOf[Int]
       (key, count)
     }
   }
@@ -601,54 +606,47 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     import scala.reflect.runtime.universe._
 
     val objType: universe.Type = obj match {
-      case "Dashboard" => typeOf[Dashboard]
-      case "User-Story" => typeOf[UserStory]
+      case "Datastory" => typeOf[Datastory]
     }
-    val fields = objType.members.collect{
+
+    objType.members.collect{
       case m: MethodSymbol if m.isCaseAccessor => m.name.toString
     }.toList
-    fields
   }
 
-  def searchLast(username: String, groups: List[String]) = {
+  def searchLast(username: String, groups: List[String]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
       "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
-    val fieldsStories = listFields("User-Story")
-    val fieldsDash = listFields("Dashboard")
+    val fieldsDatastory: List[String] = listFields("Datastory")
 
-    val queryDataset = queryHome("catalog_test", username, groups)
-    val queryOpendata = queryHome("ext_opendata", "", Nil)
-    val queryStories = queryHome("stories", username, groups)
-      .sortByFieldDesc("timestamp.keyword")
+    val queryDataset: SearchDefinition = queryHome("catalog_test", username, groups)
+    val queryOpendata: SearchDefinition = queryHome("ext_opendata", "", Nil)
+    val queryDatastory: SearchDefinition = queryHome("datastory", username, groups)
+      .sortByFieldDesc("timestamp")
       .size(3)
-    val queryDash = queryHome("dashboards", username, groups)
-      .sortByFieldDesc("timestamp.keyword")
-      .size(3)
-    val queryAggr = queryHome("", username, groups)
+    val queryAggr: SearchDefinition = queryHome("", username, groups)
 
     val resultFutureDataset: Future[SearchResponse] = executeQueryHome(client, queryDataset, fieldsDataset)
     val resultFutureOpendata: Future[SearchResponse] = executeQueryHome(client, queryOpendata, fieldsOpenData)
-    val resultFutureDash: Future[SearchResponse] = executeQueryHome(client, queryDash, fieldsDash)
-    val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
+    val resultFutureDatastory: Future[SearchResponse] = executeQueryHome(client, queryDatastory, fieldsDatastory)
     val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
-    val result = for{
-      resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
-      resFutureStories <- wrapResponseHome(resultFutureStories)
-      resFutureDash <- wrapResponseHome(resultFutureDash)
-      resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
-    } yield resFutureDataset ::: resFutureStories ::: resFutureDash ::: resFutureAggr
+    val result: Future[List[SearchResult]] = for{
+      resDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
+      resDatastory <- wrapResponseHome(resultFutureDatastory)
+      resAggr <- wrapAggrResponseHome(resultFutureAggr)
+    } yield resDataset ::: resDatastory ::: resAggr
 
     result onComplete{r => client.close(); Logger.logger.debug(s"found ${r.getOrElse(List()).size} results")}
 
     result
   }
 
-  def searchLastPublic(org: Option[String]) = {
+  def searchLastPublic(org: Option[String]): Future[List[SearchResult]] = {
     Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
     Logger.logger.debug(s"organization: $org")
 
@@ -656,32 +654,31 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     val fieldsDataset = List("dcatapit.name", "dcatapit.title", "dcatapit.modified", "dcatapit.privatex",
       "dcatapit.theme", "dcatapit.owner_org", "dcatapit.author", "operational.input_src")
     val fieldsOpenData = List("name", "title", "notes", "organization.name", "theme", "modified")
-    val fieldsStories = listFields("User-Story")
-    val fieldsDash = listFields("Dashboard")
+    val fieldsDatastory: List[String] = listFields("Datastory")
 
-    val queryDataset = queryHomePublic("catalog_test", org)
-    val queryOpendata = queryHomePublic("ext_opendata", org)
-    val queryStories = queryHomePublic("stories", org)
-      .sortByFieldDesc("timestamp.keyword")
+    val queryDataset: SearchDefinition = queryHomePublic("catalog_test", org)
+    val queryOpendata: SearchDefinition = queryHomePublic("ext_opendata", org)
+    val queryDatastory: SearchDefinition = queryHomePublic("datastory", org)
+      .sortByFieldDesc("timestamp")
       .size(3)
-    val queryAggr = queryHomePublic("", org)
+    val queryAggr: SearchDefinition = queryHomePublic("", org)
 
     val resultFutureDataset: Future[SearchResponse] = executeQueryHome(client, queryDataset, fieldsDataset)
     val resultFutureOpendata: Future[SearchResponse] = executeQueryHome(client, queryOpendata, fieldsOpenData)
-    val resultFutureStories: Future[SearchResponse] = executeQueryHome(client, queryStories, fieldsStories)
+    val resultFutureDatastory: Future[SearchResponse] = executeQueryHome(client, queryDatastory, fieldsDatastory)
     val resultFutureAggr: Future[SearchResponse] = executeAggrQueryHome(client, queryAggr)
 
     val result: Future[List[SearchResult]] = for{
-      resFutureDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
-      resFutureStories <- wrapResponseHome(resultFutureStories)
-      resFutureAggr <- wrapAggrResponseHome(resultFutureAggr)
-    }yield resFutureDataset ::: resFutureStories ::: resFutureAggr
+      resDataset <- extractAllLastDataset(wrapResponseHome(resultFutureDataset), wrapResponseHome(resultFutureOpendata))
+      resDatastory <- wrapResponseHome(resultFutureDatastory)
+      resAggr <- wrapAggrResponseHome(resultFutureAggr)
+    }yield resDataset ::: resDatastory ::: resAggr
 
     result onComplete {r => client.close(); Logger.logger.debug(s"found ${r.getOrElse(List()).size} results")}
     result
   }
 
-  private def queryHome(typeElastic: String, username: String, groups: List[String]) = {
+  private def queryHome(typeElastic: String, username: String, groups: List[String]): SearchDefinition = {
     search("ckan").types(typeElastic).query(
       boolQuery()
         .must(
@@ -691,31 +688,27 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
               must(termQuery("dcatapit.privatex", true), termQuery("dcatapit.author", username))
             ),
             termQuery("dcatapit.privatex", false),
-            must(termQuery("status", "0"), termQuery("user", username)),
-            must(termQuery("published", "0"), termQuery("user", username)),
-            must(termQuery("status", "1"), matchQuery("org", groups.mkString(" "))),
-            must(termQuery("published", "1"), matchQuery("org", groups.mkString(" "))),
-            termQuery("status", "2"),
-            termQuery("published", "2"),
-            termQuery("private", "false")
+            must(termQuery("status", 0), termQuery("user", username)),
+            must(termQuery("status", 1), matchQuery("org", groups.mkString(" "))),
+            termQuery("status", 2),
+            termQuery("private", false)
           )
         )
     )
   }
 
-  private def queryHomePublic(typeElastic: String, org: Option[String]) = {
-    def createTermQueryPublicHomeOrg(org: String) = {
+  private def queryHomePublic(typeElastic: String, org: Option[String]): SearchDefinition = {
+    def createTermQueryPublicHomeOrg(org: String): BoolQueryDefinition = {
       should(
         must(termQuery("dcatapit.owner_org", org), termQuery("dcatapit.privatex", false)),
-        must(termQuery("org", org), termQuery("published", "2")),
+        must(termQuery("org", org), termQuery("status", 2)),
         must(termQuery("organization.name", org), termQuery("private", false))
       )
     }
-    def createTermQueryPublicHomeNoOrg = {
+    def createTermQueryPublicHomeNoOrg: BoolQueryDefinition = {
       should(
         termQuery("dcatapit.privatex", false),
-        termQuery("status", "2"),
-        termQuery("published", "2"),
+        termQuery("status", 2),
         termQuery("private", false)
       )
     }
@@ -731,13 +724,13 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     )
   }
 
-  private def extractLastDataset(seqDatasetDaf: Seq[SearchResult]) = {
+  private def extractLastDataset(seqDatasetDaf: Seq[SearchResult]): List[(String, SearchResult)] = {
     seqDatasetDaf.map(
       d => (extractDate(d.`type`.get, d.source.get), d)
     ).toList.sortWith(_._1 > _._1).take(3)
   }
 
-  private def extractAllLastDataset(seqDatasetDaf: Future[Seq[SearchResult]], seqDatasetOpen: Future[List[SearchResult]]) = {
+  private def extractAllLastDataset(seqDatasetDaf: Future[Seq[SearchResult]], seqDatasetOpen: Future[List[SearchResult]]): Future[List[SearchResult]] = {
     val listDaf: Future[List[(String, SearchResult)]] = seqDatasetDaf map (daf => extractLastDataset(daf))
     val listOpen: Future[List[(String, SearchResult)]] = seqDatasetOpen map (open => extractLastDataset(open))
     val listDataset: Future[List[(String, SearchResult)]] = mergeListFuture(listDaf, listOpen)
@@ -760,10 +753,10 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     client.execute(query.sourceInclude(field))
   }
 
-  private def wrapAggrResponseHome(query: Future[SearchResponse]) = {
+  private def wrapAggrResponseHome(query: Future[SearchResponse]): Future[List[SearchResult]] = {
     query map(q => q.aggregations.map{ elem =>
-      val name = elem._1
-      val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+      val name: String = elem._1
+      val valueMap: Map[String, Int] = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
         .map(bucket => wrapAggrResp(bucket.values.toList)).map(v => v._1 -> v._2).toMap
       name -> valueMap
     }.map(elem =>SearchResult(Some(elem._1),Some("{" + elem._2.map(v => s""""${v._1}":"${v._2}"""").mkString(",") + "}"), None)).toList
@@ -772,7 +765,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
 
   private def wrapResponseHome(query: Future[SearchResponse]): Future[List[SearchResult]] = {
     query map (q => q.hits.hits.map(source =>
-      createSearchResult(source, false)
+      createSearchResult(source, search = false)
     ).toList)
   }
 

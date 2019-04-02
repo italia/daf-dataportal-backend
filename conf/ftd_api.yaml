@@ -769,6 +769,7 @@ paths:
       - Dashboard
       summary: Get Dashboards
       operationId: dashboards
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -811,6 +812,7 @@ paths:
         - Dashboard
       summary: Get Open Data Dashboards
       operationId: publicDashboards
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -1072,6 +1074,7 @@ paths:
       - Dashboard
       summary: Save Dashboard
       operationId: savedashboard
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -1107,6 +1110,7 @@ paths:
       - Dashboard
       summary: get dashboard by id
       operationId: dashboardsbyid
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -1136,6 +1140,7 @@ paths:
         - Dashboard
         summary: get dashboard by id, only open data
         operationId: publicDashboardsById
+        deprecated: true
         consumes:
            - application/json
         produces:
@@ -1165,6 +1170,7 @@ paths:
       - Dashboard
       summary: delete dashboard by id
       operationId: deletedashboard
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -1190,6 +1196,7 @@ paths:
       - UserStory
       summary: Get UserStories
       operationId: stories
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -1232,6 +1239,7 @@ paths:
         - UserStory
         summary: Get Open Data UserStories
         operationId: publicStories
+        deprecated: true
         produces:
           - application/json
         consumes:
@@ -1273,6 +1281,7 @@ paths:
       - UserStory
       summary: Save UserStory
       operationId: savestories
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -1308,6 +1317,7 @@ paths:
       - UserStory
       summary: get UserStory by id
       operationId: storiesbyid
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -1337,6 +1347,7 @@ paths:
         - UserStory
         summary: get UserStory by id, only open data
         operationId: publicStoriesbyid
+        deprecated: true
         consumes:
            - application/json
         produces:
@@ -1366,6 +1377,7 @@ paths:
       - UserStory
       summary: delete by id
       operationId: deletestory
+      deprecated: true
       consumes:
          - application/json
       produces:
