@@ -118,22 +118,6 @@ class DashboardRepositoryDev extends DashboardRepository {
     Some(Dashboard(None, None, None, None, None, None, None, None, None, None))
   }
 
-  def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]] = {
-    Future(List(SearchResult(None, None, None)))
-  }
-
-  def searchLast(username: String, groups: List[String]): Future[List[SearchResult]] = {
-    Future(List(SearchResult(None, None, None)))
-  }
-
-  def searchLastPublic(org: Option[String]): Future[List[SearchResult]] = {
-    Future(List(SearchResult(None, None, None)))
-  }
-
-  def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]] = {
-    Future(List(SearchResult(None, None, None)))
-  }
-
   def getAllDataApp: Seq[DataApp] = {
     Seq(DataApp(None, None, None, None, None, None))
   }

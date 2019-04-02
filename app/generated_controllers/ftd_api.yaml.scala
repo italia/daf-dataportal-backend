@@ -51,6 +51,7 @@ import java.net.URLEncoder
 import play.api.mvc.Headers
 import services.datastory.DatastoryRegistry
 import services.widgets.WidgetsRegistry
+import services.elasticsearch.ElasticsearchRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -59,7 +60,7 @@ import services.widgets.WidgetsRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                    
+    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -279,7 +280,7 @@ package ftd_api.yaml {
 
             val result = for {
               orgsWorks <- getUserOrgsWorkgroups(credentials.username)
-              out <- DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgsWorks.toList, limit)
+              out <- ElasticsearchRegistry.elasticsearchService.searchText(filters, credentials.username, orgsWorks.toList, limit)
             } yield out
             result flatMap (SearchFullText200(_))
           }
@@ -381,7 +382,7 @@ package ftd_api.yaml {
         val searchLastPublic = searchLastPublicAction { (org: DistributionLabel) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLastPublic
             RequestContext.execInContext[Future[SearchLastPublicType[T] forSome { type T }]]("searchLastPublic") { () =>
-            SearchLastPublic200(DashboardRegistry.dashboardService.searchLastPublic(org))
+            SearchLastPublic200(ElasticsearchRegistry.elasticsearchService.searchLastPublic(org))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLastPublic
         }
@@ -635,7 +636,7 @@ package ftd_api.yaml {
             val (filters, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
             RequestContext.execInContext[Future[SearchFullTextPublicType[T] forSome { type T }]]("searchFullTextPublic") { () =>
-            SearchFullTextPublic200(DashboardRegistry.dashboardService.searchTextPublic(filters, limit))
+            SearchFullTextPublic200(ElasticsearchRegistry.elasticsearchService.searchTextPublic(filters, limit))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
         }
@@ -669,6 +670,7 @@ package ftd_api.yaml {
               case Left(l) => CreateSubscription500(l)
             }
           }
+//          NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSubscription
         }
         val deleteDataApplication = deleteDataApplicationAction { (data_app: DataApp) =>  
@@ -719,7 +721,7 @@ package ftd_api.yaml {
             val result = for {
               orgsWorks <- getUserOrgsWorkgroups(credentials.username)
               out <- Future.successful {
-                DashboardRegistry.dashboardService.searchLast(credentials.username, orgsWorks.toList)
+                ElasticsearchRegistry.elasticsearchService.searchLast(credentials.username, orgsWorks.toList)
               }
             } yield out
             result flatMap (SearchLast200(_))
