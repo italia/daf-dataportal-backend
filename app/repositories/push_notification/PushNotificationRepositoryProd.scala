@@ -1,9 +1,8 @@
 package repositories.push_notification
 
 import com.mongodb
-import com.mongodb.{BasicDBObject, DBCollection}
-import com.mongodb.casbah.Imports.{MongoCredential, ServerAddress}
-import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.BasicDBObject
+import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.casbah.query.Imports.DBObject
 import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
@@ -458,7 +457,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoDB = mongoClient(dbName)
     val collection = mongoDB(collNotificationName)
     val query = new BasicDBObject("user", sysAdminName)
-    val results = collection.find(query).toList
+    val results = collection.find(query).sort(MongoDBObject("createDate" -> 1)).toList
     if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Right(Seq[Notification]()))}
     else{
       val notificationsSeq = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
@@ -472,7 +471,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoDB = mongoClient(dbName)
     val collection = mongoDB(collNotificationName)
     val query = new BasicDBObject("user", openDataUser)
-    val results = collection.find(query).toList
+    val results = collection.find(query).sort(MongoDBObject("createDate" -> 1)).toList
     if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Right(Seq[Notification]()))}
     else{
       val notificationsSeq = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
