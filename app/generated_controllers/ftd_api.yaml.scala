@@ -60,7 +60,7 @@ import services.elasticsearch.ElasticsearchRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-    
+                                                                            
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -400,6 +400,7 @@ package ftd_api.yaml {
               def parseError(error: Error) = {
                 error.code match {
                   case Some(401) => SaveDatastory401(error)
+                  case Some(403) => SaveDatastory403(error)
                   case _         => SaveDatastory500(error)
                 }
               }
@@ -561,6 +562,7 @@ package ftd_api.yaml {
             def parseError(error: Error) = {
               error.code match {
                 case Some(401) => SystemNotificationInsert401(error)
+                case Some(403) => SystemNotificationInsert403(error)
                 case _         => SystemNotificationInsert500(error)
               }
             }

@@ -874,6 +874,10 @@ paths:
           description: Unauthorized to save
           schema:
             $ref: '#/definitions/Error'
+        403:
+          description: Try to save a datastory with too much caracters or too much widgets
+          schema:
+            $ref: '#/definitions/Error'
         500:
           description: Unexpected error
           schema:
@@ -2180,6 +2184,10 @@ paths:
           description: unauthorized
           schema:
             $ref: '#/definitions/Error'
+        403:
+          description: invalid notification object
+          schema:
+            $ref: '#/definitions/Error'
         500:
           description: error in insert into kafka
           schema:
@@ -2892,7 +2900,7 @@ definitions:
   SysNotificationInfo:
     type: object
     required:
-      - descritpion
+      - description
       - title
       - endDate
     properties:
