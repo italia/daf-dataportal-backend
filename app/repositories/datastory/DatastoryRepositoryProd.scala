@@ -34,16 +34,25 @@ class DatastoryRepositoryProd extends DatastoryRepository {
 
   private val collection = MongoClient(server, List(credentials))(source)(collectionName)
 
+  private val maxWidgetsNumber = 50
+  private val maxTextSize = 10500
+
+  private def validateWidgetsNumeber(datastory: Datastory): Boolean = datastory.widgets.size < maxWidgetsNumber
+  private def validateTextSize(datastory: Datastory): Boolean = !datastory.widgets.exists(w => w.text.isDefined && w.text.get.length > maxTextSize)
+
   override def saveDatastory(user: String, datastory: Datastory): Future[Either[Error, Success]] = {
-    datastory.id match {
-      case Some(id) =>
-        updateDatastory(user, id, datastory)
-      case None =>
-        val uid: String = UUID.randomUUID().toString
-        val timestamp = ZonedDateTime.now().toString
-        val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamp))
-        insertDatastory(user, uid, newDatastory)
-    }
+    if(validateTextSize(datastory) || validateWidgetsNumeber(datastory) )
+      Future.successful(Left(Error(Some(403), Some("datastory too mutch size."), Some(s"[text size] ${validateTextSize(datastory)}, [widgets number] ${validateWidgetsNumeber(datastory)}"))))
+    else
+      datastory.id match {
+        case Some(id) =>
+          updateDatastory(user, id, datastory)
+        case None =>
+          val uid: String = UUID.randomUUID().toString
+          val timestamp: String = ZonedDateTime.now().toString
+          val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamp))
+          insertDatastory(user, uid, newDatastory)
+      }
   }
 
   private def insertDatastory(user: String, id: String, datastory: Datastory) = {

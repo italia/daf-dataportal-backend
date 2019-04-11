@@ -231,7 +231,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     val result = coll.insert(obj)
     val response = if(result.wasAcknowledged()){
-      logger.debug(s"notification saved in mongo")
+      logger.debug(s"notification saved in mongo: ${notification.offset}, ${notification.user}")
       Right(Success(Some(s"notification saved in mongo"), None))
     }
     else{
@@ -343,7 +343,6 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       Logger.logger.debug(s"calling updateNotifications for ${notifications.map(n => s"{offset: ${n.offset}, user: ${n.user}}").mkString(", ")}")
       updateNotifications(notifications.map(n => n.copy(status = 1)))
     }
-
     Future.successful(notifications)
   }
 
@@ -368,17 +367,17 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     Future.successful(LastOffset(offset))
   }
 
-  override def systemNotificationInsert(sysNotificationInfo: SysNotificationInfo, token: String, ws: WSClient): Future[Either[Error, Success]] = {
+  private def sendToKafka(sysNotificationInfo: SysNotificationInfo, token: String, ws: WSClient): Future[Either[Error, Success]] = {
     val jsonString =
       s"""
-        |{
-        |"topicName":"notification",
-        |"description":"${sysNotificationInfo.description.orNull}",
-        |"notificationType":"system",
-        |"title":"${sysNotificationInfo.title}",
-        |"expirationDate":"${sysNotificationInfo.endDate}",
-        |"group":"$openDataGroup"
-        |}
+         |{
+         |"topicName":"notification",
+         |"description":"${sysNotificationInfo.description}",
+         |"notificationType":"system",
+         |"title":"${sysNotificationInfo.title}",
+         |"expirationDate":"${sysNotificationInfo.endDate}",
+         |"group":"$openDataGroup"
+         |}
       """.stripMargin
 
     val url = s"$catalogManagerHost/$catalogManagerNotificationPath"
@@ -396,6 +395,13 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         case _         => Logger.debug(s"500 --> ${res.status}: ${res.body}"); Left(Error(Some(500), Some(res.body), None))
       }
     }
+  }
+
+  override def systemNotificationInsert(sysNotificationInfo: SysNotificationInfo, token: String, ws: WSClient): Future[Either[Error, Success]] = {
+    if(sysNotificationInfo.description.equals("") || sysNotificationInfo.title.equals(""))
+      { logger.debug(s"[notification ${sysNotificationInfo.title}] title or description missing"); Future.successful(Left(Error(Some(403), Some("title or description missing"), None))) }
+    else
+      sendToKafka(sysNotificationInfo, token, ws)
   }
 
   def deleteSystemNotificationByOffset(offset: Int): Future[Either[Error, Success]] = {
@@ -416,10 +422,11 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     def parseDate(endDate: String) = Try{new DateTime(endDate.replace("_", "T").concat("Z")).toDate}
 
     def createQueryUpdateFields = {
-      notificationInfo.description match {
-        case Some(desc) => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", parseDate(notificationInfo.endDate).getOrElse(null)).append("info.description", desc))
-        case None       => new BasicDBObject("$set", new BasicDBObject("status", 0).append("info.title", notificationInfo.title).append("endDate", parseDate(notificationInfo.endDate).getOrElse(null)))
-      }
+      new BasicDBObject("$set", new BasicDBObject("status", 0)
+        .append("info.title", notificationInfo.title)
+        .append("endDate", parseDate(notificationInfo.endDate).getOrElse(null))
+        .append("info.description", notificationInfo.description)
+      )
     }
 
     val mongoClient = MongoClient(server, List(credentials))

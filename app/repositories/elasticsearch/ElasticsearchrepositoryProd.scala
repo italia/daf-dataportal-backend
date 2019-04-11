@@ -2,7 +2,7 @@ package repositories.elasticsearch
 
 import com.sksamuel.elastic4s.http.ElasticDsl.{boolQuery, existsQuery, highlight, matchQuery, missingAgg, must, search, should, termQuery, termsAgg, termsQuery}
 import com.sksamuel.elastic4s.searches.queries.{BoolQueryDefinition, QueryDefinition}
-import ftd_api.yaml.{Dashboard, Datastory, Filters, SearchResult, UserStory}
+import ftd_api.yaml.{Datastory, Filters, SearchResult}
 import play.api.Logger
 import play.api.libs.json.{JsLookupResult, JsValue, Json}
 import utils.ConfigReader
@@ -13,6 +13,7 @@ import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.searches.SearchDefinition
 import org.elasticsearch.index.query.Operator
 
+import scala.collection.parallel.immutable.{ParMap, ParSeq}
 import scala.concurrent.Future
 import scala.util.Try
 import scala.concurrent.ExecutionContext.Implicits._
@@ -24,7 +25,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   private val elasticsearchMaxResult = ConfigReader.getElastcsearchMaxResult
 
   def searchText(filters: Filters, username: String, groups: List[String], limit: Option[Int]): Future[List[SearchResult]] = {
-    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort limit: $limit")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "ckan"
@@ -95,7 +96,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       ).limit(limitResult)
     }
 
-    val query = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
+    val query: SearchDefinition = queryElasticsearch(limitParam, searchType).sourceInclude(fieldToReturn)
       .aggregations(
         termsAgg("type", "_type"),
         termsAgg("status_ds", "status"),
@@ -143,7 +144,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   }
 
   def searchTextPublic(filters: Filters, limit: Option[Int]): Future[List[SearchResult]] = {
-    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort")
+    Logger.logger.debug(s"elasticsearchUrl: $elasticsearchUrl elasticsearchPort: $elasticsearchPort  limit: $limit")
 
     val client = HttpClient(ElasticsearchClientUri(elasticsearchUrl, elasticsearchPort))
     val index = "ckan"
@@ -274,12 +275,12 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   }
 
   private def createAggregationResponse(resAggr: Future[Map[String, AnyRef]], responseNoCat: Option[Future[Map[String, AnyRef]]]) = {
-    val  futureMapAggr: Future[Map[String, Map[String, Int]]] = resAggr
+    val futureMapAggr: Future[ParMap[String, Map[String, Int]]] = resAggr
       .map(mapAggr =>
-        mapAggr
+        mapAggr.par
           .map{ elem =>
-            val name = elem._1
-            val valueMap = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
+            val name: String = elem._1
+            val valueMap: Map[String, Int] = elem._2.asInstanceOf[Map[String, Any]]("buckets").asInstanceOf[List[Map[String, AnyVal]]]
               .map(elemMap =>
                 wrapAggrResp(elemMap.values.toList)
               ).map(v => v._1 -> v._2).toMap
@@ -287,9 +288,9 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
           }
       )
 
-    val futureMapNoCat: Future[Map[String, Int]] = responseNoCat match {
-      case Some(futureRespNoCat) => futureRespNoCat.map(mapNoCat => mapNoCat.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count"))))
-      case None => Future(Map[String, Int]())
+    val futureMapNoCat: Future[ParMap[String, Int]] = responseNoCat match {
+      case Some(futureRespNoCat) => futureRespNoCat.map(mapNoCat => mapNoCat.par.map(elem => (elem._1, elem._2.asInstanceOf[Map[String, Int]]("doc_count"))))
+      case None => Future(ParMap[String, Int]())
     }
 
     val futureRespAggr = for{
@@ -302,11 +303,11 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     futureRespAggr
   }
 
-  private def parseAggrType(futureMapAggr: Future[Map[String, Map[String, Int]]]) = {
+  private def parseAggrType(futureMapAggr: Future[ParMap[String, Map[String, Int]]]) = {
     futureMapAggr.map(mapAggr => SearchResult(Some("type"), Some("{" + mergeAggr(mapAggr("type").toList).mkString(",") + "}"), None))
   }
 
-  private def parseAggrOrg(futureMapAggr: Future[Map[String, Map[String, Int]]]) = {
+  private def parseAggrOrg(futureMapAggr: Future[ParMap[String, Map[String, Int]]]) = {
     val futureListAggrOrg = for{
       orgCat <- futureMapAggr.map(mapAggr => mapAggr("org_cat").toList)
       orgExt <- futureMapAggr.map(mapAggr => mapAggr("org_ext").toList)
@@ -316,7 +317,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     futureListAggrOrg.map(listAggrOrg => SearchResult(Some("organization"), Some("{" + mergeAggr(listAggrOrg).mkString(",") + "}"), None))
   }
 
-  private def parseAggrStatus(futureMapAggr: Future[Map[String, Map[String, Int]]]): Future[SearchResult] = {
+  private def parseAggrStatus(futureMapAggr: Future[ParMap[String, Map[String, Int]]]): Future[SearchResult] = {
     def convertAggrDataset(mapStatus: Map[String, Int]) = {
       val countTrue: Int = mapStatus.getOrElse("true", 0)
       val countFalse: Int = mapStatus.getOrElse("false", 0)
@@ -332,7 +333,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     futureListStatus.map(listStatus => SearchResult(Some("status"), Some("{" + mergeAggr(listStatus).mkString(",") + "}"), None))
   }
 
-  private def parseAggrTheme(futureMapAggr: Future[Map[String, Map[String, Int]]], futureMapNoCat: Future[Map[String, Int]]): Future[SearchResult] = {
+  private def parseAggrTheme(futureMapAggr: Future[ParMap[String, Map[String, Int]]], futureMapNoCat: Future[ParMap[String, Int]]): Future[SearchResult] = {
     def extractAggregationTheme(name: String, count: Int): List[(String, Int)] = {
       if(name.contains("theme")){
         val themes: String = (Json.parse(name) \\ "theme").repr.map(theme => theme.toString().replace("\"", "")).mkString(",")
@@ -447,8 +448,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
       case Some(true) => {
         List(should(
           must(matchQuery("operational.acl.groupName", groups.mkString(" ")).operator("OR"))
-        )
-        )
+        ))
       }
       case _ => List()
     }
@@ -472,7 +472,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     List(should(result))
   }
 
-  private def filterDate(futureTupleSearchResults: Future[List[(String, SearchResult)]], timestamp: String): Future[List[(String, SearchResult)]] = {
+  private def filterDate(futureTupleSearchResults: Future[ParSeq[(String, SearchResult)]], timestamp: String): Future[ParSeq[(String, SearchResult)]] = {
     val start: String = timestamp.split(" ")(0)
     val end: String = timestamp.split(" ")(1)
     futureTupleSearchResults.map(tupleSearchResults => tupleSearchResults.filter(result => (result._1 >= start) && (result._1 <= end)))
@@ -490,7 +490,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
 
   private def createSearchResult(source: SearchHit, search: Boolean): SearchResult = {
     val sourceResponse: String = source.`type` match {
-      case "ext_opendata" =>  {
+      case "ext_opendata" =>
         val theme: String = themeFormatter(Json.parse(source.sourceAsString))
         val sourceMap: Map[String, AnyRef] = source.sourceAsMap.updated("theme", theme)
         val res: String = sourceMap.map(elem =>
@@ -503,11 +503,10 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
           }
         ).mkString(",").replaceAll("\n", "").replaceAll("\r", "").replaceAll("\t", "")
         "{" + res + "}"
-      }
       case _ => source.sourceAsString
     }
     val highlight: Some[String] = source.highlight match {
-      case mapHighlight: Map[String, Seq[String]] => {
+      case mapHighlight: Map[String, Seq[String]] =>
         Some(
           "{" +
             mapHighlight.map(x =>
@@ -518,7 +517,6 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
             ).mkString(",")
             + "}"
         )
-      }
       case _ => Some("{}")
     }
 
@@ -526,23 +524,23 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
   }
 
   private def wrapResponse(query: Future[SearchResponse], order: String, search: Boolean, timestamp: Option[String]): Future[List[SearchResult]] = {
-    val futureTupleSearchResult: Future[List[(String, SearchResult)]] = query.map(q =>
-      q.hits.hits.map(source =>
+    val futureTupleSearchResult: Future[ParSeq[(String, SearchResult)]] = query.map(q =>
+      q.hits.hits.par.map(source =>
         createSearchResult(source, search)
-      ).toList.map(searchResult => (extractDate(searchResult.`type`.get, searchResult.source.get), searchResult))
+      ).toList.par.map(searchResult => (extractDate(searchResult.`type`.get, searchResult.source.get), searchResult))
     )
 
-    val res: Future[List[(String, SearchResult)]] = timestamp match {
+    val res: Future[ParSeq[(String, SearchResult)]] = timestamp match {
       case Some("") => futureTupleSearchResult
       case Some(x) => filterDate(futureTupleSearchResult, x)
       case None => futureTupleSearchResult
     }
 
     val result: Future[List[(String, SearchResult)]] = order match {
-      case "score" => res
+      case "score" => res.map(_.toList)
       case "a-z" | "z-a" => orderByName(res, order)
-      case "asc" => res.map(r => r.sortWith(_._1 < _._1))
-      case _ => res.map(r => r.sortWith(_._1 > _._1))
+      case "asc" => res.map(r => r.toList.sortWith(_._1 < _._1))
+      case _ => res.map(r => r.toList.sortWith(_._1 > _._1))
     }
 
     val toReturn: Future[List[SearchResult]] = result.map(r => r.map(elem => elem._2))
@@ -550,7 +548,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
     toReturn
   }
 
-  private def orderByName(futureListSearchResult: Future[List[(String, SearchResult)]], order: String) = {
+  private def orderByName(futureListSearchResult: Future[ParSeq[(String, SearchResult)]], order: String) = {
     futureListSearchResult.map{ listSearchResult =>
       val listTuple: List[(String, String, SearchResult)] = listSearchResult.map{ searchResult =>
         val title: String = searchResult._2.`type` match {
@@ -558,7 +556,7 @@ class ElasticsearchrepositoryProd extends ElasticsearchRepository {
           case _ => (Json.parse(searchResult._2.source.get) \ "title").get.toString()
         }
         (title, searchResult._1, searchResult._2)
-      }
+      }.toList
       order match {
         case "a-z" => listTuple.sortWith(_._1 < _._1).map(t => (t._2, t._3))
         case "z-a" => listTuple.sortWith(_._1 > _._1).map(t => (t._2, t._3))
