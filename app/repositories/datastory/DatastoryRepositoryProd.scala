@@ -41,8 +41,6 @@ class DatastoryRepositoryProd extends DatastoryRepository {
   private def validateTextSize(datastory: Datastory): Boolean = !datastory.widgets.exists(w => w.text.isDefined && w.text.get.length > maxTextSize)
 
   override def saveDatastory(user: String, datastory: Datastory): Future[Either[Error, Success]] = {
-    println(s"[text size] ${validateTextSize(datastory)} ${datastory.widgets.foreach(w => if(w.text.isDefined) println("lenght: " + w.text.get.length) else println("non definito"))}")
-    println(s"[widgets number] ${validateWidgetsNumeber(datastory)} => ${datastory.widgets.size}")
     if(validateTextSize(datastory) || validateWidgetsNumeber(datastory) )
       Future.successful(Left(Error(Some(403), Some("datastory too mutch size."), Some(s"[text size] ${validateTextSize(datastory)}, [widgets number] ${validateWidgetsNumeber(datastory)}"))))
     else
