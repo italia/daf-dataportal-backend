@@ -283,7 +283,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val results = mongoDB(collNotificationName)
       .find(composeQuery(SimpleQuery(QueryComponent("user", user))))
       .limit(limit.getOrElse(0))
-      .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
+      .sort(composeQuery(SimpleQuery(QueryComponent("createDate",-1))))
       .toList
     mongoClient.close()
     val notifications = validateSeqNotification(Json.parse(com.mongodb.util.JSON.serialize(results)).as[JsArray])
@@ -332,7 +332,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoDB = mongoClient(dbName)
     val results = mongoDB(collNotificationName)
       .find(composeQuery(MultiQuery(seqQueryConditions)))
-      .sort(composeQuery(SimpleQuery(QueryComponent("timestamp",-1))))
+      .sort(composeQuery(SimpleQuery(QueryComponent("createDate",-1))))
       .toList
     mongoClient.close()
 
