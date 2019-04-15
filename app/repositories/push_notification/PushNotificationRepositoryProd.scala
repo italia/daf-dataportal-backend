@@ -5,7 +5,7 @@ import com.mongodb.BasicDBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KafkaOffsett, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
 import org.joda.time.DateTime
 import play.api.Logger
 import utils.ConfigReader
@@ -31,6 +31,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
   private val collNotificationName = ConfigReader.getCollNotificationName
   private val collSubscriptionName = ConfigReader.getCollSubscriptionName
+  private val collKafkaOffset = ConfigReader.getCollKafkaOffsets
 
   val server = new ServerAddress(mongoHost, mongoPort)
   val credentials = MongoCredential.createCredential(userName, dbName, password.toCharArray)
@@ -156,8 +157,6 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     else { Logger.debug("successful get ttl"); Future.successful(Right(seqKeyIntValue.map{v => v.get}.filterNot(v => v.name.equals(sysNotificationTypeName)))) }
   }
 
-
-
   override def updateTtl(ttl: Seq[KeysIntValue]): Future[Either[Error, Success]] = {
 
     def keyValidation = { ttl.map{ elem => (elem.name, mapIndexinfo.contains(elem.name))} }
@@ -176,6 +175,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
 
     if(keyValidation.forall(x => x._2)){
       val result = ttl.map{ keysIntValue =>
+        logger.debug(s"update index ${keysIntValue.name} to value ${keysIntValue.value}")
         (keysIntValue.name, update(mongoDB, mapIndexinfo(keysIntValue.name), keysIntValue.value))
       }
 
@@ -314,7 +314,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         offset = (json \ "offset").as[Int],
         status = (json \ "status").as[Int],
         user = (json \ "user").as[String],
-        notificationtype = (json \ "notificationtype").asOpt[String],
+        notificationtype = (json \ "notificationtype").as[String],
         createDate = parseDate(json \ "createDate" \ "$date").get,
         info = (json \ "info").asOpt[InfoNotification],
         endDate = parseDate(json \ "endDate" \ "$date")
@@ -346,25 +346,37 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     Future.successful(notifications)
   }
 
-  override def getLastOffset(notificationType: String): Future[LastOffset] = {
+  override def getLastOffset(topicName: String): Future[Either[Error, Long]] = {
+
+    def validateLastOffset(json: JsValue) = {
+      Try{
+        KafkaOffsett(
+          topicName = (json \ "topicName").as[String],
+          offset = (json \ "offset").as[Long]
+        )
+      } match {
+        case Failure(error)             =>
+          logger.debug(s"[validate lastOffset] error: $error")
+          Left(Error(Some(500), Some(error.getMessage), None))
+        case util.Success(kafkaOffsett) =>
+          logger.debug(s"[validate lastOffset] success: ${kafkaOffsett.topicName} ${kafkaOffsett.offset}")
+          Right(kafkaOffsett.offset)
+      }
+    }
 
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
-    val results = mongoDB(collNotificationName)
-      .find(composeQuery(SimpleQuery(QueryComponent("notificationtype", notificationType))))
-      .sort(composeQuery(SimpleQuery(QueryComponent("offset",1))))
-      .limit(1)
-      .one()
-    mongoClient.close()
-    val jsonString = com.mongodb.util.JSON.serialize(results)
-    val json = Json.parse(jsonString)
-    val offset = validateNotification(json) match {
-      case Right(notification) => notification.offset
-      case Left(error)         => logger.debug(error.getMessage); 0
-    }
+    val query = composeQuery(SimpleQuery(QueryComponent("topicName", topicName)))
 
-    logger.debug(s"getLastOffset for $notificationType: $offset")
-    Future.successful(LastOffset(offset))
+    logger.debug(s"[validate lastOffset]query -> $query")
+
+    val results = mongoDB(collKafkaOffset)
+      .find(query)
+      .limit(1)
+    mongoClient.close()
+    val jsonString: String = com.mongodb.util.JSON.serialize(results)
+    val json: JsValue = Json.parse(jsonString)
+    Future.successful(validateLastOffset(json))
   }
 
   private def sendToKafka(sysNotificationInfo: SysNotificationInfo, token: String, ws: WSClient): Future[Either[Error, Success]] = {
@@ -525,6 +537,23 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
       logger.debug(s"${deleteTTLNotificationsInfo.keyName} not found in configuration file")
       Future.successful(Left(Error(Some(500), Some(s"${deleteTTLNotificationsInfo.keyName} not found in configuration file"), None)))
     }
+  }
+
+  override def updateKafkaOffset(kafkaOffsett: KafkaOffsett): Future[Either[Error, Success]] = {
+    val mongoClient = MongoClient(server, List(credentials))
+    val mongoDB = mongoClient(dbName)
+    val collection = mongoDB(collKafkaOffset)
+    val query = MongoDBObject("topicName" -> kafkaOffsett.topicName)
+    val response = collection.update(query, new BasicDBObject("$set", new BasicDBObject("offset", kafkaOffsett.offset)))
+    if(response.isUpdateOfExisting){
+      logger.debug(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}")
+      Future.successful(Right(Success(Some(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+    } else {
+      logger.debug(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}")
+      Future.successful(Left(Error(Some(500), Some(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+    }
+
+
   }
 }
 

@@ -1,7 +1,7 @@
 package services.push_notification
 
 import play.api.{Configuration, Environment}
-import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KafkaOffsett, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
 import play.api.libs.ws.WSClient
 import repositories.push_notification.{PushNotificationRepository, PushNotificationRepositoryComponent}
 
@@ -43,8 +43,8 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.checkNewNotifications(user)
     }
 
-    def getLastOffset(notificationType: String): Future[LastOffset] = {
-      pushNotificationRepository.getLastOffset(notificationType)
+    def getLastOffset(topicName: String): Future[Either[Error, Long]] = {
+      pushNotificationRepository.getLastOffset(topicName)
     }
 
     def updateTtl(ttl: Seq[KeysIntValue]): Future[Either[Error, Success]] = {
@@ -86,6 +86,11 @@ trait PushNotificationServiceComponent {
     def deleteTtl(deleteTTLNotificationsInfo: DeleteTTLNotificationInfo): Future[Either[Error, Success]] = {
       pushNotificationRepository.deleteTtl(deleteTTLNotificationsInfo)
     }
+
+    def updateKafkaOffset(kafkaOffsett: KafkaOffsett): Future[Either[Error, Success]] = {
+      pushNotificationRepository.updateKafkaOffset(kafkaOffsett)
+    }
+
   }
 }
 

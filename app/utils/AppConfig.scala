@@ -37,6 +37,7 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val databaseRoot: Option[String] = playConfig.getString("mongo.databaseAdmin")
   val collNotificationName: Option[String] = playConfig.getString("mongo.collNotificationName")
   val collSubscriptionName: Option[String] = playConfig.getString("mongo.collSubscriptionName")
+  val collKafkaOffsets: Option[String] = playConfig.getString("mongo.collKafkaOffsets")
 
   val securityManHost :Option[String] = playConfig.getString("security.manager.host")
 
@@ -68,9 +69,9 @@ class AppConfig @Inject()(playConfig: Configuration) {
   val datasetUserOpendataEmail: Option[String] = playConfig.getString("dataset-manager.email")
   val datasetUserOpendataPwd: Option[String] = playConfig.getString("dataset-manager.pwd")
 
-  val notificationInfo = playConfig.getConfigSeq("notificationType")
+  val notificationInfo: Option[Seq[Configuration]] = playConfig.getConfigSeq("notificationType")
 
-  val sysNotificationTypeName = playConfig.getString("systemNotificationTypeName")
+  val sysNotificationTypeName: Option[String] = playConfig.getString("systemNotificationTypeName")
 
 
 }
@@ -90,31 +91,32 @@ object ConfigReader {
   require(config.databaseRoot.nonEmpty, "The mongo database root must be specified")
   require(config.notificationInfo.nonEmpty, "NotificationInfo must be specified")
   require(config.openDataUser.nonEmpty, "Open data user must be specified")
+  require(config.collKafkaOffsets.nonEmpty, "Collection of kafka offsets must be specified")
 
 
-  def getOpenDataGroup = config.openDataGroup.get
-  def getOpenDataUser = config.openDataUser.get
+  def getOpenDataGroup: String = config.openDataGroup.get
+  def getOpenDataUser: String = config.openDataUser.get
 
   def getDbHost: String = config.dbHost.getOrElse("localhost")
   def getDbPort: Int = config.dbPort.getOrElse(27017)
-  def getCkanHost = config.ckanHost.getOrElse("localhost")
-  def getCkanApiKey = config.ckanApiKey.getOrElse("dsadsadas")
-  def getLocalUrl = config.localUrl.getOrElse("http://localhost:9000")
+  def getCkanHost: String = config.ckanHost.getOrElse("localhost")
+  def getCkanApiKey: String = config.ckanApiKey.getOrElse("dsadsadas")
+  def getLocalUrl: String = config.localUrl.getOrElse("http://localhost:9000")
 
-  def getMetabaseUrl = config.metabaseURL.getOrElse("http://localhost:13479")
-  def getMetaUser = config.metauser.getOrElse("ale.ercolani@gmail.com")
-  def getMetaPass = config.metapass.getOrElse("password")
+  def getMetabaseUrl: String = config.metabaseURL.getOrElse("http://localhost:13479")
+  def getMetaUser: String = config.metauser.getOrElse("ale.ercolani@gmail.com")
+  def getMetaPass: String = config.metapass.getOrElse("password")
 
-  def getSupersetUrl = config.supersetURL.getOrElse("http://localhost:8088")
-  def getSupersetOpenDataUrl = config.supersetOpenDataUrl.getOrElse("")
-  def getSupersetUser = config.supersetUser.getOrElse("alessandro")
-  def getSupersetPass = config.supersetPass.getOrElse("password")
-  def getSupersetOpenDataUser = config.supersetOpenDataUser.getOrElse("")
-  def getSupersetOpenDataPwd = config.supersetOpenDataPwd.getOrElse("")
+  def getSupersetUrl: String = config.supersetURL.getOrElse("http://localhost:8088")
+  def getSupersetOpenDataUrl: String = config.supersetOpenDataUrl.getOrElse("")
+  def getSupersetUser: String = config.supersetUser.getOrElse("alessandro")
+  def getSupersetPass: String = config.supersetPass.getOrElse("password")
+  def getSupersetOpenDataUser: String = config.supersetOpenDataUser.getOrElse("")
+  def getSupersetOpenDataPwd: String = config.supersetOpenDataPwd.getOrElse("")
 
-  def getGrafanaUrl = config.grafanaURL.getOrElse("TO DO")
+  def getGrafanaUrl: String = config.grafanaURL.getOrElse("TO DO")
 
-  def getTdMetabaseURL = config.tdMetabaseURL.getOrElse("https://dashboard.teamdigitale.governo.it")
+  def getTdMetabaseURL: String = config.tdMetabaseURL.getOrElse("https://dashboard.teamdigitale.governo.it")
 
   def database :String = config.database.getOrElse("monitor_mdb")
   def databaseRoot: String = config.databaseRoot.get
@@ -124,6 +126,7 @@ object ConfigReader {
   def userRoot: String = config.userRoot.get
   def getCollNotificationName: String = config.collNotificationName.get
   def getCollSubscriptionName: String = config.collSubscriptionName.get
+  def getCollKafkaOffsets: String = config.collKafkaOffsets.get
 
   def getSysAdminName: String = config.sysAdminName.get
 
@@ -133,25 +136,25 @@ object ConfigReader {
 
   def cookieExpiration:Long = config.cookieExpiration.getOrElse(30L)// 30 min by default
   // TODO think about a defaul ingestion mechanism without kylo
-  def kyloUrl = config.kyloUrl.getOrElse("No default")
-  def kyloInferUrl = config.kyloInferUrl.getOrElse("No default")
-  def kyloSystemUrl = config.kyloSystemUrl.getOrElse("No default")
-  def kyloCsvSerde = config.kyloCsvSerde.getOrElse("No default")
-  def kyloJsonSerde = config.kyloJsonSerde.getOrElse("No default")
-  def kyloUser = config.kyloUser.getOrElse("dladmin")
-  def kyloPwd = config.kyloPassword.getOrElse("XXXXXXXXX")
+  def kyloUrl: String = config.kyloUrl.getOrElse("No default")
+  def kyloInferUrl: String = config.kyloInferUrl.getOrElse("No default")
+  def kyloSystemUrl: String = config.kyloSystemUrl.getOrElse("No default")
+  def kyloCsvSerde: String = config.kyloCsvSerde.getOrElse("No default")
+  def kyloJsonSerde: String = config.kyloJsonSerde.getOrElse("No default")
+  def kyloUser: String = config.kyloUser.getOrElse("dladmin")
+  def kyloPwd: String = config.kyloPassword.getOrElse("XXXXXXXXX")
 
-  def getElasticsearchUrl = config.elasticsearchUrl.get
-  def getElasticsearchPort = config.elasticsearchPort.getOrElse(9200)
-  def getElastcsearchMaxResult = config.elastisearchMaxResult.get
+  def getElasticsearchUrl: String = config.elasticsearchUrl.get
+  def getElasticsearchPort: Int = config.elasticsearchPort.getOrElse(9200)
+  def getElastcsearchMaxResult: Int = config.elastisearchMaxResult.get
 
-  def getKafkaProxy = config.kafkaProxy.getOrElse("localhost:8085")
+  def getKafkaProxy: String = config.kafkaProxy.getOrElse("localhost:8085")
 
-  def getDatasetUrl =  config.datasetUrl.getOrElse("XXXXX")
-  def getDatasetUserOpendataEmail = config.datasetUserOpendataEmail.getOrElse("XXXXX")
-  def getDatasetUserOpendataPwd = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
+  def getDatasetUrl: String =  config.datasetUrl.getOrElse("XXXXX")
+  def getDatasetUserOpendataEmail: String = config.datasetUserOpendataEmail.getOrElse("XXXXX")
+  def getDatasetUserOpendataPwd: String = config.datasetUserOpendataPwd.getOrElse("XXXXXXX")
 
-  def getNotificationInfo = config.notificationInfo.get.map{x => x.getString("name").get -> x.getInt("value").get}.toMap
+  def getNotificationInfo: Map[String, Int] = config.notificationInfo.get.map{x => x.getString("name").get -> x.getInt("value").get}.toMap
 
-  def getSysNotificationTypeName = config.sysNotificationTypeName.get
+  def getSysNotificationTypeName: String = config.sysNotificationTypeName.get
 }

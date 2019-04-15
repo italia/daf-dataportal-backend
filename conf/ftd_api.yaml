@@ -2002,7 +2002,24 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/notifications/offset/last/{notification_type}":
+#  "/notifications/offset/update":
+#    put:
+#      tags:
+#      - PushNotification
+#      summary: update the value of the offset stored in mongo
+#      operationId: updateLastOffset
+#      consumes:
+#      - application/json
+#      produces:
+#      - application/json
+#      parameters:
+#      - name: kafkaInfoOffset
+#        in: body
+#        description: topic name and value of the last offset
+#        required: true
+#        schema:
+#          $ref: '#/definitions/
+  "/notifications/offset/last/{topicName}":
     get:
       tags:
       - PushNotification
@@ -2011,17 +2028,18 @@ paths:
       produces:
       - application/json
       parameters:
-      - name: notification_type
+      - name: topicName
         in: path
-        description: kind of notification
+        description: name of kafka topic
         required: true
         type: string
       responses:
         200:
           description: the last offset
           schema:
-            $ref: '#/definitions/LastOffset'
-        default:
+            type: integer
+            format: int64
+        500:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
@@ -2408,6 +2426,7 @@ definitions:
       - createDate
       - status
       - offset
+      - notificationtype
     properties:
       notificationtype:
         type: string
@@ -2433,7 +2452,7 @@ definitions:
     properties:
       offset:
         type: integer
-        format: int32
+        format: int64
   InfoNotification:
     type: object
     properties:
@@ -2940,3 +2959,14 @@ definitions:
         type: string
       notificationType:
         type: string
+  KafkaOffsett:
+    type: object
+    required:
+      - topicName
+      - offset
+    properties:
+      topicName:
+        type: string
+      offset:
+        type: integer
+        format: int64
