@@ -227,18 +227,24 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = com.mongodb.casbah.MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val coll: MongoCollection = mongoDB(collNotificationName)
-    val obj = notificationToJson(notification)
+    coll.findOne(new BasicDBObject("user", notification.user).append("offset", notification.offset)) match {
+      case Some(_) =>
+        logger.debug(s"offset ${notification.offset} for user ${notification.user} already exists")
+        Future.successful(Left(Error(Some(500), Some(s"offset ${notification.offset} for user ${notification.user} already exists"), None)))
+      case None =>
+        val obj = notificationToJson(notification)
 
-    val result = coll.insert(obj)
-    val response = if(result.wasAcknowledged()){
-      logger.debug(s"notification saved in mongo: ${notification.offset}, ${notification.user}")
-      Right(Success(Some(s"notification saved in mongo"), None))
+        val result = coll.insert(obj)
+        val response = if(result.wasAcknowledged()){
+          logger.debug(s"notification saved in mongo: ${notification.offset}, ${notification.user}")
+          Right(Success(Some(s"notification saved in mongo"), None))
+        }
+        else{
+          logger.debug(s"error in save notification")
+          Left(Error(Some(500), Some(s"error in save notification"), None))
+        }
+        Future.successful(response)
     }
-    else{
-      logger.debug(s"error in save notification")
-      Left(Error(None, Some(s"error in save notification"), None))
-    }
-    Future.successful(response)
   }
 
   override def updateNotifications(notifications: Seq[Notification]): Future[Either[Error, Success]] = {
