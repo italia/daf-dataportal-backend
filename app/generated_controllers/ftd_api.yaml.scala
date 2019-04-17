@@ -60,7 +60,7 @@ import services.elasticsearch.ElasticsearchRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                
+                                                                                                                    
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -1053,6 +1053,17 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboards
         }
+        val getLastOffset = getLastOffsetAction { (topicName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
+            RequestContext.execInContext[Future[GetLastOffsetType[T] forSome { type T }]]("getLastOffset") { () =>
+            PushNotificationRegistry.pushNotificationService.getLastOffset(topicName) flatMap{
+              case Right(offset) => GetLastOffset200(offset)
+              case Left(error)   => GetLastOffset500(error)
+            }
+          }
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
+        }
         val catalogBrokenLinks = catalogBrokenLinksAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogBrokenLinks
@@ -1119,14 +1130,6 @@ package ftd_api.yaml {
             AllBrokenLinks200(allBrokenLinks)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
-        }
-        val getLastOffset = getLastOffsetAction { (notification_type: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
-            RequestContext.execInContext[Future[GetLastOffsetType[T] forSome { type T }]]("getLastOffset") { () =>
-            GetLastOffset200(PushNotificationRegistry.pushNotificationService.getLastOffset(notification_type))
-          }
-//          NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
         }
         val publicStoriesbyid = publicStoriesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid

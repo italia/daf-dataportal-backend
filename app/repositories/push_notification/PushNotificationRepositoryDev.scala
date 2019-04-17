@@ -1,6 +1,6 @@
 package repositories.push_notification
 
-import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InsertTTLInfo, KafkaOffsett, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo, TTL}
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
@@ -39,8 +39,8 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
     Future.successful(Seq[Notification]())
   }
 
-  override def getLastOffset(notificationType: String): Future[LastOffset] = {
-    Future.successful(LastOffset(0))
+  override def getLastOffset(topicName: String): Future[Either[Error, Long]] = {
+    Future.successful(Right(0))
   }
 
   override def updateTtl(ttl: Seq[KeysIntValue]): Future[Either[Error, Success]] = {
@@ -81,5 +81,9 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
 
   override def getAllPublicSystemNotifications: Future[Either[Error, Seq[Notification]]] = {
     Future.successful(Right(Seq[Notification]()))
+  }
+
+  override def updateKafkaOffset(kafkaOffsett: KafkaOffsett): Future[Either[Error, Success]] = {
+    Future.successful(Right(Success(None, None)))
   }
 }
