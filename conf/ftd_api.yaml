@@ -2002,23 +2002,6 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-#  "/notifications/offset/update":
-#    put:
-#      tags:
-#      - PushNotification
-#      summary: update the value of the offset stored in mongo
-#      operationId: updateLastOffset
-#      consumes:
-#      - application/json
-#      produces:
-#      - application/json
-#      parameters:
-#      - name: kafkaInfoOffset
-#        in: body
-#        description: topic name and value of the last offset
-#        required: true
-#        schema:
-#          $ref: '#/definitions/
   "/notifications/offset/last/{topicName}":
     get:
       tags:

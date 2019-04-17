@@ -5,7 +5,7 @@ import com.mongodb.BasicDBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KafkaOffsett, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KafkaOffsett, KeysIntValue, Notification, Subscription, Success, SysNotificationInfo}
 import org.joda.time.DateTime
 import play.api.Logger
 import utils.ConfigReader
@@ -356,8 +356,8 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         )
       } match {
         case Failure(error)             =>
-          logger.debug(s"[validate lastOffset] error: $error")
-          Left(Error(Some(500), Some(error.getMessage), None))
+          logger.debug(s"[validate lastOffset] error: ${error.getMessage}")
+          Left(Error(Some(500), Some(s"error in get offset for topic $topicName"), None))
         case util.Success(kafkaOffsett) =>
           logger.debug(s"[validate lastOffset] success: ${kafkaOffsett.topicName} ${kafkaOffsett.offset}")
           Right(kafkaOffsett.offset)
@@ -368,15 +368,20 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoDB = mongoClient(dbName)
     val query = composeQuery(SimpleQuery(QueryComponent("topicName", topicName)))
 
-    logger.debug(s"[validate lastOffset]query -> $query")
+    logger.debug(s"[validate lastOffset] query -> $query")
 
     val results = mongoDB(collKafkaOffset)
-      .find(query)
-      .limit(1)
+      .findOne(query)
     mongoClient.close()
-    val jsonString: String = com.mongodb.util.JSON.serialize(results)
-    val json: JsValue = Json.parse(jsonString)
-    Future.successful(validateLastOffset(json))
+    results match {
+      case Some(mongoResponse) =>
+        val jsonString: String = com.mongodb.util.JSON.serialize(mongoResponse)
+        val json: JsValue = Json.parse(jsonString)
+        Future.successful(validateLastOffset(json))
+      case None =>
+        logger.debug(s"$topicName not found, return 0")
+        Future.successful(Right(0))
+    }
   }
 
   private def sendToKafka(sysNotificationInfo: SysNotificationInfo, token: String, ws: WSClient): Future[Either[Error, Success]] = {
@@ -544,16 +549,27 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoDB = mongoClient(dbName)
     val collection = mongoDB(collKafkaOffset)
     val query = MongoDBObject("topicName" -> kafkaOffsett.topicName)
-    val response = collection.update(query, new BasicDBObject("$set", new BasicDBObject("offset", kafkaOffsett.offset)))
-    if(response.isUpdateOfExisting){
-      logger.debug(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}")
-      Future.successful(Right(Success(Some(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
-    } else {
-      logger.debug(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}")
-      Future.successful(Left(Error(Some(500), Some(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+    collection.findOne(query) match {
+      case Some(_) =>
+        val updateResponse = collection.update(query, new BasicDBObject("$set", new BasicDBObject("offset", kafkaOffsett.offset)))
+        if(updateResponse.isUpdateOfExisting){
+          logger.debug(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}")
+          Future.successful(Right(Success(Some(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+        } else {
+          logger.debug(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}")
+          Future.successful(Left(Error(Some(500), Some(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+        }
+      case None =>
+        logger.debug(s"value of topic ${kafkaOffsett.topicName} not found")
+        val insertResponse = collection.insert(new BasicDBObject("topicName", kafkaOffsett.topicName).append("offset", kafkaOffsett.offset))
+        if(insertResponse.wasAcknowledged()){
+          logger.debug(s"${kafkaOffsett.topicName} -> ${kafkaOffsett.offset} insert in mongo ")
+          Future.successful(Right(Success(Some(s"topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+        } else {
+          logger.debug(s"error in insert ${kafkaOffsett.topicName} -> ${kafkaOffsett.offset}")
+          Future.successful(Left(Error(Some(500), Some(s"error in update topic ${kafkaOffsett.topicName} update to ${kafkaOffsett.offset}"), None)))
+        }
     }
-
-
   }
 }
 
