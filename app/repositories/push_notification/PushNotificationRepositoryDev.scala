@@ -39,8 +39,8 @@ class PushNotificationRepositoryDev extends PushNotificationRepository {
     Future.successful(Seq[Notification]())
   }
 
-  override def getLastOffset(topicName: String): Future[Either[Error, Long]] = {
-    Future.successful(Right(0))
+  override def getLastOffset(topicName: String): Future[Either[Error, LastOffset]] = {
+    Future.successful(Right(LastOffset(0)))
   }
 
   override def updateTtl(ttl: Seq[KeysIntValue]): Future[Either[Error, Success]] = {

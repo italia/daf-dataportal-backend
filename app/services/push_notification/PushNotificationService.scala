@@ -43,7 +43,7 @@ trait PushNotificationServiceComponent {
       pushNotificationRepository.checkNewNotifications(user)
     }
 
-    def getLastOffset(topicName: String): Future[Either[Error, Long]] = {
+    def getLastOffset(topicName: String): Future[Either[Error, LastOffset]] = {
       pushNotificationRepository.getLastOffset(topicName)
     }
 

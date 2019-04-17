@@ -5,7 +5,7 @@ import com.mongodb.BasicDBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
 import com.mongodb.casbah.{MongoClient, MongoCollection, MongoDB}
 import com.mongodb.casbah.query.Imports.DBObject
-import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KafkaOffsett, KeysIntValue, Notification, Subscription, Success, SysNotificationInfo}
+import ftd_api.yaml.{DeleteTTLNotificationInfo, Error, InfoNotification, InsertTTLInfo, KafkaOffsett, KeysIntValue, LastOffset, Notification, Subscription, Success, SysNotificationInfo}
 import org.joda.time.DateTime
 import play.api.Logger
 import utils.ConfigReader
@@ -346,7 +346,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     Future.successful(notifications)
   }
 
-  override def getLastOffset(topicName: String): Future[Either[Error, Long]] = {
+  override def getLastOffset(topicName: String): Future[Either[Error, LastOffset]] = {
 
     def validateLastOffset(json: JsValue) = {
       Try{
@@ -360,7 +360,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
           Left(Error(Some(500), Some(s"error in get offset for topic $topicName"), None))
         case util.Success(kafkaOffsett) =>
           logger.debug(s"[validate lastOffset] success: ${kafkaOffsett.topicName} ${kafkaOffsett.offset}")
-          Right(kafkaOffsett.offset)
+          Right(LastOffset(kafkaOffsett.offset))
       }
     }
 
@@ -380,7 +380,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
         Future.successful(validateLastOffset(json))
       case None =>
         logger.debug(s"$topicName not found, return 0")
-        Future.successful(Right(0))
+        Future.successful(Right(LastOffset(0)))
     }
   }
 

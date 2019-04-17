@@ -2020,8 +2020,7 @@ paths:
         200:
           description: the last offset
           schema:
-            type: integer
-            format: int64
+            $ref: '#/definitions/LastOffset'
         500:
           description: Unexpected error
           schema:
