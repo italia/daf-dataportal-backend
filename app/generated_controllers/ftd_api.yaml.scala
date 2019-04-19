@@ -48,6 +48,9 @@ import it.gov.daf.common.sso.common.CredentialManager
 import it.gov.daf.common.utils.RequestContext
 import java.net.URLEncoder
 import play.api.mvc.Headers
+import services.datastory.DatastoryRegistry
+import services.widgets.WidgetsRegistry
+import services.elasticsearch.ElasticsearchRegistry
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -56,7 +59,7 @@ import play.api.mvc.Headers
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                            
+        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -132,6 +135,25 @@ package ftd_api.yaml {
           }
 //            NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllSubscription
+        }
+        val deleteDatastory = deleteDatastoryAction { (id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
+            RequestContext.execInContext[Future[DeleteDatastoryType[T] forSome { type T }]]("deleteDatastory") { () =>
+
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(401) => DeleteDatastory401(error)
+                case Some(404) => DeleteDatastory404(error)
+                case _         => DeleteDatastory500(error)
+              }
+            }
+            val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+            DatastoryRegistry.datastoryService.deleteDatastory(id, user) flatMap {
+              case Right(success) => DeleteDatastory200(success)
+              case Left(error)    => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDatastory
         }
         val catalogDistributionLicense = catalogDistributionLicenseAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -226,13 +248,15 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.settingsByName
         }
-        val savestories = savestoriesAction { (story: UserStory) =>  
+        val savestories = savestoriesAction { input: (UserStory, LayoutDataStoryIsDraggable) =>
+            val (story, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savestories
             RequestContext.execInContext[Future[SavestoriesType[T] forSome { type T }]]("savestories") { () =>
             val user = CredentialManager.readCredentialFromRequest(currentRequest).username
+              println(user)
             val token = readTokenFromRequest(currentRequest.headers)
             token match {
-              case Some(t) => Savestories200(DashboardRegistry.dashboardService.saveStory(story, user, t, ws))
+              case Some(t) => Savestories200(DashboardRegistry.dashboardService.saveStory(story, user, shared, t, ws))
               case None => Savestories401("No token found")
             }
           }
@@ -247,22 +271,39 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.createSnapshot
         }
-        val searchFullText = searchFullTextAction { (filters: Filters) =>  
+        val searchFullText = searchFullTextAction { input: (Filters, FiltersLimit) =>
+            val (filters, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullText
             RequestContext.execInContext[Future[SearchFullTextType[T] forSome { type T }]]("searchFullText") { () =>
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
 
             val result = for {
               orgsWorks <- getUserOrgsWorkgroups(credentials.username)
-              out <- Future.successful {
-                DashboardRegistry.dashboardService.searchText(filters, credentials.username, orgsWorks.toList)
-              }
+              out <- ElasticsearchRegistry.elasticsearchService.searchText(filters, credentials.username, orgsWorks.toList, limit)
             } yield out
             result flatMap (SearchFullText200(_))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullText
         }
-        val stories = storiesAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+        val getDatastoryById = getDatastoryByIdAction { (id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
+            RequestContext.execInContext[Future[GetDatastoryByIdType[T] forSome { type T }]]("getDatastoryById") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetDatastoryById404(error)
+                case _         => GetDatastoryById500(error)
+              }
+            }
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            val response = DatastoryRegistry.datastoryService.getDatastoryById(id, credential.username, credential.groups.toList)
+            response.flatMap{
+              case Right(datastory) => GetDatastoryById200(datastory)
+              case Left(error)      => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getDatastoryById
+        }
+        val stories = storiesAction { input: (TTLErrorType, TTLErrorType, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.stories
             RequestContext.execInContext[Future[StoriesType[T] forSome { type T }]]("stories") { () =>
@@ -278,6 +319,23 @@ package ftd_api.yaml {
             result flatMap (Stories200(_))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.stories
+        }
+        val getPublicDatastoryById = getPublicDatastoryByIdAction { (id: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
+            RequestContext.execInContext[Future[GetPublicDatastoryByIdType[T] forSome { type T }]]("getPublicDatastoryById") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetPublicDatastoryById404(error)
+                case _         => GetPublicDatastoryById500(error)
+              }
+            }
+            val response = DatastoryRegistry.datastoryService.getPublicDatastoryById(id)
+            response.flatMap{
+              case Right(datastory) => GetPublicDatastoryById200(datastory)
+              case Left(error)      => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getPublicDatastoryById
         }
         val dashboardTables = dashboardTablesAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardTables
@@ -314,8 +372,8 @@ package ftd_api.yaml {
             val (tableName, user) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.iframesByTableName
             RequestContext.execInContext[Future[IframesByTableNameType[T] forSome { type T }]]("iframesByTableName") { () =>
-            val username = if(CredentialManager.isDafSysAdmin(currentRequest)) user.get else CredentialManager.readCredentialFromRequest(currentRequest).username
-            val iframes = DashboardRegistry.dashboardService.iframes(username, ws)
+            val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
+            val iframes = DashboardRegistry.dashboardService.iframes(credentials.username, ws)
             val iframesByName = iframes.map(_.filter(_.table.getOrElse("").endsWith(tableName)))
             IframesByTableName200(iframesByName)
           }
@@ -324,7 +382,7 @@ package ftd_api.yaml {
         val searchLastPublic = searchLastPublicAction { (org: DistributionLabel) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLastPublic
             RequestContext.execInContext[Future[SearchLastPublicType[T] forSome { type T }]]("searchLastPublic") { () =>
-            SearchLastPublic200(DashboardRegistry.dashboardService.searchLastPublic(org))
+            SearchLastPublic200(ElasticsearchRegistry.elasticsearchService.searchLastPublic(org))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchLastPublic
         }
@@ -335,6 +393,30 @@ package ftd_api.yaml {
             AllDistributionLiceses200(distributions)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionLiceses
+        }
+        val saveDatastory = saveDatastoryAction { (datastory: Datastory) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.saveDatastory
+            RequestContext.execInContext[Future[SaveDatastoryType[T] forSome { type T }]]("saveDatastory") { () =>
+              def parseError(error: Error) = {
+                error.code match {
+                  case Some(401) => SaveDatastory401(error)
+                  case Some(403) => SaveDatastory403(error)
+                  case _         => SaveDatastory500(error)
+                }
+              }
+
+              val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            if(datastory.user.equals(credential.username) && credential.groups.contains(datastory.org))
+              DatastoryRegistry.datastoryService.saveDatastory(credential.username, datastory) flatMap{
+                case Right(success) => SaveDatastory200(success)
+                case Left(error)    => parseError(error)
+              }
+            else {
+              logger.debug(s"${credential.username} unauthorized to insert datastory $datastory")
+              SaveDatastory401(Future.successful(Error(Some(401), Some("Unauthorized to insert datastory"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDatastory
         }
         val catalogDistrubutionFormat = catalogDistrubutionFormatAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -365,6 +447,23 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteAllNotifications
         }
+        val getAllPublicDatastory = getAllPublicDatastoryAction { (limit: TTLErrorType) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
+            RequestContext.execInContext[Future[GetAllPublicDatastoryType[T] forSome { type T }]]("getAllPublicDatastory") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetAllPublicDatastory404(error)
+                case _         => GetAllPublicDatastory500(error)
+              }
+            }
+            DatastoryRegistry.datastoryService.getAllPublicDatastory(limit) flatMap{
+              case Right(seqDatastory) => GetAllPublicDatastory200(seqDatastory)
+              case Left(error)         => parseError(error)
+
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllPublicDatastory
+        }
         val allDistributionGroups = allDistributionGroupsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
             RequestContext.execInContext[Future[AllDistributionGroupsType[T] forSome { type T }]]("allDistributionGroups") { () =>
@@ -372,6 +471,21 @@ package ftd_api.yaml {
             AllDistributionGroups200(distributions)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionGroups
+        }
+        val deleteTtl = deleteTtlAction { (deleteTTLNotificationsInfo: DeleteTTLNotificationInfo) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteTtl
+            RequestContext.execInContext[Future[DeleteTtlType[T] forSome { type T }]]("deleteTtl") { () =>
+            if(CredentialManager.isDafSysAdmin(currentRequest)){
+              PushNotificationRegistry.pushNotificationService.deleteTtl(deleteTTLNotificationsInfo) flatMap {
+                case Right(success) => DeleteTtl200(success)
+                case Left(error)    => DeleteTtl500(error)
+              }
+            } else {
+              logger.debug("only sys admin can delete a ttl")
+              DeleteTtl500(Future.successful(Error(Some(401), Some("Only sys admin can delete a ttl"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteTtl
         }
         val allDatasets = allDatasetsAction { (apikey: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.allDatasets
@@ -399,6 +513,77 @@ package ftd_api.yaml {
             }
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.storiesbyid
+        }
+        val getSystemNotificationByOffset = getSystemNotificationByOffsetAction { (offset: Int) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getSystemNotificationByOffset
+            RequestContext.execInContext[Future[GetSystemNotificationByOffsetType[T] forSome { type T }]]("getSystemNotificationByOffset") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetSystemNotificationByOffset404(error)
+                case _         => GetSystemNotificationByOffset500(error)
+              }
+            }
+            if(CredentialManager.isDafSysAdmin(currentRequest)){
+              PushNotificationRegistry.pushNotificationService.getSystemNotificationByOffset(offset) flatMap{
+                case Right(success) => GetSystemNotificationByOffset200(success)
+                case Left(error)    => parseError(error)
+              }
+            } else {
+              logger.debug("is not a sys admin")
+              GetSystemNotificationByOffset401(Future.successful(Error(Some(401), Some("Only SysAdmin can add system notifications"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getSystemNotificationByOffset
+        }
+        val deleteSystemNotificationByOffset = deleteSystemNotificationByOffsetAction { (offset: Int) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.deleteSystemNotificationByOffset
+            RequestContext.execInContext[Future[DeleteSystemNotificationByOffsetType[T] forSome { type T }]]("deleteSystemNotificationByOffset") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => DeleteSystemNotificationByOffset404(error)
+                case _         => DeleteSystemNotificationByOffset500(error)
+              }
+            }
+            if(CredentialManager.isDafSysAdmin(currentRequest)) {
+              PushNotificationRegistry.pushNotificationService.deleteSystemNotificationByOffset(offset) flatMap {
+                case Right(success) => DeleteSystemNotificationByOffset200(success)
+                case Left(error)    => parseError(error)
+              }
+            } else {
+              logger.debug("is not a sys admin")
+              DeleteSystemNotificationByOffset401(Future.successful(Error(Some(401), Some("Only SysAdmin can add system notifications"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteSystemNotificationByOffset
+        }
+        val systemNotificationInsert = systemNotificationInsertAction { (kafkaMessageInfo: SysNotificationInfo) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.systemNotificationInsert
+            RequestContext.execInContext[Future[SystemNotificationInsertType[T] forSome { type T }]]("systemNotificationInsert") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(401) => SystemNotificationInsert401(error)
+                case Some(403) => SystemNotificationInsert403(error)
+                case _         => SystemNotificationInsert500(error)
+              }
+            }
+
+            val optionToken = readTokenFromRequest(currentRequest.headers)
+            optionToken match {
+              case None        => logger.debug("no token found"); SystemNotificationInsert401(Future.successful(Error(Some(401), Some("Basic authentication it's not allowed"), None)))
+              case Some(token) =>
+                if(CredentialManager.isDafSysAdmin(currentRequest)) {
+                  PushNotificationRegistry.pushNotificationService.systemNotificationInsert(kafkaMessageInfo, token, ws) flatMap {
+                    case Right(success) => SystemNotificationInsert200(success)
+                    case Left(error)    => parseError(error)
+                  }
+                } else {
+                  logger.debug("is not a sys admin")
+                  SystemNotificationInsert401(Future.successful(Error(Some(401), Some("Only SysAdmin can add system notifications"), None)))
+                }
+            }
+
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.systemNotificationInsert
         }
         val kyloFeedByName = kyloFeedByNameAction { (feed_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
@@ -449,10 +634,11 @@ package ftd_api.yaml {
               }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloFeedByName
         }
-        val searchFullTextPublic = searchFullTextPublicAction { (filters: Filters) =>  
+        val searchFullTextPublic = searchFullTextPublicAction { input: (Filters, FiltersLimit) =>
+            val (filters, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
             RequestContext.execInContext[Future[SearchFullTextPublicType[T] forSome { type T }]]("searchFullTextPublic") { () =>
-            SearchFullTextPublic200(DashboardRegistry.dashboardService.searchTextPublic(filters))
+            SearchFullTextPublic200(ElasticsearchRegistry.elasticsearchService.searchTextPublic(filters, limit))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.searchFullTextPublic
         }
@@ -494,7 +680,7 @@ package ftd_api.yaml {
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deleteDataApplication
         }
-        val dashboards = dashboardsAction { input: (ErrorCode, ErrorCode, PublicDashboardsGetLimit) =>
+        val dashboards = dashboardsAction { input: (TTLErrorType, TTLErrorType, PublicDashboardsGetLimit) =>
             val (status, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboards
             RequestContext.execInContext[Future[DashboardsType[T] forSome { type T }]]("dashboards") { () =>
@@ -511,6 +697,25 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.dashboards
         }
+        val getAllWidgets = getAllWidgetsAction { (org: DistributionLabel) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
+            RequestContext.execInContext[Future[GetAllWidgetsType[T] forSome { type T }]]("getAllWidgets") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(401) => GetAllWidgets401(error)
+                case Some(404) => GetAllWidgets404(error)
+                case _         => GetAllWidgets500(error)
+              }
+            }
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            val result = WidgetsRegistry.widgetsService.getAllWidgets(credential.username, credential.groups.toList, org, ws)
+            result.flatMap {
+              case Right(widgets) => GetAllWidgets200(widgets)
+              case Left(error)    => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllWidgets
+        }
         val searchLast = searchLastAction {  _ =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.searchLast
             RequestContext.execInContext[Future[SearchLastType[T] forSome { type T }]]("searchLast") { () =>
@@ -518,7 +723,7 @@ package ftd_api.yaml {
             val result = for {
               orgsWorks <- getUserOrgsWorkgroups(credentials.username)
               out <- Future.successful {
-                DashboardRegistry.dashboardService.searchLast(credentials.username, orgsWorks.toList)
+                ElasticsearchRegistry.elasticsearchService.searchLast(credentials.username, orgsWorks.toList)
               }
             } yield out
             result flatMap (SearchLast200(_))
@@ -667,6 +872,30 @@ package ftd_api.yaml {
         //  NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.supersetTableFromDataset
         }
+        val updateTtl = updateTtlAction { (ttl: NotificationsUpdateTtlPutTtl) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateTtl
+            RequestContext.execInContext[Future[UpdateTtlType[T] forSome { type T }]]("updateTtl") { () =>
+              if(!CredentialManager.isDafSysAdmin(currentRequest)) {
+                logger.debug("only daf sys admin can update ttl")
+                UpdateTtl401(Error(Some(401), Some("only daf sys admin can update ttl"), None))
+              }
+              else if(ttl.groupBy(x => x.name).map{_._2.head}.size != ttl.size) {
+                logger.debug("no duplicate keys are allowed")
+                UpdateTtl400(Error(Some(400), Some("no duplicate keys are allowed"), None))
+              }
+              else if(ttl.isEmpty){
+                logger.debug("no ttl found in request")
+                UpdateTtl400(Error(Some(400), Some("no ttl found"), None))
+              }else {
+                PushNotificationRegistry.pushNotificationService.updateTtl(ttl.distinct).flatMap{
+                  case Right(r) => UpdateTtl200(r)
+                  case Left(l)  => UpdateTtl500(l)
+                }
+              }
+
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateTtl
+        }
         val dashboardsbyid = dashboardsbyidAction { (dashboard_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardsbyid
             RequestContext.execInContext[Future[DashboardsbyidType[T] forSome { type T }]]("dashboardsbyid") { () =>
@@ -706,6 +935,24 @@ package ftd_api.yaml {
             AllDistributionFormats200(distributions)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allDistributionFormats
+        }
+        val getAllDatastory = getAllDatastoryAction { input: (TTLErrorType, TTLErrorType) =>
+            val (limit, status) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
+            RequestContext.execInContext[Future[GetAllDatastoryType[T] forSome { type T }]]("getAllDatastory") { () =>
+            def parseError(error: Error) = {
+              error.code match {
+                case Some(404) => GetAllDatastory404(error)
+                case _         => GetAllDatastory500(error)
+              }
+            }
+            val credential = CredentialManager.readCredentialFromRequest(currentRequest)
+            DatastoryRegistry.datastoryService.getAllDatastory(credential.username, credential.groups.toList, limit, status) flatMap {
+              case Right(success) => GetAllDatastory200(success)
+              case Left(error)    => parseError(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllDatastory
         }
         val dashboardIframesbyorg = dashboardIframesbyorgAction { (orgName: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.dashboardIframesbyorg
@@ -752,13 +999,28 @@ package ftd_api.yaml {
             //NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloSystemName
         }
-        val publicStories = publicStoriesAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+        val publicStories = publicStoriesAction { input: (DistributionLabel, TTLErrorType, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStories
             RequestContext.execInContext[Future[PublicStoriesType[T] forSome { type T }]]("publicStories") { () =>
             PublicStories200(DashboardRegistry.dashboardRepository.storiesPublic(org))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicStories
+        }
+        val getAllSystemNotifications = getAllSystemNotificationsAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllSystemNotifications
+            RequestContext.execInContext[Future[GetAllSystemNotificationsType[T] forSome { type T }]]("getAllSystemNotifications") { () =>
+            if(CredentialManager.isDafSysAdmin(currentRequest)){
+              PushNotificationRegistry.pushNotificationService.getAllSystemNotification flatMap {
+                case Right(success) => GetAllSystemNotifications200(success)
+                case Left(error)    => GetAllSystemNotifications500(error)
+              }
+            } else {
+              logger.debug("Only SysAdmin can get sys notifications")
+              GetAllSystemNotifications401(Future.successful(Error(Some(401), Some("Only SysAdmin can get sys notifications"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllSystemNotifications
         }
         val catalogDatasetCount = catalogDatasetCountAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -769,26 +1031,38 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDatasetCount
         }
-        val savedashboard = savedashboardAction { (dashboard: Dashboard) =>  
+        val savedashboard = savedashboardAction { input: (Dashboard, LayoutDataStoryIsDraggable) =>
+            val (dashboard, shared) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.savedashboard
             RequestContext.execInContext[Future[SavedashboardType[T] forSome { type T }]]("savedashboard") { () =>
             val credentials = CredentialManager.readCredentialFromRequest(currentRequest)
             val user = credentials.username
             val token = readTokenFromRequest(currentRequest.headers)
             token match {
-              case Some(t) => Savedashboard200(DashboardRegistry.dashboardService.saveDashboard(dashboard, user, t, ws))
+              case Some(t) => Savedashboard200(DashboardRegistry.dashboardService.saveDashboard(dashboard, user, shared, t, ws))
               case None => Savedashboard401("No token found")
             }
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.savedashboard
         }
-        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, ErrorCode, PublicDashboardsGetLimit) =>
+        val publicDashboards = publicDashboardsAction { input: (DistributionLabel, TTLErrorType, PublicDashboardsGetLimit) =>
             val (org, page, limit) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicDashboards
             RequestContext.execInContext[Future[PublicDashboardsType[T] forSome { type T }]]("publicDashboards") { () =>
             PublicDashboards200(DashboardRegistry.dashboardService.dashboardsPublic(org))
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboards
+        }
+        val getLastOffset = getLastOffsetAction { (topicName: String) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
+            RequestContext.execInContext[Future[GetLastOffsetType[T] forSome { type T }]]("getLastOffset") { () =>
+            PushNotificationRegistry.pushNotificationService.getLastOffset(topicName) flatMap{
+              case Right(offset) => GetLastOffset200(offset)
+              case Left(error)   => GetLastOffset500(error)
+            }
+          }
+//          NotImplementedYet
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
         }
         val catalogBrokenLinks = catalogBrokenLinksAction { input: (String, String) =>
             val (catalogName, apikey) = input
@@ -808,6 +1082,25 @@ package ftd_api.yaml {
             }
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.publicDashboardsById
+        }
+        val insertTtl = insertTtlAction { (ttl: InsertTTLInfo) =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.insertTtl
+            RequestContext.execInContext[Future[InsertTtlType[T] forSome { type T }]]("insertTtl") { () =>
+
+            if(ttl.partialFilter.isEmpty) {
+              logger.debug("partial filter not found in request")
+              InsertTtl400(Error(Some(400), Some("no ttl found"), None))
+            } else if(!CredentialManager.isDafSysAdmin(currentRequest)) {
+              logger.debug("only daf sys admin can insert ttl")
+              InsertTtl401(Error(Some(401), Some("only daf sys admin can insert ttl"), None))
+            } else {
+              PushNotificationRegistry.pushNotificationService.insertTtl(ttl) flatMap {
+                case Right(success) => InsertTtl200(success)
+                case Left(error)    => InsertTtl500(error)
+              }
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.insertTtl
         }
         val isDatasetOnMetabase = isDatasetOnMetabaseAction { (dataset_name: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.isDatasetOnMetabase
@@ -837,14 +1130,6 @@ package ftd_api.yaml {
             AllBrokenLinks200(allBrokenLinks)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.allBrokenLinks
-        }
-        val getLastOffset = getLastOffsetAction { (notification_type: String) =>  
-            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getLastOffset
-            RequestContext.execInContext[Future[GetLastOffsetType[T] forSome { type T }]]("getLastOffset") { () =>
-            GetLastOffset200(PushNotificationRegistry.pushNotificationService.getLastOffset(notification_type))
-          }
-//          NotImplementedYet
-            // ----- End of unmanaged code area for action  Ftd_apiYaml.getLastOffset
         }
         val publicStoriesbyid = publicStoriesbyidAction { (story_id: String) =>  
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.publicStoriesbyid
@@ -880,6 +1165,29 @@ package ftd_api.yaml {
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.deletestory
         }
+        val updateSystemNotification = updateSystemNotificationAction { input: (SysNotificationInfo, Int) =>
+            val (notificationInfo, offset) = input
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.updateSystemNotification
+            RequestContext.execInContext[Future[UpdateSystemNotificationType[T] forSome { type T }]]("updateSystemNotification") { () =>
+              def parseError(error: Error) = {
+                error.code match {
+                  case Some(404) => UpdateSystemNotification404(error)
+                  case _         => UpdateSystemNotification500(error)
+                }
+              }
+            if(CredentialManager.isDafSysAdmin(currentRequest)){
+              PushNotificationRegistry.pushNotificationService.updateSystemNotification(offset, notificationInfo) flatMap{
+                case Right(success) => UpdateSystemNotification200(success)
+                case Left(error)    => parseError(error)
+              }
+
+            } else {
+              logger.debug("Only SysAdmin can update sys notification")
+              UpdateSystemNotification401(Future.successful(Error(Some(401), Some("Only SysAdmin can update sys notification"), None)))
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.updateSystemNotification
+        }
         val catalogDistrubutionGroups = catalogDistrubutionGroupsAction { input: (String, String) =>
             val (catalogName, apikey) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
@@ -888,6 +1196,27 @@ package ftd_api.yaml {
             CatalogDistrubutionGroups200(distributions)
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.catalogDistrubutionGroups
+        }
+        val getTtl = getTtlAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getTtl
+            RequestContext.execInContext[Future[GetTtlType[T] forSome { type T }]]("getTtl") { () =>
+              def parseResponse(error: Error) = {
+                error.code.getOrElse(0) match {
+                  case 404  => GetTtl404(error)
+                  case _    => GetTtl500(error)
+                }
+              }
+              if(CredentialManager.isDafSysAdmin(currentRequest)) {
+                PushNotificationRegistry.pushNotificationService.getTtl.flatMap{
+                  case Right(r) => GetTtl200(r)
+                  case Left(l)  => parseResponse(l)
+                }
+              } else {
+                GetTtl401(Error(Some(401), Some("Only SysAdmin can get ttl"), None))
+              }
+
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getTtl
         }
         val saveDataForNifi = saveDataForNifiAction { input: (File, String) =>
             val (upfile, path_to_save) = input
@@ -981,6 +1310,16 @@ package ftd_api.yaml {
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
             NotImplementedYet
             // ----- End of unmanaged code area for action  Ftd_apiYaml.monitorcatalogs
+        }
+        val getAllPublicSystemNotifications = getAllPublicSystemNotificationsAction {  _ =>  
+            // ----- Start of unmanaged code area for action  Ftd_apiYaml.getAllPublicSystemNotifications
+            RequestContext.execInContext[Future[GetAllPublicSystemNotificationsType[T] forSome { type T }]]("getAllPublicSystemNotifications") { () =>
+            PushNotificationRegistry.pushNotificationService.getAllPublicSystemNotifications flatMap{
+              case Right(success) => GetAllPublicSystemNotifications200(success)
+              case Left(error)    => GetAllPublicSystemNotifications500(error)
+            }
+          }
+            // ----- End of unmanaged code area for action  Ftd_apiYaml.getAllPublicSystemNotifications
         }
         val saveSettings = saveSettingsAction { input: (String, Settings) =>
             val (domain, settings) = input

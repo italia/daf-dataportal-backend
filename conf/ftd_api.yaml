@@ -333,6 +333,13 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/Filters'
+      - name: limit
+        in: query
+        description: limit of result to return
+        required: false
+        type: integer
+        format: int32
+        minimum: 0
       responses:
         200:
           description: Successful operation
@@ -407,6 +414,13 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Filters'
+        - name: limit
+          in: query
+          description: limit of result to return
+          required: false
+          type: integer
+          format: int32
+          minimum: 0
         responses:
           200:
             description: Successful operation
@@ -760,6 +774,7 @@ paths:
       - Dashboard
       summary: Get Dashboards
       operationId: dashboards
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -802,6 +817,7 @@ paths:
         - Dashboard
       summary: Get Open Data Dashboards
       operationId: publicDashboards
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -837,12 +853,237 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  "/datastory/save":
+    post:
+      tags:
+        - Datastory
+      summary: Save Datastory
+      operationId: saveDatastory
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: datastory
+        in: body
+        description: datastory to save
+        required: true
+        schema:
+          $ref: '#/definitions/Datastory'
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: Unauthorized to save
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: Try to save a datastory with too much caracters or too much widgets
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/datastory/delete/{id}":
+    delete:
+      tags:
+      - Datastory
+      summary: delete a Datastory
+      operationId: deleteDatastory
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: id of the datastory to delete
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: Unauthorized to delete
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: datastory not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/datastories":
+    get:
+      tags:
+      - Datastory
+      summary: get all datastory
+      description: get all datastory
+      operationId: getAllDatastory
+      produces:
+      - application/json
+      parameters:
+      - name: limit
+        in: query
+        description: number of datastory to return
+        type: integer
+        format: int32
+        required: false
+      - name: status
+        in: query
+        description: possible status (0,1,2) 2 = public
+        required: false
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: list of datastory
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Datastory'
+        404:
+          description: not found dataStory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/public/datastories":
+    get:
+      tags:
+      - Datastory
+      summary: get all public datastory
+      description: get all public datastory
+      operationId: getAllPublicDatastory
+      produces:
+      - application/json
+      parameters:
+      - name: limit
+        in: query
+        description: number of datastory to return
+        type: integer
+        format: int32
+        required: false
+      responses:
+        200:
+          description: list of public datastory
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Datastory'
+        404:
+          description: not found datastory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/datastory/get-by-id/{id}":
+    get:
+      tags:
+      - Datastory
+      summary: get a datastory by id
+      description: get a datastory by id
+      operationId: getDatastoryById
+      produces:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: the id of the datastory
+        type: string
+        required: true
+      responses:
+        200:
+          description: datastory
+          schema:
+            $ref: '#/definitions/Datastory'
+        404:
+          description: not found datastory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/public/datastory/get-by-id/{id}":
+    get:
+      tags:
+      - Datastory
+      summary: get a public datastory by id
+      description: get a public datastory by id
+      operationId: getPublicDatastoryById
+      produces:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: the id of the datastory
+        type: string
+        required: true
+      responses:
+        200:
+          description: datastory
+          schema:
+            $ref: '#/definitions/Datastory'
+        404:
+          description: not found datastory
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/widgets":
+    get:
+      tags:
+      - Widgets
+      summary: get widgets open and, if specify org parameter, private widgets
+      operationId: getAllWidgets
+      produces:
+      - application/json
+      parameters:
+      - name: org
+        in: query
+        description: the name of the org
+        required: false
+        type: string
+      responses:
+        200:
+          description: list of widgets
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Widget'
+        401:
+          description: unauthorized to get widgets
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: widgets not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   "/save/dashboards":
     post:
       tags:
       - Dashboard
       summary: Save Dashboard
       operationId: savedashboard
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -854,6 +1095,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/Dashboard'
+      - name: shared
+        in: query
+        description: if it is a sharing dashboard shared=true
+        required: false
+        type: boolean
       responses:
         '200':
           description: successful operation
@@ -873,6 +1119,7 @@ paths:
       - Dashboard
       summary: get dashboard by id
       operationId: dashboardsbyid
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -902,6 +1149,7 @@ paths:
         - Dashboard
         summary: get dashboard by id, only open data
         operationId: publicDashboardsById
+        deprecated: true
         consumes:
            - application/json
         produces:
@@ -931,6 +1179,7 @@ paths:
       - Dashboard
       summary: delete dashboard by id
       operationId: deletedashboard
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -956,6 +1205,7 @@ paths:
       - UserStory
       summary: Get UserStories
       operationId: stories
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -998,6 +1248,7 @@ paths:
         - UserStory
         summary: Get Open Data UserStories
         operationId: publicStories
+        deprecated: true
         produces:
           - application/json
         consumes:
@@ -1039,6 +1290,7 @@ paths:
       - UserStory
       summary: Save UserStory
       operationId: savestories
+      deprecated: true
       produces:
         - application/json
       consumes:
@@ -1050,6 +1302,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/UserStory'
+      - name: shared
+        in: query
+        description: if it is a sharing user-story shared=true
+        required: false
+        type: boolean
       responses:
         '200':
           description: successful operation
@@ -1069,6 +1326,7 @@ paths:
       - UserStory
       summary: get UserStory by id
       operationId: storiesbyid
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -1098,6 +1356,7 @@ paths:
         - UserStory
         summary: get UserStory by id, only open data
         operationId: publicStoriesbyid
+        deprecated: true
         consumes:
            - application/json
         produces:
@@ -1127,6 +1386,7 @@ paths:
       - UserStory
       summary: delete by id
       operationId: deletestory
+      deprecated: true
       consumes:
          - application/json
       produces:
@@ -1747,7 +2007,7 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  "/notifications/offset/last/{notification_type}":
+  "/notifications/offset/last/{topicName}":
     get:
       tags:
       - PushNotification
@@ -1756,9 +2016,9 @@ paths:
       produces:
       - application/json
       parameters:
-      - name: notification_type
+      - name: topicName
         in: path
-        description: kind of notification
+        description: name of kafka topic
         required: true
         type: string
       responses:
@@ -1766,8 +2026,322 @@ paths:
           description: the last offset
           schema:
             $ref: '#/definitions/LastOffset'
-        default:
+        500:
           description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/update/ttl":
+    put:
+      tags:
+      - PushNotification
+      summary: update the ttl of notifications
+      operationId: updateTtl
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: ttl
+        in: body
+        description: values of all ttl
+        required: true
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/KeysIntValue'
+      responses:
+        200:
+          description: ttl updatate
+          schema:
+            $ref: '#/definitions/Success'
+        400:
+          description: no ttl found in request
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: ttl not updatate
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/insert/ttl":
+    post:
+      tags:
+      - PushNotification
+      summary: insert the ttl of notifications
+      operationId: insertTtl
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: ttl
+        in: body
+        description: info of all ttl to insert
+        required: true
+        schema:
+          $ref: '#/definitions/InsertTTLInfo'
+      responses:
+        200:
+          description: ttl inserted
+          schema:
+            $ref: '#/definitions/Success'
+        400:
+          description: no ttl found in request
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: ttl not inserted
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/delete/ttl":
+    delete:
+      tags:
+      - PushNotification
+      summary: delete ttl
+      operationId: deleteTtl
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: deleteTTLNotificationsInfo
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/DeleteTTLNotificationInfo'
+      responses:
+        200:
+          description: ttl deleted
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: ttl not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: ttl not deleted
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/get/ttl":
+    get:
+      tags:
+      - PushNotification
+      summary: update the ttl of notifications
+      operationId: getTtl
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        200:
+          description: object that contains ttl
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/KeysIntValue'
+        401:
+          description: not authorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: ttl not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in get ttl from mongo
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/save":
+    post:
+      tags:
+      - PushNotification
+      summary: save system notification
+      description: insert a system notification into db
+      operationId: systemNotificationInsert
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: kafkaMessageInfo
+        in: body
+        description: message info to send to kafka by catalog
+        required: true
+        schema:
+          $ref: '#/definitions/SysNotificationInfo'
+      responses:
+        200:
+          description: notification insert into kafka
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: invalid notification object
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in insert into kafka
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/get/all":
+    get:
+      tags:
+      - PushNotification
+      summary: get all notification
+      operationId: getAllSystemNotifications
+      produces:
+      - application/json
+      responses:
+        200:
+          description: sequence of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in get all notifications
+          schema:
+            $ref: '#/definitions/Error'
+  "/public/notifications/system/get/all":
+    get:
+      tags:
+      - PushNotification
+      summary: get all notification
+      operationId: getAllPublicSystemNotifications
+      produces:
+      - application/json
+      responses:
+        200:
+          description: sequence of notifications
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Notification'
+        500:
+          description: error in get all notifications
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/{offset}":
+    get:
+      tags:
+      - PushNotificaiton
+      summary: get system notification by offset
+      description: get system notification by offset
+      operationId: getSystemNotificationByOffset
+      produces:
+      - application/json
+      parameters:
+      - name: offset
+        in: path
+        description: the offset of the notification
+        required: true
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: notification
+          schema:
+            $ref: '#/definitions/Notification'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in save notification
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+      - PushNotificaiton
+      summary: delete system notification by offset
+      description: delete system notification by offset
+      operationId: deleteSystemNotificationByOffset
+      produces:
+      - application/json
+      parameters:
+      - name: offset
+        in: path
+        description: the offset of the notification
+        required: true
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: notification deleted
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: sys notificatation not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in delete notification
+          schema:
+            $ref: '#/definitions/Error'
+  "/notifications/system/update/{offset}":
+    put:
+      tags:
+      - PushNotification
+      summary: update a system notification
+      operationId: updateSystemNotification
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: notificationInfo
+        in: body
+        description: notification to update
+        required: true
+        schema:
+          $ref: '#/definitions/SysNotificationInfo'
+      - name: offset
+        in: path
+        description: offset of the notification
+        required: true
+        type: integer
+        format: int32
+      responses:
+        200:
+          description: notification updatate
+          schema:
+            $ref: '#/definitions/Success'
+        401:
+          description: unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: notifications not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: error in update notification
           schema:
             $ref: '#/definitions/Error'
 definitions:
@@ -1836,15 +2410,18 @@ definitions:
     type: object
     required:
       - user
-      - timestamp
+      - createDate
       - status
       - offset
+      - notificationtype
     properties:
       notificationtype:
         type: string
       user:
         type: string
-      timestamp:
+      endDate:
+        type: string
+      createDate:
         type: string
       status:
         type: integer
@@ -1862,7 +2439,7 @@ definitions:
     properties:
       offset:
         type: integer
-        format: int32
+        format: int64
   InfoNotification:
     type: object
     properties:
@@ -2047,6 +2624,111 @@ definitions:
       timestamp:
         type: string
         format: date-time
+  Datastory:
+    type: object
+    required:
+      - user
+      - layout
+      - widgets
+      - title
+      - status
+      - org
+    properties:
+      user:
+        type: string
+      layout:
+        type: array
+        items:
+          $ref: '#/definitions/LayoutDataStory'
+      widgets:
+        type: array
+        items:
+          $ref: '#/definitions/Widget'
+      title:
+        type: string
+      status:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 2
+      id:
+        type: string
+      timestamp:
+        type: string
+      subtitle:
+        type: string
+      org:
+        type: string
+  LayoutDataStory:
+    type: object
+    required:
+      - h
+      - i
+      - moved
+      - static
+      - w
+      - x
+      - y
+    properties:
+      h:
+        type: integer
+        format: int32
+      i:
+        type: string
+      isDraggable:
+        type: boolean
+      isResizable:
+        type: boolean
+      maxH:
+        type: integer
+        format: int32
+      maxW:
+        type: integer
+        format: int32
+      minH:
+        type: integer
+        format: int32
+      minW:
+        type: integer
+        format: int32
+      moved:
+        type: boolean
+      static:
+        type: boolean
+      w:
+        type: integer
+        format: int32
+      x:
+        type: integer
+        format: int32
+      y:
+        type: integer
+        format: int32
+  Widget:
+    type: object
+    required:
+      - identifier
+      - viz_type
+      - origin
+      - title
+      - pvt
+    properties:
+      identifier:
+        type: string
+      widget_url:
+        type: string
+      text:
+        type: string
+      viz_type:
+        type: string
+      origin:
+        type: string
+      title:
+        type: string
+      table:
+        type: string
+      pvt:
+        type: boolean
   Oid:
     type: object
     properties:
@@ -2180,4 +2862,102 @@ definitions:
         format: int64
       org:
         type: string
-
+  TTL:
+    type: object
+    properties:
+      infoType:
+        type: integer
+        format: int32
+      successType:
+        type: integer
+        format: int32
+      errorType:
+        type: integer
+        format: int32
+  KeysIntValue:
+    type: object
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+      value:
+        type: integer
+        format: int32
+  KeysStringValue:
+    type: object
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+  PartialFilterInfo:
+    type: object
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+      isInt:
+        type: boolean
+  SysNotificationInfo:
+    type: object
+    required:
+      - description
+      - title
+      - endDate
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      endDate:
+        type: string
+  InsertTTLInfo:
+    type: object
+    required:
+      - keyName
+      - keyValue
+      - partialFilter
+      - expireAfterSeconds
+    properties:
+      keyName:
+        type: string
+      keyValue:
+        type: integer
+        format: int32
+      partialFilter:
+        type: array
+        items:
+          $ref: '#/definitions/PartialFilterInfo'
+      expireAfterSeconds:
+        type: integer
+        format: int32
+  DeleteTTLNotificationInfo:
+    type: object
+    required:
+      - keyName
+      - notificationType
+    properties:
+      keyName:
+        type: string
+      notificationType:
+        type: string
+  KafkaOffsett:
+    type: object
+    required:
+      - topicName
+      - offset
+    properties:
+      topicName:
+        type: string
+      offset:
+        type: integer
+        format: int64

@@ -1,5 +1,6 @@
 package controllers.dashboard
 
+import ftd_api.yaml.Error
 import javax.inject._
 import it.gov.daf.common.sso.common.{LoginInfo, SecuredInvocationManager}
 import it.gov.daf.common.utils.RequestContext
