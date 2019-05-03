@@ -1,11 +1,12 @@
 package repositories.datastory
-import ftd_api.yaml.{Datastory, Success, Error}
+import ftd_api.yaml.{Datastory, Error, Success}
+import play.api.libs.ws.WSClient
 
 import scala.concurrent.Future
 
 class DatastoryRepositoryDev extends DatastoryRepository {
 
-  override def saveDatastory(user: String, datastory: Datastory): Future[Either[Error, Success]] = Future.successful(Right(Success(Some("save!"), None)))
+  override def saveDatastory(user: String, datastory: Datastory, token: String, ws: WSClient): Future[Either[Error, Success]] = Future.successful(Right(Success(Some("save!"), None)))
 
   override def deleteDatastory(id: String, user: String): Future[Either[Error, Success]] = Future.successful(Right(Success(Some("delete!"), None)))
 
