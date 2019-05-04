@@ -101,8 +101,11 @@ class DatastoryRepositoryProd extends DatastoryRepository {
     Logger.logger.debug(s"kafka proxy $KAFKAPROXY")
 
     val message = s"""{
-                     |"records":[{"value":{"group":"${chooseGroup(datastory.status, datastory.org)}","token":"$token","notificationtype": "info", "info":{
-                     |"title":"Pubblicazione Datastory","description":"${buildMessage(datastory.status, datastory.title, datastory.org)}","link":""}}}]}""".stripMargin
+                     |"records":[{"value":{"group":"${chooseGroup(datastory.status, datastory.org)}","token":"$token","notificationtype": "info",
+                     |"info":{"title":"Pubblicazione Datastory",
+                     |"description":"${buildMessage(datastory.status, datastory.title, datastory.org)}",
+                     |"link":"private/datastory/list/${datastory.id.get}"}}}]
+                     |}""".stripMargin
 
     val jsonBody = Json.parse(message)
 
