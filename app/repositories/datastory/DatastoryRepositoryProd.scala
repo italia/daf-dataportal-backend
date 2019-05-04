@@ -11,7 +11,10 @@ import com.mongodb.casbah.{MongoClient, TypeImports, commons}
 import play.api.Logger
 import ftd_api.yaml.{Datastory, Error, Success}
 import play.api.libs.json._
+import play.api.libs.ws.WSClient
 import utils.ConfigReader
+import scala.concurrent.ExecutionContext.Implicits._
+
 
 import scala.concurrent.Future
 
@@ -20,6 +23,13 @@ class DatastoryRepositoryProd extends DatastoryRepository {
   import ftd_api.yaml.BodyReads._
   import ftd_api.yaml.ResponseWrites._
 
+  private val KAFKAPROXY = ConfigReader.getKafkaProxy
+  private val catalogHost = ConfigReader.getCatalogManagerHost
+  private val catalogNotificationPath = ConfigReader.getCatalogManagerNotificationPath
+
+  private val CATALOG_URL = catalogHost + catalogNotificationPath
+
+  private val OPEN_DATA_GROUP = ConfigReader.getOpenDataGroup
 
   private val mongoHost: String = ConfigReader.getDbHost
   private val mongoPort = ConfigReader.getDbPort
@@ -40,19 +50,19 @@ class DatastoryRepositoryProd extends DatastoryRepository {
   private def validateWidgetsNumeber(datastory: Datastory): Boolean = datastory.widgets.size < maxWidgetsNumber
   private def validateTextSize(datastory: Datastory): Boolean = !datastory.widgets.exists(w => w.text.isDefined && w.text.get.length > maxTextSize)
 
-  override def saveDatastory(user: String, datastory: Datastory): Future[Either[Error, Success]] = {
+  override def saveDatastory(user: String, datastory: Datastory, token: String, ws: WSClient): Future[Either[Error, Success]] = {
     if(validateTextSize(datastory) || validateWidgetsNumeber(datastory) )
-      Future.successful(Left(Error(Some(403), Some("datastory too mutch size."), Some(s"[text size] ${validateTextSize(datastory)}, [widgets number] ${validateWidgetsNumeber(datastory)}"))))
-    else
       datastory.id match {
         case Some(id) =>
-          updateDatastory(user, id, datastory)
+          updateDatastory(user, id, datastory, token, ws)
         case None =>
           val uid: String = UUID.randomUUID().toString
           val timestamp: String = ZonedDateTime.now().toString
           val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamp))
           insertDatastory(user, uid, newDatastory)
       }
+    else
+      Future.successful(Left(Error(Some(403), Some("datastory too mutch size."), Some(s"[text size] ${validateTextSize(datastory)}, [widgets number] ${validateWidgetsNumeber(datastory)}"))))
   }
 
   private def insertDatastory(user: String, id: String, datastory: Datastory) = {
@@ -73,9 +83,51 @@ class DatastoryRepositoryProd extends DatastoryRepository {
     }
   }
 
+  private def buildMessage(status: Int, title: String, org: String) = {
+    status match {
+      case 1 => s"La datastory $title è stata pubblicata per l'organizzazione $org"
+      case 2 => s"E' stata publicata la datastory $title"
+    }
+  }
 
-  private def updateDatastory(user: String, id: String, datastory: Datastory) = {
+  private def chooseGroup(status: Int, org: String) = {
+    status match {
+      case 1 => org
+      case 2 => OPEN_DATA_GROUP
+    }
+  }
+
+  private def sendMessageToKafka(datastory: Datastory, token: String, ws: WSClient) = {
+    Logger.logger.debug(s"kafka proxy $KAFKAPROXY")
+
+    val message = s"""{
+                     |"records":[{"value":{"group":"${chooseGroup(datastory.status, datastory.org)}","token":"$token","notificationtype": "info",
+                     |"info":{"title":"Pubblicazione Datastory",
+                     |"description":"${buildMessage(datastory.status, datastory.title, datastory.org)}",
+                     |"link":"private/datastory/list/${datastory.id.get}"}}}]
+                     |}""".stripMargin
+
+    val jsonBody = Json.parse(message)
+
+    Logger.debug(s"body to kafka: $jsonBody")
+
+    val responseWs = ws.url(KAFKAPROXY + "/topics/notification")
+      .withHeaders(("Content-Type", "application/vnd.kafka.v2+json"))
+      .post(jsonBody)
+
+    responseWs onComplete { res =>
+      if( res.get.status == 200 ) {
+        Logger.logger.debug(s"message sent to kakfa proxy for user ${datastory.user}")
+      }
+      else {
+        Logger.logger.debug(s"error in sending message to kafka proxy for user ${datastory.user}: ${res.get.statusText}")
+      }
+    }
+  }
+
+  private def updateDatastory(user: String, id: String, datastory: Datastory, token: String, ws: WSClient) = {
     if (checkDatastory(datastory)) {
+      getInternalDatastory(id).map(old => if(old.status != datastory.status) sendMessageToKafka(datastory, token, ws))
       val json: JsValue = Json.toJson(datastory)
       val obj: DBObject = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
       val query = MongoDBObject("id" -> id)

@@ -688,6 +688,11 @@ paths:
         description: Table name
         required: true
         type: string
+      - name: user
+        in: query
+        description: username used to get iframes if the request is sent by sys admin
+        type: string
+        required: false
       responses:
         200:
           description: An array of iFrames
@@ -2477,6 +2482,10 @@ definitions:
         type: string
       sharedWithMe:
         type: boolean
+      limit:
+        type: integer
+        format: int32
+        minimum: 0
   Error:
     type: object
     properties:

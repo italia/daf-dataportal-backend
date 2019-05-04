@@ -6,8 +6,6 @@ import java.nio.file.{Files, StandardCopyOption}
 import java.util.{Date, UUID}
 import java.time.ZonedDateTime
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import com.mongodb
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports.{MongoCredential, MongoDBObject, ServerAddress}
@@ -63,7 +61,6 @@ class DashboardRepositoryProd extends DashboardRepository {
 
   private val elasticsearchUrl = ConfigReader.getElasticsearchUrl
   private val elasticsearchPort = ConfigReader.getElasticsearchPort
-  private val elasticsearchMaxResult = ConfigReader.getElastcsearchMaxResult
 
   private val KAFKAPROXY = ConfigReader.getKafkaProxy
 
@@ -365,7 +362,7 @@ class DashboardRepositoryProd extends DashboardRepository {
 //    val servicesSuccesses: Future[Seq[Try[Seq[DashboardIframes]]]] = servicesWithFailed.map(_.filter(_.isSuccess))
 //
 //    val results: Future[Seq[DashboardIframes]] = servicesSuccesses.map(_.flatMap(_.toOption).flatten)
-
+//
 //    results
     superset
   }

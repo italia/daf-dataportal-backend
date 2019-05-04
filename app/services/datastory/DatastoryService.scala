@@ -1,6 +1,7 @@
 package services.datastory
 
-import ftd_api.yaml.{Datastory, Success, Error}
+import ftd_api.yaml.{Datastory, Error, Success}
+import play.api.libs.ws.WSClient
 import play.api.{Configuration, Environment}
 import repositories.datastory.{DatastoryRepository, DatastoryRepositoryComponent}
 
@@ -12,8 +13,8 @@ trait DatastoryServiceComponent {
 
   class DatastoryService {
 
-    def saveDatastory(user: String, datastory: Datastory): Future[Either[Error, Success]] = {
-      datastoryRepository.saveDatastory(user, datastory)
+    def saveDatastory(user: String, datastory: Datastory, token: String, ws: WSClient): Future[Either[Error, Success]] = {
+      datastoryRepository.saveDatastory(user, datastory, token, ws)
     }
 
     def deleteDatastory(id: String, user: String): Future[Either[Error, Success]] = {
