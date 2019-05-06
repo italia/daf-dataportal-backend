@@ -10,10 +10,10 @@
 **FRONT END SERVER** 
 
 Il front end server è un componente della architettura di 
-https://developers.italia.it/it/datigov/
+https://developers.italia.it/it/daf/
 
-L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Dkan, Data Analytics Framework e servizi
-esterni che offra una Restful interface ai client del progetto _dati aperti_.
+L'obiettivo del progetto é di create un layer intermedio tra le sorgenti dati Ckan, Data Analytics Framework e servizi
+esterni che offra una Restful interface ai client del progetto [dataportal](https://github.com/italia/daf-dataportal).
 
 Lo standard adottato sarà quello descritto in:
 [OpenAPI-Specification](https://github.com/OAI/OpenAPI-Specification)
@@ -69,6 +69,7 @@ val catalogDistrubutionFormat = catalogDistrubutionFormatAction { (catalogName: 
 - per "riempire" con i dati in maniera generica il modello e le risposte utilizzo un pattern di dependency injection chiamato cake pattern
 A riguardo potete leggere l'articolo [real world di](jonasboner.com/real-world-scala-dependency-injection-di/) oppure il [paper](http://lampwww.epfl.ch/~odersky/papers/ScalableComponent.pdf)
 I vantaggi sono efficienza, modularita' e non dipendere da librerie esterne. Nel paragrafo successivo andro' nel dettaglio dell'implementazione.
+
 
 ### Implementazione ###
 L'organizzazione dei packages potra' cambiare, al momento la maggior parte del codice e' contenuto nelle catelle
