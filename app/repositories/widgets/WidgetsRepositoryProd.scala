@@ -45,7 +45,7 @@ class WidgetsRepositoryProd extends WidgetsRepository {
   }
 
   private def getPublicWidgets(user: String, wsClient: WSClient): Future[Seq[Widget]] = {
-    widgets(user, wsClient)
+    widgets(user, wsClient, false)
   }
 
   private def getPrivateWidgets(user: String, org: String, wsClient: WSClient): Future[Seq[Widget]] = {
@@ -75,7 +75,7 @@ class WidgetsRepositoryProd extends WidgetsRepository {
   }
 
 
-  def widgets(user: String, wsClient: WSClient): Future[Seq[Widget]] = {
+  def widgets(user: String, wsClient: WSClient, isPrivate: Boolean = true): Future[Seq[Widget]] = {
 
     val internalSupersetUrl = s"$localUrl/superset/public_slice/$user"
 
@@ -84,7 +84,7 @@ class WidgetsRepositoryProd extends WidgetsRepository {
     supersetResponse.map { res =>
       Logger.logger.debug(s"$user: response status superset ${res.status}, text ${res.statusText}")
       val jsonSeq = res.json.as[Seq[JsValue]]
-      parseWidgetFromSupersetResponse(jsonSeq, true)
+      parseWidgetFromSupersetResponse(jsonSeq, isPrivate)
     }
   }
 
