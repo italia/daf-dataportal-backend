@@ -60,7 +60,7 @@ import services.elasticsearch.ElasticsearchRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                            
+                                                                                                                                                                
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -414,8 +414,15 @@ package ftd_api.yaml {
                 case Left(error)    => parseError(error)
               }
             else {
-              logger.debug(s"${credential.username} unauthorized to insert datastory $datastory")
-              SaveDatastory401(Future.successful(Error(Some(401), Some("Unauthorized to insert datastory"), None)))
+              token match {
+                case Some(_) =>
+                  logger.debug(s"${credential.username} unauthorized to insert datastory $datastory")
+                  SaveDatastory401(Future.successful(Error(Some(401), Some("Unauthorized to insert datastory"), None)))
+                case None    =>
+                  logger.debug(s"[${credential.username}] no token found")
+                  SaveDatastory401(Future.successful(Error(Some(401), Some("No token found"), None)))
+              }
+
             }
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.saveDatastory
