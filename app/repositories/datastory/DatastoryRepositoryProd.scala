@@ -1,6 +1,7 @@
 package repositories.datastory
 
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 import com.mongodb
@@ -13,9 +14,8 @@ import ftd_api.yaml.{Datastory, Error, Success}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import utils.ConfigReader
+
 import scala.concurrent.ExecutionContext.Implicits._
-
-
 import scala.concurrent.Future
 
 class DatastoryRepositoryProd extends DatastoryRepository {
@@ -57,8 +57,8 @@ class DatastoryRepositoryProd extends DatastoryRepository {
           updateDatastory(user, id, datastory, token, ws)
         case None =>
           val uid: String = UUID.randomUUID().toString
-          val timestamp: String = ZonedDateTime.now().toString
-          val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamp))
+          val timestamp = ZonedDateTime.now().toString
+          val newDatastory: Datastory = datastory.copy(id = Some(uid), timestamp = Some(timestamp.substring(0, timestamp.indexOf("+")).concat("Z")))
           insertDatastory(user, uid, newDatastory)
       }
     else
