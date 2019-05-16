@@ -500,7 +500,7 @@ class PushNotificationRepositoryProd extends PushNotificationRepository {
     val mongoClient = MongoClient(server, List(credentials))
     val mongoDB = mongoClient(dbName)
     val collection = mongoDB(collNotificationName)
-    val query = new BasicDBObject("user", openDataUser)
+    val query = new BasicDBObject("user", openDataUser).append("notificationtype", sysNotificationTypeName)
     val results = collection.find(query).sort(MongoDBObject("createDate" -> 1)).toList
     if(results.isEmpty){ logger.debug("notification not found"); Future.successful(Right(Seq[Notification]()))}
     else{
