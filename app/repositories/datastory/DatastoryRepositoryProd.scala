@@ -13,7 +13,6 @@ import ftd_api.yaml.{Datastory, Error, Success}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import utils.ConfigReader
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
