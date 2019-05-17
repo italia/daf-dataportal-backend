@@ -14,7 +14,7 @@ name := "daf-datipubblici"
 
 //version in ThisBuild := "1.0-alpha.1"
 
-version in ThisBuild := "2.0.7-SNAPSHOT"
+version in ThisBuild := "2.0.11-SNAPSHOT"
 
 val isStaging = System.getProperty("STAGING") != null
 
@@ -128,7 +128,6 @@ publishTo in ThisBuild := {
 }
 
 //credentials += {if(isStaging) Credentials(Path.userHome / ".ivy2" / ".credentialsTest") else Credentials(Path.userHome / ".ivy2" / ".credentials")}
-
 credentials += { Credentials(Path.userHome / ".ivy2" / ".credentials") }
 
 

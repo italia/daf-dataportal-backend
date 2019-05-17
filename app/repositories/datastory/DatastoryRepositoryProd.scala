@@ -13,7 +13,6 @@ import ftd_api.yaml.{Datastory, Error, Success}
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import utils.ConfigReader
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
@@ -126,7 +125,7 @@ class DatastoryRepositoryProd extends DatastoryRepository {
 
   private def updateDatastory(user: String, id: String, datastory: Datastory, token: String, ws: WSClient) = {
     if (checkDatastory(datastory)) {
-      getInternalDatastory(id).map(old => if(old.status != datastory.status) sendMessageToKafka(datastory, token, ws))
+      getInternalDatastory(id).foreach(old => if(old.status != datastory.status && datastory.status != 0) sendMessageToKafka(datastory, token, ws))
       val json: JsValue = Json.toJson(datastory)
       val obj: DBObject = com.mongodb.util.JSON.parse(json.toString()).asInstanceOf[DBObject]
       val query = MongoDBObject("id" -> id)
