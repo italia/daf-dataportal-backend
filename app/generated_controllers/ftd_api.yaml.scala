@@ -32,6 +32,7 @@ import java.util.Base64
 import play.api.Environment
 import scala.io.Source
 import play.api.libs.json._
+import services.kylo.KyloRegistry
 import services.settings.SettingsRegistry
 import services.push_notification.PushNotificationRegistry
 import utils.InferSchema._
@@ -52,6 +53,7 @@ import play.api.mvc.Headers
 import services.datastory.DatastoryRegistry
 import services.widgets.WidgetsRegistry
 import services.elasticsearch.ElasticsearchRegistry
+import play.api.libs.ws.WSResponse
 
 /**
  * This controller is re-generated after each change in the specification.
@@ -60,7 +62,7 @@ import services.elasticsearch.ElasticsearchRegistry
 
 package ftd_api.yaml {
     // ----- Start of unmanaged code area for package Ftd_apiYaml
-                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                        
     // ----- End of unmanaged code area for package Ftd_apiYaml
     class Ftd_apiYaml @Inject() (
         // ----- Start of unmanaged code area for injections Ftd_apiYaml
@@ -1267,51 +1269,11 @@ package ftd_api.yaml {
             val (upfile, fileType) = input
             // ----- Start of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
             RequestContext.execInContext[Future[KyloInferschemaType[T] forSome { type T }]]("kyloInferschema") { () =>
-            // TODO refactor and parametrize when dealing with other format
-            val inferUrl = ConfigReader.kyloInferUrl
-            val serde = fileType match {
-              case "csv" => ConfigReader.kyloCsvSerde
-              case "json" => ConfigReader.kyloJsonSerde
-            }
-
-            var file = upfile
-            if (fileType.equals("csv")) {
-              implicit val codec = Codec("UTF-8")
-              codec.onMalformedInput(CodingErrorAction.REPLACE)
-              codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
-
-              val lines: Iterator[String] = Source.fromFile(upfile).getLines
-              val header = lines.next()
-              val separator = InferSchema.inferSeparator(header, InferSchema.SEPARATORS)
-              val columns = header.split(separator)
-              val newColumns = columns.map(col => {
-                val newCol = if (col.trim.contains(" "))
-                  col.replaceAll(" ", "_").trim()
-                else col.trim()
-                newCol
-              })
-              val newHeader = newColumns.mkString(separator)
-
-              val tempFile = TemporaryFile(prefix = file.getName).file
-              val writer = new PrintWriter(tempFile)
-              writer.println(newHeader)
-              for (line <- lines) {
-                writer.println(line)
+              KyloRegistry.kyloService.inferSchema(fileType, upfile, ws) flatMap{
+                case Right(str)  => KyloInferschema200(str)
+                case Left(error) => KyloInferschema400(error)
               }
-              writer.close()
-              file = tempFile
-            }
 
-            val response = ws.url(inferUrl)
-              .withAuth(ConfigReader.kyloUser, ConfigReader.kyloPwd, WSAuthScheme.BASIC)
-              .post(akka.stream.scaladsl.Source(FilePart("file", file.getName,
-                Option("text/csv"), FileIO.fromFile(file)) :: DataPart("parser",
-                serde) :: List()))
-
-            response.flatMap(r => {
-              logger.debug(Json.stringify(r.json))
-              KyloInferschema200(Json.stringify(r.json))
-            })
           }
             // ----- End of unmanaged code area for action  Ftd_apiYaml.kyloInferschema
         }
