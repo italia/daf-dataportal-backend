@@ -69,8 +69,8 @@ class KyloRepositoryProd extends KyloRepository {
           (col.trim, validationColumnName(col.trim))
         }
         if(validationResults.exists(!_._2)) {
-          logger.debug(s"fields not valid: ${validationResults.filter(!_._2).map(_._1).mkString(",")}")
-          Future.successful(Left(Error(Some(400), None, Some(validationResults.filter(!_._2).map(_._1).mkString(",")))))
+          logger.debug(s"fields not valid: ${validationResults.filter(!_._2).map(_._1).mkString(", ")}")
+          Future.successful(Left(Error(Some(400), None, Some(validationResults.filter(!_._2).map(_._1).mkString(", ")))))
         }
         else {
           val tempFile: File = TemporaryFile(prefix = sampleFile.getName).file
