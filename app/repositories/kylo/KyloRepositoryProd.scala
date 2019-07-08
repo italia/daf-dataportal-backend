@@ -27,9 +27,9 @@ class KyloRepositoryProd extends KyloRepository {
   //true  -> valid
   //false -> non valid
   private def validationColumnName(colName: String): Boolean = {
-    //[!$%^&*()+~=`{}[\]<>?\"\'./\\\]
-    val regex = """[!$%^&*()+~=`{}[\\]<>?\"'/àèéìòù -]""".r
-    regex.findAllIn(colName).isEmpty
+    //^[a-zA-Z0-9]+$
+    val regexValid = """^[a-zA-Z0-9_]+$""".r
+    regexValid.findAllIn(colName).nonEmpty
   }
 
   private def validateJsonKeys(jsValue: JsValue): List[(String, Boolean)] = {
