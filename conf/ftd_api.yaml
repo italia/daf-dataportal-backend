@@ -1518,6 +1518,10 @@ paths:
           description: string representing a non static schema in json format
           schema:
             type: string
+        '400':
+          description: the column's names contain not allowed characters 
+          schema:
+            $ref: '#/definitions/Error'
   "/infer/ws/kylo/{url}/{file_type}":
       post:
         tags:

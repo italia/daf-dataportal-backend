@@ -35,7 +35,7 @@ spec:
           - "idm"
       containers:
       - name: datipubblici
-        image: nexus.daf.teamdigitale.it/daf-datipubblici:2.0.12
+        image: nexus.daf.teamdigitale.it/daf-datipubblici:2.0.13
         imagePullPolicy: Always
         env:
         - name: JAVA_OPTS
